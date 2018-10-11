@@ -1,4 +1,4 @@
-import os, sys, requests
+import os, sys, requests, numpy
 from bs4 import BeautifulSoup
 
 appolllink = r"https://collegefootball.ap.org/poll"
@@ -10,9 +10,6 @@ tfive = []
 while tfcounter < 25:
     tfcounter += 1
     tfive.append(tfcounter)
-
-# List of 1 to 25
-print tfive
 
 
 def apweeklyurlgenerator(week, year):
@@ -28,6 +25,7 @@ def apweeklyurlgenerator(week, year):
             year = '20' + str(year)
 
     # Preseason?
+    week = str(week)
     if week in prelist:
         week = '1'
     # If the week entered is higher than 16, assume user wants final rankings.
@@ -50,30 +48,9 @@ def apweeklyurlgenerator(week, year):
         url = url1 + str(week) + url2 + year + url3
     return url
 
-# def pinzest(pinlinklong):
-#     r = requests.get(pinlinklong)
-#     soup = BeautifulSoup(r.content, "html.parser")#, 'html5lib')
-#     # print soup
-#     print "------"
-#     # trsearch = soup.find_all('title')
-#     trsearch = soup.find_all('script')
-#     for node2 in trsearch:
-#         stringnode = str(node2)
-#         # print stringnode
-#         searchterm = "pinterestapp:source"
-#         if searchterm in stringnode:
-#             print stringnode
-#             findsearchterm = stringnode.find(searchterm)
-#             print findsearchterm
-#             teststr = stringnode[findsearchterm:findsearchterm+250]
-#             print teststr
-#             print teststr[teststr.find('": "')+4:teststr.find('", "')]
-#
-
 
 def pollgrabber(aplink):
     """ _ """
-    toptfive = {}
     r = requests.get(aplink)
     soup = BeautifulSoup(r.content, "html.parser")#, 'html5lib')
     # trsearch = soup.find_all('title')
@@ -83,6 +60,17 @@ def pollgrabber(aplink):
     nodecounter = 0
     ##########
     strsearch = str(trsearch)
+    # print strsearch
+    return strsearch
+
+def gettoptfive(websitestrsearch):
+    """ _ """
+    toptfive = {}
+    nodecounter = 0
+
+    strsearch = websitestrsearch
+    print strsearch
+
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
         searchno1 = 'class="number">' + str(ranking) + '<'
@@ -94,31 +82,103 @@ def pollgrabber(aplink):
             findno1 = strsearch.find(searchno1)
             findno2 = strsearch.find(searchno2)
             outstring = strsearch[findno1:findno2]
-            print outstring
+            print ranking, outstring
             teamname = outstring[outstring.find(teamsearchstart)+len(teamsearchstart):outstring.find(teamsearchend)]
-            print teamname
-            toptfive[ranking] = teamname
             nodecounter += 1
-    ##########
-    # for node2 in trsearch:
-    #     stringnode = str(node2)
-    #     # print stringnode
-    #     if searchterm.lower() in stringnode.lower() and stringterm2 in stringnode.lower():
-    #         # print stringnode
-    #         findsearchterm = stringnode.find(searchterm)
-    #         # print findsearchterm
-    #         teststr = stringnode[findsearchterm:stringnode.find(stringterm2)+len(stringterm2)+77]
-    #         print teststr
-    # #         print teststr[teststr.find('": "')+4:teststr.find('", "')]
-    #         nodecounter +=1
-    print nodecounter
+        else:
+            teamname = "ERROR NO TEAM HERE"
+        # ___
+        if ranking in toptfive:
+            print ranking, "ALREADY IN THE dictionary; missing", teamname
+        else:
+            toptfive[ranking] = teamname
+
+    print "n =", nodecounter
     print toptfive
     for rank in toptfive:
         print rank, toptfive[rank]
 
 
+# here, make sure others receiving votes gets documented. Use function to jump off of last point possible in
+#   pollgrabber function to split to get top 25 in one function and other votes in another.
+    # Make sure in t25, you resolve ties.
+
+def othersreceivingvotes(websitestrsearch):
+    """ _ """
+    tsixplus = {}
+    nodecounter = 0
+    tsixcounter = 26
+    rankingdict = {}
+    inverserankingdict = {}
+
+    strsearch = websitestrsearch
+    print strsearch
+
+    apsearchterm = "AP Top 25"  # 'class="number">1'
+    searchothers = 'class="title">Others receiving votes: </span>'
+    searchno2 = r'</p></div>\n</div>\n<div'
+    # searchno2 = r'</p></div>\n</div>\n</div>\n</div> <!-- // 50/50 Layout for Rankings'
+    teamsearchstart = '<span class="team-names">'
+    teamsearchend = '</span><abbr title='
+    if apsearchterm.lower() in strsearch.lower() and searchothers.lower() in strsearch.lower():
+        findap = strsearch.find(apsearchterm)
+        findothers = strsearch.find(searchothers)
+        findend = strsearch.find(searchno2)
+        print findothers
+        outstring = strsearch[findothers+len(searchothers):findend]
+        print outstring
+        print "String length:", len(outstring)
+        outstringlist = outstring.strip().split(",")
+        print outstringlist
+        for othervote in outstringlist:
+            if outstringlist[0] != othervote:
+                othervote = othervote[1:]
+            space = othervote.rfind(" ")
+            pts = othervote[space+1:]
+            team = othervote[:space]
+            print team, pts
+            intpts = int(pts)
+            if intpts not in tsixplus:
+                tsixplus[intpts] = [team]
+            else:
+                tsixplus[intpts].append(team)
+        print tsixplus
+        pointorder = sorted(tsixplus, reverse=True)
+
+        print "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+        # Find average of ties
+        for score in pointorder:
+            teamlist = tsixplus[score]
+            teamspervote = len(teamlist)
+            if teamspervote == 1:
+                rankingdict[tsixcounter] = teamlist[0]
+                inverserankingdict[teamlist[0]] = tsixcounter
+                tsixcounter += 1
+            else:  # If there is a tie in votes:
+                nextrank = tsixcounter
+                lastrank = tsixcounter + teamspervote
+                valstoaverage = range(nextrank, lastrank, 1)  # + 1, 1)
+                designatedrank = numpy.mean(valstoaverage)
+                # if designatedrank not in rankingdict:
+                #     rankingdict[designatedrank] = teamlist[0]
+                # elif designatedrank in rankingdict:
+                for team in teamlist:
+                    if team == teamlist[0]:
+                        rankingdict[designatedrank] = [team]
+                    else:
+                        rankingdict[designatedrank].append(team)
+                    inverserankingdict[team] = designatedrank
+                tsixcounter += teamspervote
+        print rankingdict
+        print tsixcounter
+        print inverserankingdict
+
+        return inverserankingdict
+
+
 # weekinquestion = apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
-weekinquestion = apweeklyurlgenerator("Final", 2011)
+weekinquestion = apweeklyurlgenerator(1, year=2018)
 
 # pollgrabber(currentespnap)
-pollgrabber(weekinquestion)
+gettoptfive(pollgrabber(weekinquestion))
+# othersreceivingvotes(pollgrabber(weekinquestion))
