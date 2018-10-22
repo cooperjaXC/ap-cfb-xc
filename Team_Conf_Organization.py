@@ -183,12 +183,12 @@ sunbelt = [appalachianst, arkansasst, coastalcarolina, georgiasouthern, georgias
 
 conferences = [acc, aac, bigxii, b1g, cusa, indep, mac, mtnwst, pac12, sec, sunbelt]
 conferencedict = {"ACC": acc, "American": aac, "Big XII": bigxii, "Big Ten": b1g, "Conference USA": cusa,
-                  "Independent": indep, "MAC": mac, "Moutain West": mtnwst, "Pac 12": pac12, "SEC": sec,
+                  "Independent": indep, "MAC": mac, "Mountain West": mtnwst, "Pac 12": pac12, "SEC": sec,
                   "Sun Belt": sunbelt}
 
 onlyconferences = [acc, aac, bigxii, b1g, cusa, mac, mtnwst, pac12, sec, sunbelt]
 onlyconferencesdict = {"ACC": acc, "American": aac, "Big XII": bigxii, "Big Ten": b1g, "Conference USA": cusa,
-                       "MAC": mac, "Moutain West": mtnwst, "Pac 12": pac12, "SEC": sec, "Sun Belt": sunbelt}
+                       "MAC": mac, "Mountain West": mtnwst, "Pac 12": pac12, "SEC": sec, "Sun Belt": sunbelt}
 
 for confr in onlyconferencesdict:
     print confr, onlyconferencesdict[confr]

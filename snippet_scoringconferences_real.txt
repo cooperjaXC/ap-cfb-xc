@@ -1,0 +1,38 @@
+accscore = []
+for tm in acc:
+    #
+    if tm in ffd:
+        print tm, ffd[tm]
+        accscore.append(ffd[tm])        
+        
+Boston College 34
+Clemson 2
+Florida State 19
+NC State 32
+Virginia Tech 20
+print accscore
+[34, 2, 19, 32, 20]
+print accscore.sort()
+None
+sort(accscore)
+Traceback (most recent call last):
+  File "<input>", line 1, in <module>
+NameError: name 'sort' is not defined
+newaccscore = accscore.sort()
+newaccscore
+print newaccscore
+None
+accscore
+[2, 19, 20, 32, 34]
+accxctotal = listsum(accscore[:4])
+Traceback (most recent call last):
+  File "<input>", line 1, in <module>
+NameError: name 'listsum' is not defined
+accxctotal = sum(accscore[:4])
+accxctotal
+73
+2+19+20+32+34
+107
+accxctotal = sum(accscore[:5])
+accxctotal
+107

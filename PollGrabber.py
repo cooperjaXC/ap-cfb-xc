@@ -67,6 +67,7 @@ def gettoptfive(websitestrsearch):
     """ _ """
     toptfive = {}
     nodecounter = 0
+    inverserankings = {}
 
     strsearch = websitestrsearch
     print strsearch
@@ -96,8 +97,11 @@ def gettoptfive(websitestrsearch):
     print "n =", nodecounter
     print toptfive
     for rank in toptfive:
-        print rank, toptfive[rank]
-
+        team = toptfive[rank]
+        print rank, team
+        inverserankings[team] = rank
+    print inverserankings
+    return inverserankings
 
 # here, make sure others receiving votes gets documented. Use function to jump off of last point possible in
 #   pollgrabber function to split to get top 25 in one function and other votes in another.
@@ -176,9 +180,40 @@ def othersreceivingvotes(websitestrsearch):
         return inverserankingdict
 
 
-# weekinquestion = apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
-weekinquestion = apweeklyurlgenerator(1, year=2018)
+def mergerankings(top25dict, othervotesdict):
+    """ Merge the top 25 and beyond dictionaries into one dictionary by which we can assign points for XC scoring """
+    rawmergeddict = {}
 
-# pollgrabber(currentespnap)
-gettoptfive(pollgrabber(weekinquestion))
-# othersreceivingvotes(pollgrabber(weekinquestion))
+    for item in top25dict:
+        rawmergeddict[item] = top25dict[item]
+    for item in othervotesdict:
+        rawmergeddict[item] = othervotesdict[item]
+
+    print len(rawmergeddict), rawmergeddict
+
+    return rawmergeddict
+
+
+def orderedmergeddict(rawmergedic):
+    """ _ """
+    ordereddict = {}
+
+    for team in rawmergedic:
+        score = rawmergedic[team]
+        if score not in ordereddict:
+            ordereddict[score] = team
+        else:
+            ordereddict[score].append(team)
+
+    print ordereddict
+    return ordereddict
+
+# # weekinquestion = apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
+# weekinquestion = apweeklyurlgenerator(9, year=2018)
+#
+# # pollgrabber(currentespnap)
+# t25dict = gettoptfive(pollgrabber(weekinquestion))
+# otherzdict = othersreceivingvotes(pollgrabber(weekinquestion))
+#
+# mergedict = mergerankings(t25dict, otherzdict)
+# # scoreddict = orderedmergeddict(mergedict)

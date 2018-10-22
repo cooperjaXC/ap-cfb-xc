@@ -1,0 +1,3 @@
+* Make sure Miami is picked up by ACC, T A&M by SEC
+
+* Fix ties in T25 rankings
