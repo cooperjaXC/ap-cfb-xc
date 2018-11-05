@@ -208,8 +208,9 @@ def orderedmergeddict(rawmergedic):
     print ordereddict
     return ordereddict
 
+
 # # weekinquestion = apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
-# weekinquestion = apweeklyurlgenerator(9, year=2018)
+# weekinquestion = apweeklyurlgenerator(10, year=2018)
 #
 # # pollgrabber(currentespnap)
 # t25dict = gettoptfive(pollgrabber(weekinquestion))

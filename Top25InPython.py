@@ -4,7 +4,7 @@ import PollGrabber
 import Team_Conf_Organization as vars
 
 # weekinquestion = apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
-weekinquestion = PollGrabber.apweeklyurlgenerator(9, year=2018)
+weekinquestion = PollGrabber.apweeklyurlgenerator(11, year=2018)
 grabbedpoll = PollGrabber.pollgrabber(weekinquestion)
 
 # pollgrabber(currentespnap)
@@ -67,3 +67,5 @@ for conf in conferencepointsdict:
 
 print fourscoredict
 print fivescoredict
+
+
