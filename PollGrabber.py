@@ -14,7 +14,7 @@ while tfcounter < 25:
 
 def apweeklyurlgenerator(week, year):
     """ Generate a URL link for a specific week of AP Rankings. Preseason = week 1 """
-    finallist = ['final', 'f', 'complete', 'total']
+    finallist = ['final', 'f', 'complete', 'total', 'last']
     prelist = ['preseason', 'initial', 'first', 'init', 'pre']
 
     # Format the year correctly
@@ -36,15 +36,16 @@ def apweeklyurlgenerator(week, year):
         pass
 
     # Generate the URL
+    oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
+    url1 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
     if week.lower() in finallist:
-        finalurlexample = 'http://www.espn.com/college-football/rankings/_/week/1/year/2017/seasontype/3'
-        url1 = 'http://www.espn.com/college-football/rankings/_/week/1/year/'
+        oldfinalurlexample = 'http://www.espn.com/college-football/rankings/_/week/1/year/2017/seasontype/3'
+        week1 = '1/year/'
         seasontype = '/seasontype/3'
-        url = url1 + year + seasontype
+        url = url1 + week1 + year + seasontype
     else:
-        url1 = r"http://www.espn.com/college-football/rankings/_/week/"
         url2 = r"/year/"
-        url3 = r"'/seasontype/2"
+        url3 = r"/seasontype/2"
         url = url1 + str(week) + url2 + year + url3
     return url
 
@@ -57,6 +58,7 @@ def pollgrabber(aplink):
     trsearch = soup.find_all('div')  # 'table-caption')
     # print trsearch
     print "- - - - - - - -"
+    print aplink
     nodecounter = 0
     ##########
     strsearch = str(trsearch)
@@ -78,14 +80,20 @@ def gettoptfive(websitestrsearch):
         searchno2 = 'class="number">' + str(ranking+1) + '<'
         teamsearchstart = '<span class="team-names">'
         teamsearchend = '</span><abbr title='
+
+        tiecounter = 0
+
         if apsearchterm.lower() in strsearch.lower() and searchno1.lower() in strsearch.lower():
             findap = strsearch.find(apsearchterm)
             findno1 = strsearch.find(searchno1)
             findno2 = strsearch.find(searchno2)
-            outstring = strsearch[findno1:findno2]
+            outstring = strsearch[findno1:findno2]#+len(searchno2)]#]#Restore to the only ]
             print ranking, outstring
             teamname = outstring[outstring.find(teamsearchstart)+len(teamsearchstart):outstring.find(teamsearchend)]
             nodecounter += 1
+            # # Search for a tie within this ranking's segment of strsearch
+            # teamsinstrsearch = outstring.count(teamsearchstart)
+            # if teamsinstrsearch
         else:
             teamname = "ERROR NO TEAM HERE"
         # ___
@@ -120,7 +128,8 @@ def othersreceivingvotes(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     searchothers = 'class="title">Others receiving votes: </span>'
-    searchno2 = r'</p></div>\n</div>\n<div'
+    searchno2 = r'</p></div>\n</div>\n<div'  # </p></div>\n<div
+    searchno2 = r'</p></div>\n<'#/div'
     # searchno2 = r'</p></div>\n</div>\n</div>\n</div> <!-- // 50/50 Layout for Rankings'
     teamsearchstart = '<span class="team-names">'
     teamsearchend = '</span><abbr title='
@@ -178,6 +187,8 @@ def othersreceivingvotes(websitestrsearch):
         print inverserankingdict
 
         return inverserankingdict
+    else:
+        print "GRAVE ERROR"
 
 
 def mergerankings(top25dict, othervotesdict):
