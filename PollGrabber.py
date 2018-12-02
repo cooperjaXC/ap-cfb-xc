@@ -48,6 +48,7 @@ def apweeklyurlgenerator(week, year):
         url3 = r"/seasontype/2"
         url = url1 + str(week) + url2 + year + url3
     return url
+    # Should be the default URL: r"http://www.espn.com/college-football/rankings/_/poll/1/"
 
 
 def pollgrabber(aplink):
@@ -77,12 +78,11 @@ def gettoptfive(websitestrsearch):
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
         searchno1 = 'class="number">' + str(ranking) + '<'
-        searchno2 = 'class="number">' + str(ranking+1) + '<'
+        searchno2 = 'class="number">' + str(ranking + 1) + '<'
         teamsearchstart = '<span class="team-names">'
         teamsearchend = '</span><abbr title='
 
-        tiecounter = 0
-
+        tieteamlist = []
         if apsearchterm.lower() in strsearch.lower() and searchno1.lower() in strsearch.lower():
             findap = strsearch.find(apsearchterm)
             findno1 = strsearch.find(searchno1)
@@ -91,16 +91,45 @@ def gettoptfive(websitestrsearch):
             print ranking, outstring
             teamname = outstring[outstring.find(teamsearchstart)+len(teamsearchstart):outstring.find(teamsearchend)]
             nodecounter += 1
-            # # Search for a tie within this ranking's segment of strsearch
-            # teamsinstrsearch = outstring.count(teamsearchstart)
-            # if teamsinstrsearch
+
+            # Search for a tie within this ranking's segment of strsearch
+            tiecounter = 0
+
+            #   #25 perpetually has this problem. You can search for the str 'Dropped from rankings:' if 25th team
+            if ranking == 25:
+                outstring = outstring[:outstring.find("Dropped from rankings:")]
+            teamsinstrsearch = outstring.count(teamsearchstart)
+            # tiecounter = teamsinstrsearch - 1 # Not really the case becasue the strsearch has a gob ton of teams
+            if teamsinstrsearch > 1:
+                print "!!!!!!!!!", teamname, "is in a tie!!!! Total teams at", ranking, ":", teamsinstrsearch
+                searchno3 = 'class="number">' + str(ranking + 2) + '<'#you must put an exception jut in case there is greater than a 2 team tie; this only gets the ranking after 2 tied teams. If this was a 3 team tie, searching for x + 2 ranking would return None for the search
+                findno3 = strsearch.find(searchno3)
+                if findno3 == -1:
+                    searchno3 = 'class="number">' + str(ranking + 3) + '<'
+                    findno3 = strsearch.find(searchno3)
+                    if findno3 == -1:
+                        searchno3 = 'class="number">' + str(ranking + 4) + '<'
+                        findno3 = strsearch.find(searchno3)
+                tieoutstr = strsearch[findno1:findno3]
+                print tieoutstr
+            #Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W 12).
+            #   To do this, search thru tieoutstr string and find all instances of teamsearchstart. Append each that != teamname to tieteamlist
+
         else:
             teamname = "ERROR NO TEAM HERE"
         # ___
         if ranking in toptfive:
             print ranking, "ALREADY IN THE dictionary; missing", teamname
+            #function to append other team to the dict
         else:
-            toptfive[ranking] = teamname
+            if len(tieteamlist) != 0:
+                dictrank = toptfive[ranking]
+                toptfive[ranking] = [teamname]
+                for tieteam in tieteamlist:
+                    dictrank.append(tieteam)
+            else:
+                toptfive[ranking] = teamname #should be [teamname]? would have to refigure code downstream if so
+
 
     print "n =", nodecounter
     print toptfive

@@ -74,7 +74,7 @@ westernkentucky = "Western Kentucky"
 
 # Indep
 liberty = "Liberty"
-army = "Army West Point"
+army = "Army"  # West Point
 byu = "BYU"
 umass = "Massachusetts"
 newmexicost = "New Mexico State"
