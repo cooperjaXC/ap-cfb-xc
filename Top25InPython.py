@@ -4,7 +4,7 @@ import PollGrabber
 import Team_Conf_Organization as vars
 
 # weekinquestion = PollGrabber.apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
-weekinquestion = PollGrabber.apweeklyurlgenerator(week=14, year=2018)
+weekinquestion = PollGrabber.apweeklyurlgenerator(week='final', year=2018)
 # weekinquestion = r"http://www.espn.com/college-football/rankings/_/poll/1/week/12/year/2017/seasontype/2"#deletethiswhenitworks
 grabbedpoll = PollGrabber.pollgrabber(weekinquestion)
 # grabbedpoll = PollGrabber.pollgrabber(r"http://www.espn.com/college-football/rankings/_/poll/1/week/11/year/2018/seasontype/2")
