@@ -77,10 +77,16 @@ def gettoptfive(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
+        # potentially new way of deliniating ranking:
+        # "><td class="tight-cell Table2__td">11</td><td class=
         searchno1 = 'class="number">' + str(ranking) + '<'
+        searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
         searchno2 = 'class="number">' + str(ranking + 1) + '<'
+        searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
         teamsearchstart = '<span class="team-names">'
+        teamsearchstart = 'px" title="'
         teamsearchend = '</span><abbr title='
+        teamsearchend = '"/></a></span>'
 
         tieteamlist = []
         if apsearchterm.lower() in strsearch.lower() and searchno1.lower() in strsearch.lower():
@@ -88,8 +94,9 @@ def gettoptfive(websitestrsearch):
             findno1 = strsearch.find(searchno1)
             findno2 = strsearch.find(searchno2)
             outstring = strsearch[findno1:findno2]#+len(searchno2)]#]#Restore to the only ]
-            print ranking, outstring
+            # print ranking, outstring
             teamname = outstring[outstring.find(teamsearchstart)+len(teamsearchstart):outstring.find(teamsearchend)]
+            print ranking, teamname
             nodecounter += 1
 
             # Search for a tie within this ranking's segment of strsearch
@@ -153,31 +160,50 @@ def othersreceivingvotes(websitestrsearch):
     inverserankingdict = {}
 
     strsearch = websitestrsearch
-    print strsearch
+    # print strsearch
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
-    searchothers = 'class="title">Others receiving votes: </span>'
+    searchothers = 'class="title">Others receiving votes: </span> <!-- -->'
+    searchothersnewbold = 'class="fw-bold">Others receiving votes: </span>'  # Test for new formatting of this str
+    # Test to see if new searchothers is the right way of searching now.
+    searchothers = searchothersnewbold
     searchno2 = r'</p></div>\n</div>\n<div'  # </p></div>\n<div
     searchno2 = r'</p></div>\n<'#/div'
     # searchno2 = r'</p></div>\n</div>\n</div>\n</div> <!-- // 50/50 Layout for Rankings'
+    searchno2 = r'</p><p><span class="fw-bold">'
     teamsearchstart = '<span class="team-names">'
     teamsearchend = '</span><abbr title='
+    weirdstr = '<!-- -->'
+
+    # Testing which search term is not being found:
+    if apsearchterm.lower() in strsearch.lower():
+        print apsearchterm, "is in this string; not the problem"
+    else:
+        print apsearchterm, "is not in this string and is the problem"
+
+    if searchothers.lower() in strsearch.lower():
+        print "var <strsearch> is in this string; not the problem"
+    else:
+        print "var <strsearch> is not in this string and is the problem"
+
     if apsearchterm.lower() in strsearch.lower() and searchothers.lower() in strsearch.lower():
         findap = strsearch.find(apsearchterm)
         findothers = strsearch.find(searchothers)
         findend = strsearch.find(searchno2)
         print findothers
         outstring = strsearch[findothers+len(searchothers):findend]
-        print outstring
+        # print outstring
         print "String length:", len(outstring)
         outstringlist = outstring.strip().split(",")
-        print outstringlist
+        # print outstringlist
         for othervote in outstringlist:
             if outstringlist[0] != othervote:
                 othervote = othervote[1:]
             space = othervote.rfind(" ")
             pts = othervote[space+1:]
             team = othervote[:space]
+            if weirdstr in team:
+                team = str(team.replace(weirdstr, ""))
             print team, pts
             intpts = int(pts)
             if intpts not in tsixplus:
