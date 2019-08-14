@@ -13,6 +13,7 @@ while tfcounter < 25:
 
 
 def findnth(haystack, needle, n):
+    """ <https://stackoverflow.com/questions/1883980/find-the-nth-occurrence-of-substring-in-a-string> """
     n = n-1
     parts = haystack.split(needle, n+1)
     if len(parts) <= n+1:
@@ -74,6 +75,7 @@ def pollgrabber(aplink):
     # print strsearch
     return strsearch
 
+
 def gettoptfive(websitestrsearch):
     """ _ """
     toptfive = {}
@@ -85,11 +87,16 @@ def gettoptfive(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
+        print "Ranking in top 25", ranking  ## Test print statement delete
         # Commented out search strs no longer used but kept in case of future troubleshooting.
         # searchno1 = 'class="number">' + str(ranking) + '<'
-        searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
+      #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
+        # # 2019 edit
+        searchno1 = '<td class="Table2__td">' + str(ranking) + "<"
         # searchno2 = 'class="number">' + str(ranking + 1) + '<'
-        searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
+      #  searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
+        # # 2019 edit
+        searchno2 = '<td class="Table2__td">' + str(ranking+1) + "<"
         # teamsearchstart = '<span class="team-names">'
         teamsearchstart = 'px" title="'
         # teamsearchend = '</span><abbr title='
@@ -150,6 +157,7 @@ def gettoptfive(websitestrsearch):
                                       findnth(noinfinity, teamsearchend, 2)]
                 print ranking, teamname
             else:
+                print searchno1new, "<-- search term aint in large strsearch neither"  ##This is a test print statement
                 teamname = "ERROR NO TEAM HERE"
 
         # ___
@@ -178,6 +186,7 @@ def gettoptfive(websitestrsearch):
 # here, make sure others receiving votes gets documented. Use function to jump off of last point possible in
 #   pollgrabber function to split to get top 25 in one function and other votes in another.
     # Make sure in t25, you resolve ties.
+
 
 def othersreceivingvotes(websitestrsearch):
     """ _ """
