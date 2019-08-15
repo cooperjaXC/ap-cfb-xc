@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 appolllink = r"https://collegefootball.ap.org/poll"
 staticespn = r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
 currentespnap = r"http://www.espn.com/college-football/rankings"
+defaultlink = currentespnap
 
 tfcounter = 0
 tfive = []

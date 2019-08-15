@@ -1,7 +1,0 @@
-* Make sure Miami is picked up by ACC, T A&M by SEC
-
-* Fix ties in T25 rankings
-
-* Only years 2014 and on have 'others receiving votes' data.
-
-* Fix the default URL that's generated to be http://www.espn.com/college-football/rankings/_/poll/1/
