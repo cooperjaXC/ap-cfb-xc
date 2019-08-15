@@ -4,12 +4,22 @@ from bs4 import BeautifulSoup
 appolllink = r"https://collegefootball.ap.org/poll"
 staticespn = r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
 currentespnap = r"http://www.espn.com/college-football/rankings"
+defaultlink = currentespnap
 
 tfcounter = 0
 tfive = []
 while tfcounter < 25:
     tfcounter += 1
     tfive.append(tfcounter)
+
+
+def findnth(haystack, needle, n):
+    """ <https://stackoverflow.com/questions/1883980/find-the-nth-occurrence-of-substring-in-a-string> """
+    n = n-1
+    parts = haystack.split(needle, n+1)
+    if len(parts) <= n+1:
+        return -1
+    return len(haystack)-len(parts[-1])-len(needle)
 
 
 def apweeklyurlgenerator(week, year):
@@ -66,6 +76,7 @@ def pollgrabber(aplink):
     # print strsearch
     return strsearch
 
+
 def gettoptfive(websitestrsearch):
     """ _ """
     toptfive = {}
@@ -77,15 +88,19 @@ def gettoptfive(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
-        # potentially new way of deliniating ranking:
-        # "><td class="tight-cell Table2__td">11</td><td class=
-        searchno1 = 'class="number">' + str(ranking) + '<'
-        searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
-        searchno2 = 'class="number">' + str(ranking + 1) + '<'
-        searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
-        teamsearchstart = '<span class="team-names">'
+        print "Ranking in top 25", ranking  ## Test print statement delete
+        # Commented out search strs no longer used but kept in case of future troubleshooting.
+        # searchno1 = 'class="number">' + str(ranking) + '<'
+      #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
+        # # 2019 edit
+        searchno1 = '<td class="Table2__td">' + str(ranking) + "<"
+        # searchno2 = 'class="number">' + str(ranking + 1) + '<'
+      #  searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
+        # # 2019 edit
+        searchno2 = '<td class="Table2__td">' + str(ranking+1) + "<"
+        # teamsearchstart = '<span class="team-names">'
         teamsearchstart = 'px" title="'
-        teamsearchend = '</span><abbr title='
+        # teamsearchend = '</span><abbr title='
         teamsearchend = '"/></a></span>'
 
         tieteamlist = []
@@ -123,7 +138,29 @@ def gettoptfive(websitestrsearch):
             #   To do this, search thru tieoutstr string and find all instances of teamsearchstart. Append each that != teamname to tieteamlist
 
         else:
-            teamname = "ERROR NO TEAM HERE"
+            previousranking = ranking - 1
+
+            searchno1new = searchno1.replace(str(ranking), str(previousranking))
+            searchno2new = searchno1.replace(str(ranking+1), str(ranking))  # Set end of the search as current ranking
+                # yeah but what if we didn't do that. There is no current ranking that finds that search no. kee searchno2 the same to bound the back end of the new outstring?
+            searchno3 = searchno2  # responding to the comment above. This bounds the back end of the outstr; previousranking + 2 or ranking + 1
+
+            # teamsearchstart = 'px" title="' # same
+            # teamsearchend = '"/></a></span>' # same
+
+            if searchno1new in strsearch:
+                # This is where the change has to come from. Cannot search for the first instance of the findno1.
+                findno1new = strsearch.find(searchno1new)
+                findno3 = strsearch.find(searchno3)
+                noinfinity = strsearch[findno1new:findno3]  # noinfinity == outstring in above func but has an ending
+                # use the 2nd entity of each team search strs to find next team
+                teamname = noinfinity[findnth(noinfinity, teamsearchstart, 2)+len(teamsearchstart):
+                                      findnth(noinfinity, teamsearchend, 2)]
+                print ranking, teamname
+            else:
+                print searchno1new, "<-- search term aint in large strsearch neither"  ##This is a test print statement
+                teamname = "ERROR NO TEAM HERE"
+
         # ___
         if ranking in toptfive:
             print ranking, "ALREADY IN THE dictionary; missing", teamname
@@ -150,6 +187,7 @@ def gettoptfive(websitestrsearch):
 # here, make sure others receiving votes gets documented. Use function to jump off of last point possible in
 #   pollgrabber function to split to get top 25 in one function and other votes in another.
     # Make sure in t25, you resolve ties.
+
 
 def othersreceivingvotes(websitestrsearch):
     """ _ """
