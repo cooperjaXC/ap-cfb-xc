@@ -1,12 +1,22 @@
 * Make sure Miami is picked up by ACC, T A&M by SEC
 
-* Fix ties in T25 rankings
+* Get Pandas printout to match Excel format so you can copy and paste directly into excel. 
+	* Identify other conferences that aren't Power 5 as a note if they score. 
 
-* Note: Only years 2014 and on have 'others receiving votes' data.
+* Black all the code to standardize formatting.
+	* Generally clean the code
+
+* Fix 2-way ties in T25 rankings
+	* See UGA & Florida in final 2018 rankings. Tied @ 7 but gives one 7 and one 8. Make 7.5
+
+* Fix 3(+) way ties in Top 25
+	* Is this just T25 or also ORV?
+
+* Note: Only years 2014 and on have 'others receiving votes' (ORV) data.
 
 * Fix the default URL that's generated to be http://www.espn.com/college-football/rankings/_/poll/1/
 
-* Get Pandas printout to match Excel format so you can copy and paste directly into excel. 
+
 
 * Possible: Put rankings into a postgresql database for easier manipulation and stats building?
 
