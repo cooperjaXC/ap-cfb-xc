@@ -152,43 +152,190 @@ troy = "Troy"
 
 
 # Conferences
-acc = [bostoncollege, clemson, duke, floridast, georgiatech, louisville, miami, unc, ncst, pittsburgh, syracuse,
-       uva, virginiatech, wakeforest]
+acc = [
+    bostoncollege,
+    clemson,
+    duke,
+    floridast,
+    georgiatech,
+    louisville,
+    miami,
+    unc,
+    ncst,
+    pittsburgh,
+    syracuse,
+    uva,
+    virginiatech,
+    wakeforest,
+]
 
-aac = [ucf, cincinnati, uconn, ecu, houston, memphis, navy, southflorida, smu, temple, tulane, tulsa]
+aac = [
+    ucf,
+    cincinnati,
+    uconn,
+    ecu,
+    houston,
+    memphis,
+    navy,
+    southflorida,
+    smu,
+    temple,
+    tulane,
+    tulsa,
+]
 
-bigxii = [baylor, iowast, kansas, kansasst, oklahoma, oklahomast, tcu, texas, texastech, westvirginia]
+bigxii = [
+    baylor,
+    iowast,
+    kansas,
+    kansasst,
+    oklahoma,
+    oklahomast,
+    tcu,
+    texas,
+    texastech,
+    westvirginia,
+]
 
-b1g = [illinois, indiana, iowa, maryland, michigan, michiganst, minnesota, nebraska, northwestern, ohiost, pennst,
-       purdue, rutgers, wisconsin]
+b1g = [
+    illinois,
+    indiana,
+    iowa,
+    maryland,
+    michigan,
+    michiganst,
+    minnesota,
+    nebraska,
+    northwestern,
+    ohiost,
+    pennst,
+    purdue,
+    rutgers,
+    wisconsin,
+]
 
-cusa = [uab, charlotte, fiu, floridaatlantic, louisianatech, marshall, mtsu, northtexas, olddominion, rice,
-        southernmiss, utep, utsa, westernkentucky]
+cusa = [
+    uab,
+    charlotte,
+    fiu,
+    floridaatlantic,
+    louisianatech,
+    marshall,
+    mtsu,
+    northtexas,
+    olddominion,
+    rice,
+    southernmiss,
+    utep,
+    utsa,
+    westernkentucky,
+]
 
 indep = [liberty, army, byu, umass, newmexicost, notredame]
 
-mac = [akron, ballst, bowlinggreen, buffalo, centralmichigan, easternmichigan, kentst, miamioh, northernillinios, ohio,
-       toledo, westernmichigan]
+mac = [
+    akron,
+    ballst,
+    bowlinggreen,
+    buffalo,
+    centralmichigan,
+    easternmichigan,
+    kentst,
+    miamioh,
+    northernillinios,
+    ohio,
+    toledo,
+    westernmichigan,
+]
 
-mtnwst = [airforce, boisest, coloradost, fresnost, hawaii, nevada, unlv, newmexico, sandiegost, sanjosest, utahst,
-          wyoming]
+mtnwst = [
+    airforce,
+    boisest,
+    coloradost,
+    fresnost,
+    hawaii,
+    nevada,
+    unlv,
+    newmexico,
+    sandiegost,
+    sanjosest,
+    utahst,
+    wyoming,
+]
 
-pac12 = [arizona, arizonast, cal, ucla, colorado, oregon, oregonst, usc, stanford, utah, washington, washingtonst]
+pac12 = [
+    arizona,
+    arizonast,
+    cal,
+    ucla,
+    colorado,
+    oregon,
+    oregonst,
+    usc,
+    stanford,
+    utah,
+    washington,
+    washingtonst,
+]
 
-sec = [alabama, arkansas, auburn, florida, georgia, kentucky, lsu, olemiss, mississippist, missouri, southcarolina,
-       tennessee, texasam, vanderbilt]
+sec = [
+    alabama,
+    arkansas,
+    auburn,
+    florida,
+    georgia,
+    kentucky,
+    lsu,
+    olemiss,
+    mississippist,
+    missouri,
+    southcarolina,
+    tennessee,
+    texasam,
+    vanderbilt,
+]
 
-sunbelt = [appalachianst, arkansasst, coastalcarolina, georgiasouthern, georgiast, louisiana, louisianamonroe,
-           southalabama, texasst, troy]
+sunbelt = [
+    appalachianst,
+    arkansasst,
+    coastalcarolina,
+    georgiasouthern,
+    georgiast,
+    louisiana,
+    louisianamonroe,
+    southalabama,
+    texasst,
+    troy,
+]
 
 conferences = [acc, aac, bigxii, b1g, cusa, indep, mac, mtnwst, pac12, sec, sunbelt]
-conferencedict = {"ACC": acc, "American": aac, "Big XII": bigxii, "Big Ten": b1g, "Conference USA": cusa,
-                  "Independent": indep, "MAC": mac, "Mountain West": mtnwst, "Pac 12": pac12, "SEC": sec,
-                  "Sun Belt": sunbelt}
+conferencedict = {
+    "ACC": acc,
+    "American": aac,
+    "Big XII": bigxii,
+    "Big Ten": b1g,
+    "Conference USA": cusa,
+    "Independent": indep,
+    "MAC": mac,
+    "Mountain West": mtnwst,
+    "Pac 12": pac12,
+    "SEC": sec,
+    "Sun Belt": sunbelt,
+}
 
 onlyconferences = [acc, aac, bigxii, b1g, cusa, mac, mtnwst, pac12, sec, sunbelt]
-onlyconferencesdict = {"ACC": acc, "American": aac, "Big XII": bigxii, "Big Ten": b1g, "Conference USA": cusa,
-                       "MAC": mac, "Mountain West": mtnwst, "Pac 12": pac12, "SEC": sec, "Sun Belt": sunbelt}
+onlyconferencesdict = {
+    "ACC": acc,
+    "American": aac,
+    "Big XII": bigxii,
+    "Big Ten": b1g,
+    "Conference USA": cusa,
+    "MAC": mac,
+    "Mountain West": mtnwst,
+    "Pac 12": pac12,
+    "SEC": sec,
+    "Sun Belt": sunbelt,
+}
 
 for confr in onlyconferencesdict:
     print confr, onlyconferencesdict[confr]

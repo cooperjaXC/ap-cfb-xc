@@ -4,7 +4,9 @@ import PollGrabber
 import Team_Conf_Organization as vars
 
 # weekinquestion = PollGrabber.apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
-weekinquestion = PollGrabber.apweeklyurlgenerator(week='final', year=2013)
+weekinquestion = PollGrabber.apweeklyurlgenerator(
+    week="preseason", year=2019
+)  # 'final'
 # weekinquestion = r"http://www.espn.com/college-football/rankings/_/poll/1/week/12/year/2017/seasontype/2"#deletethiswhenitworks
 grabbedpoll = PollGrabber.pollgrabber(weekinquestion)
 # grabbedpoll = PollGrabber.pollgrabber('http://www.espn.com/mens-college-basketball/rankings')  # for basketball
@@ -16,10 +18,21 @@ otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll)
 mergedict = PollGrabber.mergerankings(t25dict, otherzdict)
 # scoreddict = orderedmergeddict(mergedict)
 
-conferencepointsdict = {"ACC": [], "American": [], "Big XII": [], "Big Ten": [], "Conference USA": [],
-                        "Independent": [], "MAC": [], "Mountain West": [], "Pac 12": [], "SEC": [], "Sun Belt": []}
+conferencepointsdict = {
+    "ACC": [],
+    "American": [],
+    "Big XII": [],
+    "Big Ten": [],
+    "Conference USA": [],
+    "Independent": [],
+    "MAC": [],
+    "Mountain West": [],
+    "Pac 12": [],
+    "SEC": [],
+    "Sun Belt": [],
+}
 
-mistakedict = {vars.miami: "Miami", vars.texasam: "Texas A&amp;M;"}
+mistakedict = {vars.miami: "Miami", vars.texasam: "Texas A&amp;M"}  # "Texas A&amp;M;"
 
 for conference in vars.conferencedict:
     confscore = []
@@ -69,5 +82,3 @@ for conf in conferencepointsdict:
 
 print fourscoredict
 print fivescoredict
-
-
