@@ -1,4 +1,13 @@
+URGENT
+------
+* Fix ties when they occur at #25
+	* See 2019 week 2. Iowa St-Nebraska tie. only gives 1st one listed the 25, omits the second listed one, and moves others receiving votes up one (UVA should be 27th but is given 26pts)
+
 * Make sure Miami is picked up by ACC, T A&M by SEC
+	* Multiple forms of Texas A&M. Make sure all are picked up. 
+
+* Add README.md. Make Git Hub Repo more professional for others to use.
+	* Sub directories for personal files like .docx full of scratch code.
 
 * Get Pandas printout to match Excel format so you can copy and paste directly into excel. 
 	* Identify other conferences that aren't Power 5 as a note if they score. 
@@ -10,14 +19,23 @@
 	* See UGA & Florida in final 2018 rankings. Tied @ 7 but gives one 7 and one 8. Make 7.5
 
 * Fix 3(+) way ties in Top 25
-	* Is this just T25 or also ORV?
+	* This problem is only in the Top 25; ORV is fine with any # of ties (See preseason 2019 ORV: 4-way tie divides perfectly)
 
 * Note: Only years 2014 and on have 'others receiving votes' (ORV) data.
 
 * Fix the default URL that's generated to be http://www.espn.com/college-football/rankings/_/poll/1/
 
 
+LONG TERM
+---------
+* Move to using the actual AP website instead of relying on ESPN's 3rd party. 
+	* Can you get historical data doing this? 
+	* Simple, current poll: https://www.apnews.com/APTop25CollegeFootballPoll
+	* Detailed poll: 
 
-* Possible: Put rankings into a postgresql database for easier manipulation and stats building?
 
-* Possible: Statistical tests on significances of findings? 
+POSSIBLE
+--------
+* Put rankings into a postgresql database for easier manipulation and stats building?
+
+* Statistical tests on significances of findings? 

@@ -6,7 +6,12 @@ staticespn = (
     r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
 )
 currentespnap = r"http://www.espn.com/college-football/rankings"
-defaultlink = currentespnap
+# defaultlink = currentespnap
+oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
+# Should be the default URL:
+aponlylinkespn =  r"http://www.espn.com/college-football/rankings/_/poll/1/"
+aponlylinkespn2=r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
+defaultlink = aponlylinkespn2
 
 tfcounter = 0
 tfive = []
@@ -27,7 +32,8 @@ def findnth(haystack, needle, n):
 def apweeklyurlgenerator(week, year):
     """ Generate a URL link for a specific week of AP Rankings. Preseason = week 1 """
     finallist = ["final", "f", "complete", "total", "last"]
-    prelist = ["preseason", "initial", "first", "init", "pre"]
+    prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
+    currentlist = ["current", "present", "default"]
 
     # Format the year correctly
     year = str(year)
@@ -38,7 +44,7 @@ def apweeklyurlgenerator(week, year):
 
     # Preseason?
     week = str(week)
-    if week in prelist:
+    if week.lower() in prelist:
         week = "1"
     # If the week entered is higher than 16, assume user wants final rankings.
     try:
@@ -48,13 +54,23 @@ def apweeklyurlgenerator(week, year):
         pass
 
     # Generate the URL
-    oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
-    url1 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
+    # Default link here (see the top of script for variable definition)
+    url1 = defaultlink
+    # Is the week entered indicating the final week?
     if week.lower() in finallist:
         oldfinalurlexample = "http://www.espn.com/college-football/rankings/_/week/1/year/2017/seasontype/3"
         week1 = "1/year/"
         seasontype = "/seasontype/3"
         url = url1 + week1 + year + seasontype
+    # Check for entries wanting the most up-to-date rankings
+    elif week.lower() in currentlist:
+        # just use the default link
+        url = url1  # default link
+    # # Commented out b/c we want the user to get the results they want and not be confused by getting the current week
+    # #     when they wanted another week. This will error out to let them know that.
+    # elif week is None:
+    #     # just use the default link by passing
+    #     pass
     else:
         url2 = r"/year/"
         url3 = r"/seasontype/2"
