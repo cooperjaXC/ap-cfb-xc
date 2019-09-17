@@ -106,7 +106,7 @@ def gettoptfive(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
-        print "Ranking in top 25", ranking  ## Test print statement delete
+        print "Ranking in Top 25:", ranking  ## Test print statement delete
         # Commented out search strs no longer used but kept in case of future troubleshooting.
         # searchno1 = 'class="number">' + str(ranking) + '<'
         #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
@@ -135,7 +135,7 @@ def gettoptfive(websitestrsearch):
             # print ranking, outstring
             teamname = outstring[
                 outstring.find(teamsearchstart)
-                + len(teamsearchstart) : outstring.find(teamsearchend)
+                + len(teamsearchstart): outstring.find(teamsearchend)
             ]
             print ranking, teamname
             nodecounter += 1
@@ -164,6 +164,27 @@ def gettoptfive(websitestrsearch):
                 print tieoutstr
             # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W 12).
             #   To do this, search thru tieoutstr string and find all instances of teamsearchstart. Append each that != teamname to tieteamlist
+
+                #method that may not resolve >2 ties but may be on to something
+                tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
+                tiesubstr_idx = tieoutstr.find(tieindicator)
+                tiesubstr=tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
+                tieteamsubsearchstart='''"><img alt="'''
+                tieteamsubsearchend='''" src="'''
+                a_tie_team = tiesubstr[tiesubstr.find(tieteamsubsearchstart)+len(tieteamsubsearchstart):
+                                       tiesubstr.find(tieteamsubsearchend)]
+                print "Team tied at ranking", ranking, a_tie_team
+
+                # Append to tie team list
+                # # 17 Spet 19 error: Traceback (most recent call last):
+                # #   File "C:/Users/acc-s/Documents/Python/AP_XC/Top25InPython.py", line 19, in <module>
+                # #     t25dict = PollGrabber.gettoptfive(grabbedpoll)
+                # #   File "C:\Users\acc-s\Documents\Python\AP_XC\PollGrabber.py", line 219, in gettoptfive
+                # #     dictrank = toptfive[ranking]
+                # # KeyError: 13
+                # tieteamlist.append(a_tie_team)
+                # tieteamlist.append(teamname)
+                # print "Teams in the tie:", tieteamlist
 
         else:
             previousranking = ranking - 1

@@ -1,5 +1,9 @@
 URGENT
 ------
+* Fix 2-way ties in T25 rankings
+	* See UGA & Florida in final 2018 rankings. Tied @ 7 but gives one 7 and one 8. Make 7.5
+	* Or week 4 2019. Wisconsin Penn St tie at 13. Gives one 13 & one 14. Same conference so OK but should be 13.5
+
 * Fix ties when they occur at #25
 	* See 2019 week 2. Iowa St-Nebraska tie. only gives 1st one listed the 25, omits the second listed one, and moves others receiving votes up one (UVA should be 27th but is given 26pts)
 
@@ -19,8 +23,6 @@ URGENT
 * Black all the code to standardize formatting.
 	* Generally clean the code
 
-* Fix 2-way ties in T25 rankings
-	* See UGA & Florida in final 2018 rankings. Tied @ 7 but gives one 7 and one 8. Make 7.5
 
 * Fix 3(+) way ties in Top 25
 	* This problem is only in the Top 25; ORV is fine with any # of ties (See preseason 2019 ORV: 4-way tie divides perfectly)
