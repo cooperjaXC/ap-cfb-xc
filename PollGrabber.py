@@ -102,7 +102,8 @@ def gettoptfive(websitestrsearch):
     inverserankings = {}
 
     strsearch = websitestrsearch
-    print strsearch
+    # # Print this only to see the long version of the html returned by the search. Too much for PyCharm run window rn.
+    # print strsearch
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
@@ -161,11 +162,14 @@ def gettoptfive(websitestrsearch):
                         searchno3 = 'class="number">' + str(ranking + 4) + "<"
                         findno3 = strsearch.find(searchno3)
                 tieoutstr = strsearch[findno1:findno3]
-                print tieoutstr
-            # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W 12).
-            #   To do this, search thru tieoutstr string and find all instances of teamsearchstart. Append each that != teamname to tieteamlist
+                # # print out the tieoutstr for tie troubleshooting. Comment out otherwise
+                # print tieoutstr
 
-                #method that may not resolve >2 ties but may be on to something
+                # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W '12).
+                #   To do this, search thru tieoutstr string and find all instances of teamsearchstart.
+                #   Append each that != teamname to tieteamlist
+
+                # Method that may not resolve >2 ties but may be on to something
                 tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
                 tiesubstr_idx = tieoutstr.find(tieindicator)
                 tiesubstr=tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
@@ -182,9 +186,10 @@ def gettoptfive(websitestrsearch):
                 # #   File "C:\Users\acc-s\Documents\Python\AP_XC\PollGrabber.py", line 219, in gettoptfive
                 # #     dictrank = toptfive[ranking]
                 # # KeyError: 13
-                # tieteamlist.append(a_tie_team)
-                # tieteamlist.append(teamname)
-                # print "Teams in the tie:", tieteamlist
+                tieteamlist.append(a_tie_team)
+                # tieteamlist.append("dummy ver") # DELETE THIS LINE testing only
+                tieteamlist.append(teamname)
+            print "Teams in the tie:", tieteamlist
 
         else:
             previousranking = ranking - 1
@@ -219,28 +224,46 @@ def gettoptfive(websitestrsearch):
                 teamname = "ERROR NO TEAM HERE"
 
         # ___
+        ##tsting#delete next 3 lines after
+        print "n_init =", nodecounter
+        print toptfive
+        print type(ranking)
         if ranking in toptfive:
             print ranking, "ALREADY IN THE dictionary; missing", teamname
             # function to append other team to the dict
         else:
             if len(tieteamlist) != 0:
-                dictrank = toptfive[ranking]
-                toptfive[ranking] = [teamname]
+                # dictrank = toptfive[ranking]
+                toptfive[ranking] = []#[teamname]
                 for tieteam in tieteamlist:
-                    dictrank.append(tieteam)
+                    toptfive[ranking].append(tieteam)
             else:
-                toptfive[
-                    ranking
-                ] = (
-                    teamname
-                )  # should be [teamname]? would have to refigure code downstream if so
+                # This is the option most often used on a normal basis.
+                toptfive[ranking] = teamname
+                  # should be [teamname]? would have to refigure code downstream if so
 
     print "n =", nodecounter
     print toptfive
     for rank in toptfive:
         team = toptfive[rank]
         print rank, team
-        inverserankings[team] = rank
+        # Work out ties
+        if type(team) is list:
+            teamstied = len(team)
+            holderlist= [rank]  # Go ahead and put the init rank in there. Add on others later.
+            while len(holderlist) < teamstied:
+                holderlist.append(len(holderlist)+rank)
+            print holderlist
+            dividedrank = float(sum(holderlist) / float(teamstied))  # Float to get that decimal point
+            dividedrank_round = round(dividedrank, 2)  # Two decimal points, even for tripple ties
+            print dividedrank_round
+
+            # Add the custom rank to the inverse rankings dict.
+            for tieam in team:
+                inverserankings[tieam] = dividedrank_round
+        # Default if there is no tie
+        else:
+          inverserankings[team] = rank
     print inverserankings
     return inverserankings
 
@@ -388,3 +411,4 @@ def orderedmergeddict(rawmergedic):
 #
 # mergedict = mergerankings(t25dict, otherzdict)
 # # scoreddict = orderedmergeddict(mergedict)
+print "sup" #tst for importing; delete later
