@@ -3,16 +3,23 @@ import math
 import PollGrabber
 import Team_Conf_Organization as vars
 
-# weekinquestion = PollGrabber.apweeklyurlgenerator("Final", year=2012)  # Example of a top 25 tie that needs to be resolved.
+# Target Week
 weekinquestion = PollGrabber.apweeklyurlgenerator(
-    week="preseason", year=2019
-)  # 'final'
+    week='current', year=2019  # "preseason", # 'final'
+    # week="Final", year=2012  # Example of a top 25 tie that needs to be resolved. # 5 Georgia & Texas A&M
+    # # Note: 2013 and before may error with "GRAVE ERROR"
+    # week=4, year=2019  # Another example of a top 25 tie that needs to be resolved. # 13 Penn St & Wisconsin
+    # week=2, year=2019  # Example of a tie at number 25 that needs to be resolved. Nebraska & Iowa St.
+)
+
 # weekinquestion = r"http://www.espn.com/college-football/rankings/_/poll/1/week/12/year/2017/seasontype/2"#deletethiswhenitworks
+
 grabbedpoll = PollGrabber.pollgrabber(weekinquestion)
 # grabbedpoll = PollGrabber.pollgrabber('http://www.espn.com/mens-college-basketball/rankings')  # for basketball
 
-# pollgrabber(currentespnap)
+# Get a dictionary of the top 25 teams
 t25dict = PollGrabber.gettoptfive(grabbedpoll)
+# Get a dictionary of the "others receiving votes" and their ranks.
 otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll)
 
 mergedict = PollGrabber.mergerankings(t25dict, otherzdict)

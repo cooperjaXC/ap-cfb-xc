@@ -55,11 +55,11 @@ pennst = "Penn State"
 purdue = "Purdue"
 rutgers = "Rutgers"
 wisconsin = "Wisconsin"
-uab = "UAB"
+
 
 # CUSA
 charlotte = "Charlotte"
-fiu = "FIU"
+fiu = "FIU"  # Or "Florida International" ?
 floridaatlantic = "Florida Atlantic"
 louisianatech = "Louisiana Tech"
 marshall = "Marshall"
@@ -68,6 +68,7 @@ northtexas = "North Texas"
 olddominion = "Old Dominion"
 rice = "Rice"
 southernmiss = "Southern Miss"
+uab = "UAB"
 utep = "UTEP"
 utsa = "UTSA"
 westernkentucky = "Western Kentucky"

@@ -6,7 +6,12 @@ staticespn = (
     r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
 )
 currentespnap = r"http://www.espn.com/college-football/rankings"
-defaultlink = currentespnap
+# defaultlink = currentespnap
+oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
+# Should be the default URL:
+aponlylinkespn =  r"http://www.espn.com/college-football/rankings/_/poll/1/"
+aponlylinkespn2=r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
+defaultlink = aponlylinkespn2
 
 tfcounter = 0
 tfive = []
@@ -27,7 +32,8 @@ def findnth(haystack, needle, n):
 def apweeklyurlgenerator(week, year):
     """ Generate a URL link for a specific week of AP Rankings. Preseason = week 1 """
     finallist = ["final", "f", "complete", "total", "last"]
-    prelist = ["preseason", "initial", "first", "init", "pre"]
+    prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
+    currentlist = ["current", "present", "default"]
 
     # Format the year correctly
     year = str(year)
@@ -38,7 +44,7 @@ def apweeklyurlgenerator(week, year):
 
     # Preseason?
     week = str(week)
-    if week in prelist:
+    if week.lower() in prelist:
         week = "1"
     # If the week entered is higher than 16, assume user wants final rankings.
     try:
@@ -48,13 +54,23 @@ def apweeklyurlgenerator(week, year):
         pass
 
     # Generate the URL
-    oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
-    url1 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
+    # Default link here (see the top of script for variable definition)
+    url1 = defaultlink
+    # Is the week entered indicating the final week?
     if week.lower() in finallist:
         oldfinalurlexample = "http://www.espn.com/college-football/rankings/_/week/1/year/2017/seasontype/3"
         week1 = "1/year/"
         seasontype = "/seasontype/3"
         url = url1 + week1 + year + seasontype
+    # Check for entries wanting the most up-to-date rankings
+    elif week.lower() in currentlist:
+        # just use the default link
+        url = url1  # default link
+    # # Commented out b/c we want the user to get the results they want and not be confused by getting the current week
+    # #     when they wanted another week. This will error out to let them know that.
+    # elif week is None:
+    #     # just use the default link by passing
+    #     pass
     else:
         url2 = r"/year/"
         url3 = r"/seasontype/2"
@@ -86,11 +102,12 @@ def gettoptfive(websitestrsearch):
     inverserankings = {}
 
     strsearch = websitestrsearch
-    print strsearch
+    # # Print this only to see the long version of the html returned by the search. Too much for PyCharm run window rn.
+    # print strsearch
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
-        print "Ranking in top 25", ranking  ## Test print statement delete
+        print "Ranking in Top 25:", ranking  ## Test print statement delete
         # Commented out search strs no longer used but kept in case of future troubleshooting.
         # searchno1 = 'class="number">' + str(ranking) + '<'
         #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
@@ -119,7 +136,7 @@ def gettoptfive(websitestrsearch):
             # print ranking, outstring
             teamname = outstring[
                 outstring.find(teamsearchstart)
-                + len(teamsearchstart) : outstring.find(teamsearchend)
+                + len(teamsearchstart): outstring.find(teamsearchend)
             ]
             print ranking, teamname
             nodecounter += 1
@@ -145,9 +162,34 @@ def gettoptfive(websitestrsearch):
                         searchno3 = 'class="number">' + str(ranking + 4) + "<"
                         findno3 = strsearch.find(searchno3)
                 tieoutstr = strsearch[findno1:findno3]
-                print tieoutstr
-            # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W 12).
-            #   To do this, search thru tieoutstr string and find all instances of teamsearchstart. Append each that != teamname to tieteamlist
+                # # print out the tieoutstr for tie troubleshooting. Comment out otherwise
+                # print tieoutstr
+
+                # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W '12).
+                #   To do this, search thru tieoutstr string and find all instances of teamsearchstart.
+                #   Append each that != teamname to tieteamlist
+
+                # Method that may not resolve >2 ties but may be on to something
+                tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
+                tiesubstr_idx = tieoutstr.find(tieindicator)
+                tiesubstr=tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
+                tieteamsubsearchstart='''"><img alt="'''
+                tieteamsubsearchend='''" src="'''
+                a_tie_team = tiesubstr[tiesubstr.find(tieteamsubsearchstart)+len(tieteamsubsearchstart):
+                                       tiesubstr.find(tieteamsubsearchend)]
+                print "Team tied at ranking", ranking, a_tie_team
+
+                # Append to tie team list
+                # # 17 Spet 19 error: Traceback (most recent call last):
+                # #   File "C:/Users/acc-s/Documents/Python/AP_XC/Top25InPython.py", line 19, in <module>
+                # #     t25dict = PollGrabber.gettoptfive(grabbedpoll)
+                # #   File "C:\Users\acc-s\Documents\Python\AP_XC\PollGrabber.py", line 219, in gettoptfive
+                # #     dictrank = toptfive[ranking]
+                # # KeyError: 13
+                tieteamlist.append(a_tie_team)
+                # tieteamlist.append("dummy ver") # DELETE THIS LINE testing only
+                tieteamlist.append(teamname)
+            print "Teams in the tie:", tieteamlist
 
         else:
             previousranking = ranking - 1
@@ -187,24 +229,46 @@ def gettoptfive(websitestrsearch):
             # function to append other team to the dict
         else:
             if len(tieteamlist) != 0:
-                dictrank = toptfive[ranking]
-                toptfive[ranking] = [teamname]
+                # dictrank = toptfive[ranking]
+                toptfive[ranking] = []#[teamname]
                 for tieteam in tieteamlist:
-                    dictrank.append(tieteam)
+                    toptfive[ranking].append(tieteam)
             else:
-                toptfive[
-                    ranking
-                ] = (
-                    teamname
-                )  # should be [teamname]? would have to refigure code downstream if so
+                # This is the option most often used on a normal basis.
+                toptfive[ranking] = teamname
+                  # should be [teamname]? would have to refigure code downstream if so
 
     print "n =", nodecounter
     print toptfive
     for rank in toptfive:
         team = toptfive[rank]
-        print rank, team
-        inverserankings[team] = rank
+        # print rank, team
+        # Work out ties
+        if type(team) is list:
+            print rank, team
+            teamstied = len(team)
+            holderlist= [rank]  # Go ahead and put the init rank in there. Add on others later.
+            while len(holderlist) < teamstied:
+                holderlist.append(len(holderlist)+rank)
+            # print holderlist
+            dividedrank = float(sum(holderlist) / float(teamstied))  # Float to get that decimal point
+            dividedrank_round = round(dividedrank, 2)  # Two decimal points, even for tripple ties
+            # print dividedrank_round
+
+            # Add the custom rank to the inverse rankings dict.
+            for tieam in team:
+                print dividedrank_round, tieam
+                inverserankings[tieam] = dividedrank_round
+        # Pass if a team is already in the inverse dict ie it has already been grabbed by the tie.
+        elif team in inverserankings:
+            # print team, "already in dict because of a tie. Will not be entered as", rank
+            pass
+        # Default if there is no tie
+        else:
+            print rank, team
+            inverserankings[team] = rank
     print inverserankings
+    print "______________________________________________________________________________"
     return inverserankings
 
 
@@ -351,3 +415,4 @@ def orderedmergeddict(rawmergedic):
 #
 # mergedict = mergerankings(t25dict, otherzdict)
 # # scoreddict = orderedmergeddict(mergedict)
+print "sup" #tst for importing; delete later
