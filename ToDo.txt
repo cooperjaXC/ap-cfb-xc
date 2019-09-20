@@ -1,11 +1,16 @@
 URGENT
 ------
-* Fix 2-way ties in T25 rankings
+*[complete 19 Sept 19] Fix 2-way ties in T25 rankings
 	* See UGA & Florida in final 2018 rankings. Tied @ 7 but gives one 7 and one 8. Make 7.5
 	* Or week 4 2019. Wisconsin Penn St tie at 13. Gives one 13 & one 14. Same conference so OK but should be 13.5
+	* Problem resolved
+		* Pending +2 way tie. Should work for 3+ way tie, but no T25 sample for that yet. Code should be able to handle it. 
 
 * Fix ties when they occur at #25
 	* See 2019 week 2. Iowa St-Nebraska tie. only gives 1st one listed the 25, omits the second listed one, and moves others receiving votes up one (UVA should be 27th but is given 26pts)
+	* Current (Sept 2019) efforts to resolve all top 25 teams identify teams tied at 25 too. 
+	* Top 25 ties everywhere, including at #25, fixed (19 Sept 19)
+	* But the others receiving votes still starts at 26 regardless. Fix
 
 * Make sure Miami is picked up by ACC, T A&M by SEC
 	* Multiple forms of Texas A&M. Make sure all are picked up. 

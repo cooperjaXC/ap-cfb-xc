@@ -224,10 +224,6 @@ def gettoptfive(websitestrsearch):
                 teamname = "ERROR NO TEAM HERE"
 
         # ___
-        ##tsting#delete next 3 lines after
-        print "n_init =", nodecounter
-        print toptfive
-        print type(ranking)
         if ranking in toptfive:
             print ranking, "ALREADY IN THE dictionary; missing", teamname
             # function to append other team to the dict
@@ -246,25 +242,33 @@ def gettoptfive(websitestrsearch):
     print toptfive
     for rank in toptfive:
         team = toptfive[rank]
-        print rank, team
+        # print rank, team
         # Work out ties
         if type(team) is list:
+            print rank, team
             teamstied = len(team)
             holderlist= [rank]  # Go ahead and put the init rank in there. Add on others later.
             while len(holderlist) < teamstied:
                 holderlist.append(len(holderlist)+rank)
-            print holderlist
+            # print holderlist
             dividedrank = float(sum(holderlist) / float(teamstied))  # Float to get that decimal point
             dividedrank_round = round(dividedrank, 2)  # Two decimal points, even for tripple ties
-            print dividedrank_round
+            # print dividedrank_round
 
             # Add the custom rank to the inverse rankings dict.
             for tieam in team:
+                print dividedrank_round, tieam
                 inverserankings[tieam] = dividedrank_round
+        # Pass if a team is already in the inverse dict ie it has already been grabbed by the tie.
+        elif team in inverserankings:
+            # print team, "already in dict because of a tie. Will not be entered as", rank
+            pass
         # Default if there is no tie
         else:
-          inverserankings[team] = rank
+            print rank, team
+            inverserankings[team] = rank
     print inverserankings
+    print "______________________________________________________________________________"
     return inverserankings
 
 
