@@ -66,6 +66,11 @@ print conferencepointsdict
 fourscoredict = {}
 fivescoredict = {}
 
+# Get the max score for downstream pandas work
+#   If max >= 100, more digits needed in the printout for the pandas table.
+maxfourscore = 0
+maxfivescore = 0
+
 # _____ <- what does this next section do?
 for conf in conferencepointsdict:
     pointlist = conferencepointsdict[conf]
@@ -81,11 +86,16 @@ for conf in conferencepointsdict:
     else:
         fivesum = None
     print conf, ":", scoredteams, "teams scored"
+
     fourscoredict[conf] = foursum
     print "| 4score:", foursum
+    # Check on maxfourscore & set it to = conference's score if conference's score is greatest yet.
+    if foursum > maxfourscore:
+        maxfourscore = foursum
+
     fivescoredict[conf] = fivesum
     print "| 5score", fivesum
     print "| ALL:", pointlist
-
-print fourscoredict
-print fivescoredict
+    # Check on maxfivescore & set it to = conference's score if conference's score is greatest yet.
+    if fivesum > maxfivescore:
+        maxfivescore = fivesum

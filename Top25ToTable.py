@@ -1,7 +1,9 @@
+""" Prints the AP XC results in a table format to easily paste into Excel """
+
 import pandas
 
 import Top25InPython
-
+print "-------------PANDAS----------------"
 og_dict = pandas.DataFrame.from_dict(Top25InPython.fourscoredict.items())
 
 print og_dict.to_string(index=False)
@@ -52,7 +54,18 @@ print pd_transposed.to_string(index=False)
 
 # Dictionary to copy to excel
 powerfive_tocopy = pd_transposed[["SEC", "ACC", "Big Ten", "Big XII", "Pac 12"]]
+# Printing with leading zeros so excel's text import wizard will work correctly.
+#   datasciencemadesimple.com/add-leading-preceding-zeros-python/
+copycolumns = powerfive_tocopy.columns
+for cll in copycolumns:
+    # # print cll
+    # Put leading 0s on each val till len(item) = 4
+    #   This min num of chars includes decimals & d point.
+    #   4 chosen because rankings rarely get above 40 & only decimal pt val could = .5 in a even # of teams tie
+    # # print powerfive_tocopy[cll].apply(lambda x: '{0:0>4}'.format(x))
+    powerfive_tocopy[cll] = powerfive_tocopy[cll].apply(lambda x: '{0:0>4}'.format(x))
+
 print powerfive_tocopy.to_string(index=False)
-
-
-# Fix T25 tie issue in previous sheets
+# Auto copy this to the clipboard for pasting in Excel without row indexes or column headers
+#   Separate by tab in the Excel text importer
+powerfive_tocopy.to_clipboard(index=False, header=False)

@@ -11,12 +11,9 @@ URGENT
 	* Current (Sept 2019) efforts to resolve all top 25 teams identify teams tied at 25 too. 
 	* Top 25 ties everywhere, including at #25, fixed (19 Sept 19)
 	* But the others receiving votes still starts at 26 regardless. Fix
-
-* Make sure Miami is picked up by ACC, T A&M by SEC
-	* Multiple forms of Texas A&M. Make sure all are picked up. 
-
-* Add README.md. Make Git Hub Repo more professional for others to use.
-	* Sub directories for personal files like .docx full of scratch code.
+		* Itterate through t25 inverse dict. If any value from that dict is > 25, you know you have to start after 26. Ie a val of 25.5 means others RV would start @ 27.
+			* if score > 25, add team to list. len(list) + 25 = number you start at. 
+			* in ex above, 2 teams' scores are > 25. 2 teams append to holder_list. len(holder_list) = 2. 25+2 = 27. ORV stars @ 27.
 
 * Get Pandas printout to match Excel format so you can copy and paste directly into excel. 
 	* Deal with Excel thinking the lack of a tens digit on rankings 1-9 is a space thereby mixing up columns
@@ -25,9 +22,14 @@ URGENT
 			* http://www.datasciencemadesimple.com/add-leading-preceding-zeros-python/
 	* Identify other conferences that aren't Power 5 as a note if they score. 
 
+* Make sure Miami is picked up by ACC, T A&M by SEC
+	* Multiple forms of Texas A&M. Make sure all are picked up. 
+
+* Add README.md. Make Git Hub Repo more professional for others to use.
+	* Sub directories for personal files like .docx full of scratch code.
+
 * Black all the code to standardize formatting.
 	* Generally clean the code
-
 
 * Fix 3(+) way ties in Top 25
 	* This problem is only in the Top 25; ORV is fine with any # of ties (See preseason 2019 ORV: 4-way tie divides perfectly)
