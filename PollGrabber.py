@@ -252,7 +252,9 @@ def gettoptfive(websitestrsearch):
                 holderlist.append(len(holderlist)+rank)
             # print holderlist
             dividedrank = float(sum(holderlist) / float(teamstied))  # Float to get that decimal point
-            dividedrank_round = round(dividedrank, 2)  # Two decimal points, even for tripple ties
+            # One decimal point; you'll never have more than a .5, even for triple or quad ties.
+            #   Odd ties = .5, even ties = int
+            dividedrank_round = round(dividedrank, 1)
             # print dividedrank_round
 
             # Add the custom rank to the inverse rankings dict.
@@ -322,7 +324,7 @@ def othersreceivingvotes(websitestrsearch):
         findothers = strsearch.find(searchothers)
         findend = strsearch.find(searchno2)
         print findothers
-        outstring = strsearch[findothers + len(searchothers) : findend]
+        outstring = strsearch[findothers + len(searchothers): findend]
         # print outstring
         print "String length:", len(outstring)
         outstringlist = outstring.strip().split(",")
@@ -331,7 +333,7 @@ def othersreceivingvotes(websitestrsearch):
             if outstringlist[0] != othervote:
                 othervote = othervote[1:]
             space = othervote.rfind(" ")
-            pts = othervote[space + 1 :]
+            pts = othervote[space + 1:]
             team = othervote[:space]
             if weirdstr in team:
                 team = str(team.replace(weirdstr, ""))
@@ -358,9 +360,6 @@ def othersreceivingvotes(websitestrsearch):
                 lastrank = tsixcounter + teamspervote
                 valstoaverage = range(nextrank, lastrank, 1)  # + 1, 1)
                 designatedrank = numpy.mean(valstoaverage)
-                # if designatedrank not in rankingdict:
-                #     rankingdict[designatedrank] = teamlist[0]
-                # elif designatedrank in rankingdict:
                 for team in teamlist:
                     if team == teamlist[0]:
                         rankingdict[designatedrank] = [team]
