@@ -112,11 +112,17 @@ def gettoptfive(websitestrsearch):
         # searchno1 = 'class="number">' + str(ranking) + '<'
         #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
         # # 2019 edit
-        searchno1 = '<td class="Table2__td">' + str(ranking) + "<"
+        # searchno1 = '<td class="Table2__td">' + str(ranking) + "<"
+        # # 2019 edit 2
+        searchno1 = '<td class="Table__TD">' + str(ranking) + "<"
+
         # searchno2 = 'class="number">' + str(ranking + 1) + '<'
         #  searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
         # # 2019 edit
-        searchno2 = '<td class="Table2__td">' + str(ranking + 1) + "<"
+        # searchno2 = '<td class="Table2__td">' + str(ranking + 1) + "<"
+        # # 2019 edit
+        searchno2 = '<td class="Table__TD">' + str(ranking + 1) + "<"
+
         # teamsearchstart = '<span class="team-names">'
         teamsearchstart = 'px" title="'
         # teamsearchend = '</span><abbr title='
@@ -128,8 +134,8 @@ def gettoptfive(websitestrsearch):
             and searchno1.lower() in strsearch.lower()
         ):
             findap = strsearch.find(apsearchterm)
-            findno1 = strsearch.find(searchno1)
-            findno2 = strsearch.find(searchno2)
+            findno1 = strsearch.lower().find(searchno1.lower())
+            findno2 = strsearch.lower().find(searchno2.lower())
             outstring = strsearch[
                 findno1:findno2
             ]  # +len(searchno2)]#]#Restore to the only ]
