@@ -7,6 +7,8 @@ URGENT
 		* Working for +2 way tie. 
 		* Pending for 3+ way tie, but no T25 sample for that yet. Code should be able to handle it. Check
 		* Still issues with ties @ #25 concerning ORVs; see below. 
+	* Problem resurfaced with ESPN HTML code change after release of week 5 2019
+		* Resolved 25 Sept 19
 
 * Fix ties when they occur at #25
 	* See 2019 week 2. Iowa St-Nebraska tie. only gives 1st one listed the 25, omits the second listed one, and moves others receiving votes up one (UVA should be 27th but is given 26pts)

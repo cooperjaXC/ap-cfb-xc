@@ -107,7 +107,7 @@ def gettoptfive(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
-        print "Ranking in Top 25:", ranking  ## Test print statement delete
+        # print "Ranking in Top 25:", ranking  ## Test print statement delete
         # Commented out search strs no longer used but kept in case of future troubleshooting.
         # searchno1 = 'class="number">' + str(ranking) + '<'
         #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
@@ -168,17 +168,19 @@ def gettoptfive(websitestrsearch):
                         searchno3 = 'class="number">' + str(ranking + 4) + "<"
                         findno3 = strsearch.find(searchno3)
                 tieoutstr = strsearch[findno1:findno3]
-                # # print out the tieoutstr for tie troubleshooting. Comment out otherwise
-                # print tieoutstr
+                # print out the tieoutstr for tie troubleshooting. Comment out otherwise
+                print tieoutstr
 
                 # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W '12).
                 #   To do this, search thru tieoutstr string and find all instances of teamsearchstart.
                 #   Append each that != teamname to tieteamlist
 
                 # Method that may not resolve >2 ties but may be on to something
-                tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
-                tiesubstr_idx = tieoutstr.find(tieindicator)
-                tiesubstr=tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
+                # tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
+                # # 2019 edit 2 tieindicator  # Looks like Table2 --> Table and _td --> _TD
+                tieindicator = '''Table__even" data-idx="'''+str(ranking)+'''"><td class='''
+                tiesubstr_idx = tieoutstr.lower().find(tieindicator.lower())
+                tiesubstr = tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
                 tieteamsubsearchstart='''"><img alt="'''
                 tieteamsubsearchend='''" src="'''
                 a_tie_team = tiesubstr[tiesubstr.find(tieteamsubsearchstart)+len(tieteamsubsearchstart):
@@ -195,7 +197,7 @@ def gettoptfive(websitestrsearch):
                 tieteamlist.append(a_tie_team)
                 # tieteamlist.append("dummy ver") # DELETE THIS LINE testing only
                 tieteamlist.append(teamname)
-            print "Teams in the tie:", tieteamlist
+                print "Teams in the tie:", tieteamlist
 
         else:
             previousranking = ranking - 1

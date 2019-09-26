@@ -20,6 +20,8 @@ grabbedpoll = PollGrabber.pollgrabber(weekinquestion)
 
 # Get a dictionary of the top 25 teams
 t25dict = PollGrabber.gettoptfive(grabbedpoll)
+
+
 # Get a dictionary of the "others receiving votes" and their ranks.
 otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll)
 
