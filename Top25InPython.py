@@ -8,8 +8,8 @@ weekinquestion = PollGrabber.apweeklyurlgenerator(
     # week='current', year=2019  # "preseason", # 'final'
     # week="Final", year=2012  # Example of a top 25 tie  # 5 Georgia & Texas A&M
     # # Note: 2013 and before may error with "GRAVE ERROR" because ESPN does not have data for ORVs.
-    week=4, year=2019  # Another example of a top 25 tie  # 13 Penn St & Wisconsin
-    # week=2, year=2019  # Example of a tie at number 25  # Nebraska & Iowa St.
+    # week=4, year=2019  # Another example of a top 25 tie  # 13 Penn St & Wisconsin
+    week=2, year=2019  # Example of a tie at number 25  # Nebraska & Iowa St.
     #   # ORVs start at 26. Should be 27. Fix.
 )
 
@@ -23,10 +23,10 @@ t25dict = PollGrabber.gettoptfive(grabbedpoll)
 
 
 # Get a dictionary of the "others receiving votes" and their ranks.
-otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll)
+otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll, t25dict)
 
 # # FOR TESTING; DELETE AFTER OTHERZDICT IS FIXED FOR #25 TIE
-# otherzdict = othersreceivingvotes(grabbedpoll)
+# otherzdict = othersreceivingvotes(grabbedpoll, t25dict)
 
 mergedict = PollGrabber.mergerankings(t25dict, otherzdict)
 # scoreddict = orderedmergeddict(mergedict)

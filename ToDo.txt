@@ -7,10 +7,11 @@ URGENT
 		* Working for +2 way tie. 
 		* Pending for 3+ way tie, but no T25 sample for that yet. Code should be able to handle it. Check
 		* Still issues with ties @ #25 concerning ORVs; see below. 
+			* Problem fixed 25 Sept 19
 	* Problem resurfaced with ESPN HTML code change after release of week 5 2019
 		* Resolved 25 Sept 19
 
-* Fix ties when they occur at #25
+* [complete 25 Sept 19] Fix ties when they occur at #25
 	* See 2019 week 2. Iowa St-Nebraska tie. only gives 1st one listed the 25, omits the second listed one, and moves others receiving votes up one (UVA should be 27th but is given 26pts)
 	* Current (Sept 2019) efforts to resolve all top 25 teams identify teams tied at 25 too. 
 		* Top 25 ties everywhere, including at #25, fixed (19 Sept 19)
@@ -18,6 +19,15 @@ URGENT
 		* Itterate through t25 inverse dict. If any value from that dict is > 25, you know you have to start after 26. Ie a val of 25.5 means others RV would start @ 27.
 			* if score > 25, add team to list. len(list) + 25 = number you start at. 
 			* in ex above, 2 teams' scores are > 25. 2 teams append to holder_list. len(holder_list) = 2. 25+2 = 27. ORV stars @ 27.
+	* Problem resolved	
+		* Week 2 2019 splits tie btwn Nebraska and Iowa St. at 25.5 and starts UVA @ 27.
+
+* Fix pandas copying warning in Top25ToTable.py
+	* C:/Users/acc-s/Documents/Python/AP_XC/Top25ToTable.py:66: SettingWithCopyWarning: 
+		A value is trying to be set on a copy of a slice from a DataFrame.
+		Try using .loc[row_indexer,col_indexer] = value instead
+		See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
+		powerfive_tocopy[cll] = powerfive_tocopy[cll].apply(lambda x: '{0:0>4}'.format(x))
 
 * Make sure Miami is picked up by ACC, T A&M by SEC
 	* Multiple forms of Texas A&M. Make sure all are picked up. 
@@ -46,3 +56,8 @@ POSSIBLE
 * Put rankings into a postgresql database for easier manipulation and stats building?
 
 * Statistical tests on significances of findings? 
+
+
+COMPLETE
+--------
+

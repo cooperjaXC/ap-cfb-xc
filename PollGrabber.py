@@ -287,14 +287,40 @@ def gettoptfive(websitestrsearch):
 # Make sure in t25, you resolve ties.
 
 
-def othersreceivingvotes(websitestrsearch):
+def othersreceivingvotes(websitestrsearch, dictofthettfive):
     """ _ """
+    # Starting holder variables
     tsixplus = {}
     nodecounter = 0
-    tsixcounter = 26
     rankingdict = {}
     inverserankingdict = {}
 
+    # Determine at what number to start ORVs.
+    #   Most times it's 26.
+    #   However, if there is a tie at 25, that's multiple teams in that last spot, meaning that the start must be >= 27.
+    # To start, Itterate through t25 inverse dict.
+    #   If any value from that dict is > 25, you know you have to start after 26.
+    #   Ie a val of 25.5 means others RV would start after 26, probably 27 in a two-way tie.
+    # # dictofthettfive should = gettoptfive(websitestrsearch)
+    overtfive = []
+    defaultrank = 25
+    for teem in dictofthettfive:
+        raank = dictofthettfive[teem]
+        # print teem, raank
+    # 			* if score > 25, add team to list. len(list) + 25 = number you start at.
+        if raank > 25:
+            # print teem, raank
+            overtfive.append(teem)
+    teamstiedattfive = len(overtfive)
+    if teamstiedattfive > 0:  # If there are any teams tied at 25:
+        print "----", teamstiedattfive, "teams tied at #25:", overtfive
+        tsixcounter = defaultrank + teamstiedattfive  # var name tsixcounter is a misnomer here b/c start # would >= 27
+        # EX: 2 teams' scores are > 25. 2 teams append to holder_list. len(holder_list) = 2. 25+2 = 27. ORV stars @ 27.
+        print "---- ORVs will start ranking at #", tsixcounter
+    else:
+        tsixcounter = defaultrank + 1  # ie 26
+
+    # Get HTML of website from which to glean ORVs.
     strsearch = websitestrsearch
     # print strsearch
 
@@ -313,16 +339,17 @@ def othersreceivingvotes(websitestrsearch):
     teamsearchend = "</span><abbr title="
     weirdstr = "<!-- -->"
 
-    # Testing which search term is not being found:
-    if apsearchterm.lower() in strsearch.lower():
-        print apsearchterm, "is in this string; not the problem"
-    else:
-        print apsearchterm, "is not in this string and is the problem"
-
-    if searchothers.lower() in strsearch.lower():
-        print "var <strsearch> is in this string; not the problem"
-    else:
-        print "var <strsearch> is not in this string and is the problem"
+    # # TROUBLESHOOTING; Uncomment if there is an issue
+    # # Testing which search term is not being found:
+    # if apsearchterm.lower() in strsearch.lower():
+    #     print apsearchterm, "is in this string; not the problem"
+    # else:
+    #     print apsearchterm, "is not in this string and is the problem"
+    #
+    # if searchothers.lower() in strsearch.lower():
+    #     print "var <strsearch> is in this string; not the problem"
+    # else:
+    #     print "var <strsearch> is not in this string and is the problem"
 
     if (
         apsearchterm.lower() in strsearch.lower()
@@ -331,10 +358,10 @@ def othersreceivingvotes(websitestrsearch):
         findap = strsearch.find(apsearchterm)
         findothers = strsearch.find(searchothers)
         findend = strsearch.find(searchno2)
-        print findothers
+        # print findothers
         outstring = strsearch[findothers + len(searchothers): findend]
         # print outstring
-        print "String length:", len(outstring)
+        # print "String length:", len(outstring)
         outstringlist = outstring.strip().split(",")
         # print outstringlist
         for othervote in outstringlist:
@@ -382,6 +409,8 @@ def othersreceivingvotes(websitestrsearch):
         return inverserankingdict
     else:
         print "GRAVE ERROR"
+        print "Check whether var <apsearchterm> and/or var <strsearch> in the search string and is the problem."
+        print "Use problem solving code in the block b4 the previous if statement to do this"  # TROUBLESHOOTING header
 
 
 def mergerankings(top25dict, othervotesdict):
