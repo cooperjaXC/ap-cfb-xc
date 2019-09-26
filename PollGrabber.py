@@ -107,16 +107,22 @@ def gettoptfive(websitestrsearch):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     for ranking in tfive:
-        print "Ranking in Top 25:", ranking  ## Test print statement delete
+        # print "Ranking in Top 25:", ranking  ## Test print statement delete
         # Commented out search strs no longer used but kept in case of future troubleshooting.
         # searchno1 = 'class="number">' + str(ranking) + '<'
         #  searchno1 = '<td class="tight-cell Table2__td">' + str(ranking) + "<"
         # # 2019 edit
-        searchno1 = '<td class="Table2__td">' + str(ranking) + "<"
+        # searchno1 = '<td class="Table2__td">' + str(ranking) + "<"
+        # # 2019 edit 2
+        searchno1 = '<td class="Table__TD">' + str(ranking) + "<"
+
         # searchno2 = 'class="number">' + str(ranking + 1) + '<'
         #  searchno2 = '<td class="tight-cell Table2__td">' + str(ranking+1) + "<"
         # # 2019 edit
-        searchno2 = '<td class="Table2__td">' + str(ranking + 1) + "<"
+        # searchno2 = '<td class="Table2__td">' + str(ranking + 1) + "<"
+        # # 2019 edit
+        searchno2 = '<td class="Table__TD">' + str(ranking + 1) + "<"
+
         # teamsearchstart = '<span class="team-names">'
         teamsearchstart = 'px" title="'
         # teamsearchend = '</span><abbr title='
@@ -128,8 +134,8 @@ def gettoptfive(websitestrsearch):
             and searchno1.lower() in strsearch.lower()
         ):
             findap = strsearch.find(apsearchterm)
-            findno1 = strsearch.find(searchno1)
-            findno2 = strsearch.find(searchno2)
+            findno1 = strsearch.lower().find(searchno1.lower())
+            findno2 = strsearch.lower().find(searchno2.lower())
             outstring = strsearch[
                 findno1:findno2
             ]  # +len(searchno2)]#]#Restore to the only ]
@@ -162,17 +168,19 @@ def gettoptfive(websitestrsearch):
                         searchno3 = 'class="number">' + str(ranking + 4) + "<"
                         findno3 = strsearch.find(searchno3)
                 tieoutstr = strsearch[findno1:findno3]
-                # # print out the tieoutstr for tie troubleshooting. Comment out otherwise
-                # print tieoutstr
+                # print out the tieoutstr for tie troubleshooting. Comment out otherwise
+                print tieoutstr
 
                 # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W '12).
                 #   To do this, search thru tieoutstr string and find all instances of teamsearchstart.
                 #   Append each that != teamname to tieteamlist
 
                 # Method that may not resolve >2 ties but may be on to something
-                tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
-                tiesubstr_idx = tieoutstr.find(tieindicator)
-                tiesubstr=tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
+                # tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
+                # # 2019 edit 2 tieindicator  # Looks like Table2 --> Table and _td --> _TD
+                tieindicator = '''Table__even" data-idx="'''+str(ranking)+'''"><td class='''
+                tiesubstr_idx = tieoutstr.lower().find(tieindicator.lower())
+                tiesubstr = tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
                 tieteamsubsearchstart='''"><img alt="'''
                 tieteamsubsearchend='''" src="'''
                 a_tie_team = tiesubstr[tiesubstr.find(tieteamsubsearchstart)+len(tieteamsubsearchstart):
@@ -189,7 +197,7 @@ def gettoptfive(websitestrsearch):
                 tieteamlist.append(a_tie_team)
                 # tieteamlist.append("dummy ver") # DELETE THIS LINE testing only
                 tieteamlist.append(teamname)
-            print "Teams in the tie:", tieteamlist
+                print "Teams in the tie:", tieteamlist
 
         else:
             previousranking = ranking - 1
@@ -279,14 +287,40 @@ def gettoptfive(websitestrsearch):
 # Make sure in t25, you resolve ties.
 
 
-def othersreceivingvotes(websitestrsearch):
+def othersreceivingvotes(websitestrsearch, dictofthettfive):
     """ _ """
+    # Starting holder variables
     tsixplus = {}
     nodecounter = 0
-    tsixcounter = 26
     rankingdict = {}
     inverserankingdict = {}
 
+    # Determine at what number to start ORVs.
+    #   Most times it's 26.
+    #   However, if there is a tie at 25, that's multiple teams in that last spot, meaning that the start must be >= 27.
+    # To start, Itterate through t25 inverse dict.
+    #   If any value from that dict is > 25, you know you have to start after 26.
+    #   Ie a val of 25.5 means others RV would start after 26, probably 27 in a two-way tie.
+    # # dictofthettfive should = gettoptfive(websitestrsearch)
+    overtfive = []
+    defaultrank = 25
+    for teem in dictofthettfive:
+        raank = dictofthettfive[teem]
+        # print teem, raank
+    # 			* if score > 25, add team to list. len(list) + 25 = number you start at.
+        if raank > 25:
+            # print teem, raank
+            overtfive.append(teem)
+    teamstiedattfive = len(overtfive)
+    if teamstiedattfive > 0:  # If there are any teams tied at 25:
+        print "----", teamstiedattfive, "teams tied at #25:", overtfive
+        tsixcounter = defaultrank + teamstiedattfive  # var name tsixcounter is a misnomer here b/c start # would >= 27
+        # EX: 2 teams' scores are > 25. 2 teams append to holder_list. len(holder_list) = 2. 25+2 = 27. ORV stars @ 27.
+        print "---- ORVs will start ranking at #", tsixcounter
+    else:
+        tsixcounter = defaultrank + 1  # ie 26
+
+    # Get HTML of website from which to glean ORVs.
     strsearch = websitestrsearch
     # print strsearch
 
@@ -305,16 +339,17 @@ def othersreceivingvotes(websitestrsearch):
     teamsearchend = "</span><abbr title="
     weirdstr = "<!-- -->"
 
-    # Testing which search term is not being found:
-    if apsearchterm.lower() in strsearch.lower():
-        print apsearchterm, "is in this string; not the problem"
-    else:
-        print apsearchterm, "is not in this string and is the problem"
-
-    if searchothers.lower() in strsearch.lower():
-        print "var <strsearch> is in this string; not the problem"
-    else:
-        print "var <strsearch> is not in this string and is the problem"
+    # # TROUBLESHOOTING; Uncomment if there is an issue
+    # # Testing which search term is not being found:
+    # if apsearchterm.lower() in strsearch.lower():
+    #     print apsearchterm, "is in this string; not the problem"
+    # else:
+    #     print apsearchterm, "is not in this string and is the problem"
+    #
+    # if searchothers.lower() in strsearch.lower():
+    #     print "var <strsearch> is in this string; not the problem"
+    # else:
+    #     print "var <strsearch> is not in this string and is the problem"
 
     if (
         apsearchterm.lower() in strsearch.lower()
@@ -323,10 +358,10 @@ def othersreceivingvotes(websitestrsearch):
         findap = strsearch.find(apsearchterm)
         findothers = strsearch.find(searchothers)
         findend = strsearch.find(searchno2)
-        print findothers
+        # print findothers
         outstring = strsearch[findothers + len(searchothers): findend]
         # print outstring
-        print "String length:", len(outstring)
+        # print "String length:", len(outstring)
         outstringlist = outstring.strip().split(",")
         # print outstringlist
         for othervote in outstringlist:
@@ -374,6 +409,8 @@ def othersreceivingvotes(websitestrsearch):
         return inverserankingdict
     else:
         print "GRAVE ERROR"
+        print "Check whether var <apsearchterm> and/or var <strsearch> in the search string and is the problem."
+        print "Use problem solving code in the block b4 the previous if statement to do this"  # TROUBLESHOOTING header
 
 
 def mergerankings(top25dict, othervotesdict):
