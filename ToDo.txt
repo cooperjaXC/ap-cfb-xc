@@ -1,5 +1,85 @@
 URGENT
 ------
+* [Fixed 20 Oct 2019] Fix preseason 2019 #25 tie weirdness
+	* #25 Stanford tied with ''. Blank entry. Why, how, and how best to fix?
+	* fix printout syntax: 
+		!!!!!!!!! Stanford is in a tie!!!! Total teams at 25 : 401
+		Team tied at ranking 25 : 
+		Teams in the tie: ['Stanford']
+		...
+		25 ['Stanford']
+		25.0 Stanford
+	
+* [Fixed 20 Oct 2019] Include AAC in power 5 printouts 
+
+* Make an entry argument of 'current' work regardless of year. 
+
+* Fix pandas copying warning in Top25ToTable.py
+	* C:/Users/acc-s/Documents/Python/AP_XC/Top25ToTable.py:66: SettingWithCopyWarning: 
+		A value is trying to be set on a copy of a slice from a DataFrame.
+		Try using .loc[row_indexer,col_indexer] = value instead
+		See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
+		powerfive_tocopy[cll] = powerfive_tocopy[cll].apply(lambda x: '{0:0>4}'.format(x))
+
+* Make sure Miami is picked up by ACC, T A&M by SEC
+	* Multiple forms of Texas A&M. Make sure all are picked up. 
+	* Top25InPython.py line 47
+	* Miami Ohio listed as "Miami (OH)" while Miami FL is defaulted at "Miami"
+		* https://www.espn.com/college-football/rankings/_/poll/1/week/1/year/2003/seasontype/3
+		* Running Top25InPython.py with only top25dict for 2003 poll above shows both Miami FL as "Miami" default and "Miami (OH)" are picked up by their respective conferences. 
+			* IE Miami problem is fixed already :)		
+	* T A&M:
+		* Can you have multiple versions of the team in the vars .py and it still work ok?
+
+* Add README.md. Make Git Hub Repo more professional for others to use.
+	* Sub directories for personal files like .docx full of scratch code.
+
+* Black all the code to standardize formatting.
+	* Generally clean the code
+
+* Only years 2014 and on have 'others receiving votes' (ORV) data.
+	* Write exception in mergedict that won't error out but will notify user of this fact.
+		* This would only use rankings 1-25 for the scoring. 
+
+* Fix the default URL that's generated to be http://www.espn.com/college-football/rankings/_/poll/1/
+
+
+LONG TERM
+---------
+* Try using different source for AP Rankings instead of relying on ESPN's 3rd party. 
+	* Why?
+		* Might offer more code stability than ESPN
+		* Wouldn't have the before 2014 ORV problem maybe. 
+	* Potential Sources:
+		* Actual AP Poll website?
+			* *** Can you get historical data doing this? *** Million dollar Q.
+			* Simple, current poll: https://www.apnews.com/APTop25CollegeFootballPoll
+			* Detailed poll: 
+				* May not exist any more. A podcast suggested Reddit. Would be a bear to beautiful soup though...
+			* See point below about using pandas to get top 25; makes this easier.
+		* Other source? 
+
+* Try using pandas to grab the top 25
+	* https://medium.com/@ageitgey/quick-tip-the-easiest-way-to-grab-data-out-of-a-web-page-in-python-7153cecfca58
+	* Method worked well in init trial
+	* dependent on python 3
+	
+* Move project to python 3
+
+* Continue to include the AAC?
+
+
+POSSIBLE
+--------
+* Put rankings into a postgresql database for easier manipulation and stats building?
+	* Or simple creation of csv of rankings to put into git repo where you could source the rankings locally.
+		* Then add week-by-week somehow. 		
+
+* Statistical tests on significances of findings? 
+
+
+COMPLETE
+--------
 *[complete 19 Sept 19] Fix ties in T25 rankings
 	* See UGA & Florida in final 2018 rankings. Tied @ 7 but gives one 7 and one 8. Make 7.5
 	* Or week 4 2019. Wisconsin Penn St tie at 13. Gives one 13 & one 14. Same conference so OK but should be 13.5
@@ -21,43 +101,3 @@ URGENT
 			* in ex above, 2 teams' scores are > 25. 2 teams append to holder_list. len(holder_list) = 2. 25+2 = 27. ORV stars @ 27.
 	* Problem resolved	
 		* Week 2 2019 splits tie btwn Nebraska and Iowa St. at 25.5 and starts UVA @ 27.
-
-* Fix pandas copying warning in Top25ToTable.py
-	* C:/Users/acc-s/Documents/Python/AP_XC/Top25ToTable.py:66: SettingWithCopyWarning: 
-		A value is trying to be set on a copy of a slice from a DataFrame.
-		Try using .loc[row_indexer,col_indexer] = value instead
-		See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
-		powerfive_tocopy[cll] = powerfive_tocopy[cll].apply(lambda x: '{0:0>4}'.format(x))
-
-* Make sure Miami is picked up by ACC, T A&M by SEC
-	* Multiple forms of Texas A&M. Make sure all are picked up. 
-
-* Add README.md. Make Git Hub Repo more professional for others to use.
-	* Sub directories for personal files like .docx full of scratch code.
-
-* Black all the code to standardize formatting.
-	* Generally clean the code
-
-* Note: Only years 2014 and on have 'others receiving votes' (ORV) data.
-
-* Fix the default URL that's generated to be http://www.espn.com/college-football/rankings/_/poll/1/
-
-
-LONG TERM
----------
-* Move to using the actual AP website instead of relying on ESPN's 3rd party. 
-	* Can you get historical data doing this? 
-	* Simple, current poll: https://www.apnews.com/APTop25CollegeFootballPoll
-	* Detailed poll: 
-
-
-POSSIBLE
---------
-* Put rankings into a postgresql database for easier manipulation and stats building?
-
-* Statistical tests on significances of findings? 
-
-
-COMPLETE
---------
-

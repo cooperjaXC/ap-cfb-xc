@@ -1,7 +1,6 @@
 import os, sys, requests, numpy
 from bs4 import BeautifulSoup
 
-appolllink = r"https://collegefootball.ap.org/poll"
 staticespn = (
     r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
 )
@@ -9,8 +8,7 @@ currentespnap = r"http://www.espn.com/college-football/rankings"
 # defaultlink = currentespnap
 oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
 # Should be the default URL:
-aponlylinkespn =  r"http://www.espn.com/college-football/rankings/_/poll/1/"
-aponlylinkespn2=r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
+aponlylinkespn2 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
 defaultlink = aponlylinkespn2
 
 tfcounter = 0
@@ -75,6 +73,7 @@ def apweeklyurlgenerator(week, year):
         url2 = r"/year/"
         url3 = r"/seasontype/2"
         url = url1 + str(week) + url2 + year + url3
+    print "Week", week, ",", year, "season"
     return url
     # Should be the default URL: r"http://www.espn.com/college-football/rankings/_/poll/1/"
 
@@ -168,8 +167,8 @@ def gettoptfive(websitestrsearch):
                         searchno3 = 'class="number">' + str(ranking + 4) + "<"
                         findno3 = strsearch.find(searchno3)
                 tieoutstr = strsearch[findno1:findno3]
-                # print out the tieoutstr for tie troubleshooting. Comment out otherwise
-                print tieoutstr
+                # # print out the tieoutstr for tie troubleshooting. Comment out otherwise
+                # print tieoutstr
 
                 # Populate tieteamlist with all schools not initially set as teamname (like Texas A&M for final W '12).
                 #   To do this, search thru tieoutstr string and find all instances of teamsearchstart.
@@ -178,24 +177,28 @@ def gettoptfive(websitestrsearch):
                 # Method that may not resolve >2 ties but may be on to something
                 # tieindicator = '''Table2__even" data-idx="'''+str(ranking)+'''"><td class='''
                 # # 2019 edit 2 tieindicator  # Looks like Table2 --> Table and _td --> _TD
-                tieindicator = '''Table__even" data-idx="'''+str(ranking)+'''"><td class='''
+                tieindicator = (
+                    '''Table__even" data-idx="''' + str(ranking) + """"><td class="""
+                )
                 tiesubstr_idx = tieoutstr.lower().find(tieindicator.lower())
-                tiesubstr = tieoutstr[tiesubstr_idx:tiesubstr_idx+3000]
-                tieteamsubsearchstart='''"><img alt="'''
-                tieteamsubsearchend='''" src="'''
-                a_tie_team = tiesubstr[tiesubstr.find(tieteamsubsearchstart)+len(tieteamsubsearchstart):
-                                       tiesubstr.find(tieteamsubsearchend)]
-                print "Team tied at ranking", ranking, a_tie_team
+                tiesubstr = tieoutstr[tiesubstr_idx : tiesubstr_idx + 3000]
+                tieteamsubsearchstart = '''"><img alt="'''
+                tieteamsubsearchend = '''" src="'''
+                a_tie_team = tiesubstr[
+                    tiesubstr.find(tieteamsubsearchstart)
+                    + len(tieteamsubsearchstart) : tiesubstr.find(tieteamsubsearchend)
+                ]
+                print "Team tied at ranking", ranking, ":", a_tie_team
 
                 # Append to tie team list
-                # # 17 Spet 19 error: Traceback (most recent call last):
-                # #   File "C:/Users/acc-s/Documents/Python/AP_XC/Top25InPython.py", line 19, in <module>
-                # #     t25dict = PollGrabber.gettoptfive(grabbedpoll)
-                # #   File "C:\Users\acc-s\Documents\Python\AP_XC\PollGrabber.py", line 219, in gettoptfive
-                # #     dictrank = toptfive[ranking]
-                # # KeyError: 13
-                tieteamlist.append(a_tie_team)
-                # tieteamlist.append("dummy ver") # DELETE THIS LINE testing only
+                # Check if a_tie_team is actually nothing
+                #   This is the case for 2019 preseason #25: Stanford, ''
+                if a_tie_team != '':
+                    tieteamlist.append(a_tie_team)
+                else:
+                    pass  # For now. Check and see if the tieteamlist append for the other non-blank team is a problem.
+                #           Reason for not initially not appending: 3-way tie where one is blank. Can't disregard other2
+                #           Init 20 Oct 2019 test preseason 2019: this fix works.
                 tieteamlist.append(teamname)
                 print "Teams in the tie:", tieteamlist
 
@@ -236,15 +239,15 @@ def gettoptfive(websitestrsearch):
             print ranking, "ALREADY IN THE dictionary; missing", teamname
             # function to append other team to the dict
         else:
-            if len(tieteamlist) != 0:
+            if len(tieteamlist) != 0:  # If there is a tie:
                 # dictrank = toptfive[ranking]
-                toptfive[ranking] = []#[teamname]
+                toptfive[ranking] = []  # [teamname]
                 for tieteam in tieteamlist:
                     toptfive[ranking].append(tieteam)
-            else:
+            else:  # If there is not a tie:
                 # This is the option most often used on a normal basis.
                 toptfive[ranking] = teamname
-                  # should be [teamname]? would have to refigure code downstream if so
+                # should be [teamname]? would have to refigure code downstream if so
 
     print "n =", nodecounter
     print toptfive
@@ -255,11 +258,15 @@ def gettoptfive(websitestrsearch):
         if type(team) is list:
             print rank, team
             teamstied = len(team)
-            holderlist= [rank]  # Go ahead and put the init rank in there. Add on others later.
+            holderlist = [
+                rank
+            ]  # Go ahead and put the init rank in there. Add on others later.
             while len(holderlist) < teamstied:
-                holderlist.append(len(holderlist)+rank)
+                holderlist.append(len(holderlist) + rank)
             # print holderlist
-            dividedrank = float(sum(holderlist) / float(teamstied))  # Float to get that decimal point
+            dividedrank = float(
+                sum(holderlist) / float(teamstied)
+            )  # Float to get that decimal point
             # One decimal point; you'll never have more than a .5, even for triple or quad ties.
             #   Odd ties = .5, even ties = int
             dividedrank_round = round(dividedrank, 1)
@@ -307,14 +314,16 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
     for teem in dictofthettfive:
         raank = dictofthettfive[teem]
         # print teem, raank
-    # 			* if score > 25, add team to list. len(list) + 25 = number you start at.
+        # 			* if score > 25, add team to list. len(list) + 25 = number you start at.
         if raank > 25:
             # print teem, raank
             overtfive.append(teem)
     teamstiedattfive = len(overtfive)
     if teamstiedattfive > 0:  # If there are any teams tied at 25:
         print "----", teamstiedattfive, "teams tied at #25:", overtfive
-        tsixcounter = defaultrank + teamstiedattfive  # var name tsixcounter is a misnomer here b/c start # would >= 27
+        tsixcounter = (
+            defaultrank + teamstiedattfive
+        )  # var name tsixcounter is a misnomer here b/c start # would >= 27
         # EX: 2 teams' scores are > 25. 2 teams append to holder_list. len(holder_list) = 2. 25+2 = 27. ORV stars @ 27.
         print "---- ORVs will start ranking at #", tsixcounter
     else:
@@ -359,7 +368,7 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
         findothers = strsearch.find(searchothers)
         findend = strsearch.find(searchno2)
         # print findothers
-        outstring = strsearch[findothers + len(searchothers): findend]
+        outstring = strsearch[findothers + len(searchothers) : findend]
         # print outstring
         # print "String length:", len(outstring)
         outstringlist = outstring.strip().split(",")
@@ -368,7 +377,7 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
             if outstringlist[0] != othervote:
                 othervote = othervote[1:]
             space = othervote.rfind(" ")
-            pts = othervote[space + 1:]
+            pts = othervote[space + 1 :]
             team = othervote[:space]
             if weirdstr in team:
                 team = str(team.replace(weirdstr, ""))
@@ -451,4 +460,3 @@ def orderedmergeddict(rawmergedic):
 #
 # mergedict = mergerankings(t25dict, otherzdict)
 # # scoreddict = orderedmergeddict(mergedict)
-print "sup" #tst for importing; delete later
