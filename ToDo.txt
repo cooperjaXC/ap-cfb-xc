@@ -1,17 +1,5 @@
 URGENT
 ------
-* [Fixed 20 Oct 2019] Fix preseason 2019 #25 tie weirdness
-	* #25 Stanford tied with ''. Blank entry. Why, how, and how best to fix?
-	* fix printout syntax: 
-		!!!!!!!!! Stanford is in a tie!!!! Total teams at 25 : 401
-		Team tied at ranking 25 : 
-		Teams in the tie: ['Stanford']
-		...
-		25 ['Stanford']
-		25.0 Stanford
-	
-* [Fixed 20 Oct 2019] Include AAC in power 5 printouts 
-
 * Make an entry argument of 'current' work regardless of year. 
 
 * Fix pandas copying warning in Top25ToTable.py
@@ -61,6 +49,8 @@ LONG TERM
 
 * Try using pandas to grab the top 25
 	* https://medium.com/@ageitgey/quick-tip-the-easiest-way-to-grab-data-out-of-a-web-page-in-python-7153cecfca58
+		>>> tables = pd.read_html("<url>")
+		>>> print(tables[0])
 	* Method worked well in init trial
 	* dependent on python 3
 	
