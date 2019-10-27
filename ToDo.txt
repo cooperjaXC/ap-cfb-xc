@@ -9,6 +9,10 @@ URGENT
 		See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
 		powerfive_tocopy[cll] = powerfive_tocopy[cll].apply(lambda x: '{0:0>4}'.format(x))
 
+* Move bottom opperations of Top25InPython.py into functions
+	* Maybe change .py name to better reflect everything.
+	* Reorganize where and when everything is called? 
+
 * Make sure Miami is picked up by ACC, T A&M by SEC
 	* Multiple forms of Texas A&M. Make sure all are picked up. 
 	* Top25InPython.py line 47
@@ -25,7 +29,7 @@ URGENT
 * Black all the code to standardize formatting.
 	* Generally clean the code
 
-* Only years 2014 and on have 'others receiving votes' (ORV) data.
+* [completed 27 Oct 2019] Only years 2014 and on have 'others receiving votes' (ORV) data.
 	* Write exception in mergedict that won't error out but will notify user of this fact.
 		* This would only use rankings 1-25 for the scoring. 
 

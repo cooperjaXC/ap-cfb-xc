@@ -1,15 +1,7 @@
 import os, sys, requests, numpy
 from bs4 import BeautifulSoup
 
-staticespn = (
-    r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
-)
-currentespnap = r"http://www.espn.com/college-football/rankings"
-# defaultlink = currentespnap
-oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
-# Should be the default URL:
-aponlylinkespn2 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
-defaultlink = aponlylinkespn2
+
 
 tfcounter = 0
 tfive = []
@@ -27,23 +19,33 @@ def findnth(haystack, needle, n):
     return len(haystack) - len(parts[-1]) - len(needle)
 
 
-def apweeklyurlgenerator(week, year):
-    """ Generate a URL link for a specific week of AP Rankings. Preseason = week 1 """
-    finallist = ["final", "f", "complete", "total", "last"]
+def dateprocessing(week, year):
+    """ Processes raw inputs of week and year for downstream use in multiple functions """
     prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
-    currentlist = ["current", "present", "default"]
+    currentlist = ["current", "present", "default", None, str(None)]
+    finallist = ["final", "f", "complete", "total", "last", "fin"]
 
-    # Format the year correctly
+    # YEAR FORMATTING
     year = str(year)
+    # Format abbreviated dates for the 2000s
     if len(year) != 4:
         if len(year) == 2 and (year[0] == "1" or year[0] == "0"):
             # Assume the entry was an abreviation of a year. Add the 20__ before it.
             year = "20" + str(year)
 
+    # WEEK FORMATTING
     # Preseason?
     week = str(week)
     if week.lower() in prelist:
         week = "1"
+
+    # Current week?
+    elif week.lower() in currentlist:
+        week = "current"
+
+    # Final?
+    elif week.lower() in finallist:
+        week = "final"
     # If the week entered is higher than 16, assume user wants final rankings.
     try:
         if int(week) > 16:
@@ -51,19 +53,63 @@ def apweeklyurlgenerator(week, year):
     except:
         pass
 
+    if int(year) < int(2014):
+        print "Warning: Others Receiving Votes not stored by ESPN before the 2014 season."
+
+    # Compile into a list for returning
+    #    Must return a list of strings
+    datelist = [week, year]
+    return datelist
+
+
+def apweeklyurlgenerator(date_list): #  week, year):
+    """ Generate a URL link for a specific week of AP Rankings. Preseason = week 1 """
+    week = str(date_list[0])
+    year = str(date_list[1])
+    staticespn = (
+        r"http://www.espn.com/college-football/rankings/_/week/6/year/2018/seasontype/2"
+    )
+    currentespnap = r"http://www.espn.com/college-football/rankings"
+    # defaultlink = currentespnap
+    oldurl1 = r"http://www.espn.com/college-football/rankings/_/week/"
+    # Should be the default URL:
+    aponlylinkespn2 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
+    defaultlink = aponlylinkespn2
+
+    # finallist = ["final", "f", "complete", "total", "last"]
+    #
+    # currentlist = ["current", "present", "default"]
+
+    # # Format the year correctly
+    # year = str(year)
+    # if len(year) != 4:
+    #     if len(year) == 2 and (year[0] == "1" or year[0] == "0"):
+    #         # Assume the entry was an abreviation of a year. Add the 20__ before it.
+    #         year = "20" + str(year)
+    #
+    # # Week formatting
+    # # Preseason?
+    # week = str(week)
+    # if week.lower() in prelist:
+    #     week = "1"
+    # # If the week entered is higher than 16, assume user wants final rankings.
+    # try:
+    #     if int(week) > 16:
+    #         week = "final"
+    # except:
+    #     pass
+
     # Generate the URL
-    # Default link here (see the top of script for variable definition)
-    url1 = defaultlink
     # Is the week entered indicating the final week?
-    if week.lower() in finallist:
+    if week.lower() == "final":# in finallist:
         oldfinalurlexample = "http://www.espn.com/college-football/rankings/_/week/1/year/2017/seasontype/3"
         week1 = "1/year/"
         seasontype = "/seasontype/3"
-        url = url1 + week1 + year + seasontype
+        url = defaultlink + week1 + year + seasontype
     # Check for entries wanting the most up-to-date rankings
-    elif week.lower() in currentlist:
+    elif week.lower() == "current":# in currentlist:
         # just use the default link
-        url = url1  # default link
+        url = defaultlink  # default link
     # # Commented out b/c we want the user to get the results they want and not be confused by getting the current week
     # #     when they wanted another week. This will error out to let them know that.
     # elif week is None:
@@ -72,7 +118,7 @@ def apweeklyurlgenerator(week, year):
     else:
         url2 = r"/year/"
         url3 = r"/seasontype/2"
-        url = url1 + str(week) + url2 + year + url3
+        url = defaultlink + str(week) + url2 + year + url3
     print "Week", week, ",", year, "season"
     return url
     # Should be the default URL: r"http://www.espn.com/college-football/rankings/_/poll/1/"
