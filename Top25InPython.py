@@ -4,32 +4,39 @@ import PollGrabber
 import Team_Conf_Organization as vars
 
 # Target Week
-weekinquestion = PollGrabber.apweeklyurlgenerator(
-    # week='current', year=2019  # "preseason", # 'final'
+weekinquestion = PollGrabber.dateprocessing(
+    week='current',  # "preseason",  # 'final', # 4,#
+    year=2019
+
+    # # Ties
     # week="Final", year=2012  # Example of a top 25 tie  # 5 Georgia & Texas A&M
-    # # Note: 2013 and before may error with "GRAVE ERROR" because ESPN does not have data for ORVs.
     # week=4, year=2019  # Another example of a top 25 tie  # 13 Penn St & Wisconsin
-    week=2, year=2019  # Example of a tie at number 25  # Nebraska & Iowa St.
-    #   # ORVs start at 26. Should be 27. Fix.
+    # week=2, year=2019  # Example of a tie at number 25  # Nebraska & Iowa St. # ORVs should now start at 27+.
+    # week=6, year=2019  # Another tie at rank number 25  # Texas A&M & Michigan St. 25.5, California at 27
+
+    # # Other Troubleshooting
+    # # Note: 2013 and before may error with "GRAVE ERROR" because ESPN does not have data for ORVs.
+    # week='final', year=2003  # Year both Miami FL and Miami OH finished in top 10. Last final appearance there for M(OH)
 )
 
-# weekinquestion = r"http://www.espn.com/college-football/rankings/_/poll/1/week/12/year/2017/seasontype/2"#deletethiswhenitworks
+generated_url = PollGrabber.apweeklyurlgenerator(weekinquestion)
 
-grabbedpoll = PollGrabber.pollgrabber(weekinquestion)
+grabbedpoll = PollGrabber.pollgrabber(generated_url)
 # grabbedpoll = PollGrabber.pollgrabber('http://www.espn.com/mens-college-basketball/rankings')  # for basketball
 
 # Get a dictionary of the top 25 teams
 t25dict = PollGrabber.gettoptfive(grabbedpoll)
 
+# Check that ESPN will have ORVs. Only for 2014 and on.
+if int(weekinquestion[1]) < 2014:
+    print "Warning: Others Receiving Votes not stored by ESPN before the 2014 season."
+    mergedict = t25dict
+else:
+    # Get a dictionary of the "others receiving votes" and their ranks.
+    otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll, t25dict)
 
-# Get a dictionary of the "others receiving votes" and their ranks.
-otherzdict = PollGrabber.othersreceivingvotes(grabbedpoll, t25dict)
-
-# # FOR TESTING; DELETE AFTER OTHERZDICT IS FIXED FOR #25 TIE
-# otherzdict = othersreceivingvotes(grabbedpoll, t25dict)
-
-mergedict = PollGrabber.mergerankings(t25dict, otherzdict)
-# scoreddict = orderedmergeddict(mergedict)
+    mergedict = PollGrabber.mergerankings(t25dict, otherzdict)
+    # scoreddict = orderedmergeddict(mergedict)
 
 conferencepointsdict = {
     "ACC": [],
@@ -46,6 +53,8 @@ conferencepointsdict = {
 }
 
 mistakedict = {vars.miami: "Miami", vars.texasam: "Texas A&amp;M"}  # "Texas A&amp;M;"
+
+# Begin operations
 
 for conference in vars.conferencedict:
     confscore = []
