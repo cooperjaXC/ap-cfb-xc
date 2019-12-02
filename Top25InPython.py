@@ -29,7 +29,7 @@ t25dict = PollGrabber.gettoptfive(grabbedpoll)
 
 # Check that ESPN will have ORVs. Only for 2014 and on.
 if int(weekinquestion[1]) < 2014:
-    print "Warning: Others Receiving Votes not stored by ESPN before the 2014 season."
+    print("Warning: Others Receiving Votes not stored by ESPN before the 2014 season.")
     mergedict = t25dict
 else:
     # Get a dictionary of the "others receiving votes" and their ranks.
@@ -59,9 +59,9 @@ mistakedict = {vars.miami: "Miami", vars.texasam: "Texas A&amp;M"}  # "Texas A&a
 for conference in vars.conferencedict:
     confscore = []
     teamlist = vars.conferencedict[conference]
-    print conference, len(teamlist), teamlist
+    print(conference, len(teamlist), teamlist)
     # for teem in conferencedict[conference]:
-    #     print team
+    #     print(team)
     for team in teamlist:
         # Make sure odd names like Texas A&M and Miami (FL) are taken care of
         if team in mistakedict:
@@ -69,20 +69,20 @@ for conference in vars.conferencedict:
         # Did teams receive votes in this week's AP Poll?
         if team in mergedict:
             indivscore = mergedict[team]
-            print team, indivscore
+            print(team, indivscore)
             # Append them to the correct conference's list of scores
             confscore.append(indivscore)
             # conferencepointsdict[conference].append(indivscore)
     confscore.sort()
-    print conference, "score:", confscore  # .sort()
+    print(conference, "score:", confscore)  # .sort()
     conferencepointsdict[conference] = confscore
-print conferencepointsdict
+print(conferencepointsdict)
 
 fourscoredict = {}
 fivescoredict = {}
 
 # Get the max score for downstream pandas work
-#   If max >= 100, more digits needed in the printout for the pandas table.
+#   If max >= 100, more digits needed in the print(ut for the pandas table.)
 maxfourscore = 0
 maxfivescore = 0
 
@@ -100,17 +100,17 @@ for conf in conferencepointsdict:
         fivesum = math.fsum(pointlist[:5])
     else:
         fivesum = None
-    print conf, ":", scoredteams, "teams scored"
+    print(conf, ":", scoredteams, "teams scored")
 
     fourscoredict[conf] = foursum
-    print "| 4score:", foursum
+    print("| 4score:", foursum)
     # Check on maxfourscore & set it to = conference's score if conference's score is greatest yet.
-    if foursum > maxfourscore:
+    if foursum is not None and foursum > maxfourscore:
         maxfourscore = foursum
 
     fivescoredict[conf] = fivesum
-    print "| 5score", fivesum
-    print "| ALL:", pointlist
+    print("| 5score", fivesum)
+    print("| ALL:", pointlist)
     # Check on maxfivescore & set it to = conference's score if conference's score is greatest yet.
-    if fivesum > maxfivescore:
+    if fivesum is not None and fivesum > maxfivescore:
         maxfivescore = fivesum
