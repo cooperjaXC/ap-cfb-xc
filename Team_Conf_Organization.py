@@ -339,4 +339,4 @@ onlyconferencesdict = {
 }
 
 for confr in onlyconferencesdict:
-    print confr, onlyconferencesdict[confr]
+    print(confr, onlyconferencesdict[confr])
