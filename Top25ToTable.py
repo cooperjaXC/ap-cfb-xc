@@ -59,9 +59,18 @@ pd_transposed = pd_newidx.transpose()
 print(pd_transposed.to_string(index=False))
 
 # Dictionary to copy to excel
-powerfive_tocopy = pd_transposed[["SEC", "ACC", "Big Ten", "Big XII", "Pac 12"
-                                  # For 2019, the AAC is included in this. Comment out if irrelevant.
-                                  , "American"]]
+powerfive_tocopy = pd_transposed[
+    [
+        "SEC",
+        "ACC",
+        "Big Ten",
+        "Big XII",
+        "Pac 12"
+        # For 2019, the AAC is included in this. Comment out if irrelevant.
+        ,
+        "American",
+    ]
+]
 # print(ng with leading zeros so excel's text import wizard will work correctly.)
 #   datasciencemadesimple.com/add-leading-preceding-zeros-python/
 copycolumns = powerfive_tocopy.columns
@@ -77,4 +86,4 @@ for cll in copycolumns:
 print(powerfive_tocopy.to_string(index=False))
 # Auto copy this to the clipboard for pasting in Excel without row indexes or column headers
 #   Separate by tab in the Excel text importer
-powerfive_tocopy.to_clipboard(index=False, header=False, sep=' ')
+powerfive_tocopy.to_clipboard(index=False, header=False, sep=" ")

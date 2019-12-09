@@ -34,6 +34,10 @@ URGENT
 		* This would only use rankings 1-25 for the scoring. 
 
 * Fix the default URL that's generated to be http://www.espn.com/college-football/rankings/_/poll/1/
+	* Isn't this done? (-10 Nov 2019)
+
+* Try adding all vote totals and aggregate by conference 
+	* IE this would be a ratio rather than an ordinal-interval measurement. Definately prizes top teams. 
 
 
 LONG TERM

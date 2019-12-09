@@ -2,7 +2,6 @@ import os, sys, requests, numpy
 from bs4 import BeautifulSoup
 
 
-
 tfcounter = 0
 tfive = []
 while tfcounter < 25:
@@ -48,13 +47,16 @@ def dateprocessing(week, year):
         week = "final"
     # If the week entered is higher than 16, assume user wants final rankings.
     try:
+        # 16 is the max # of regular season weeks allowed, tho usually 15. "CFB Leap Year." See 2014 & 2019
         if int(week) > 16:
             week = "final"
     except:
         pass
 
     if int(year) < int(2014):
-        print("Warning: Others Receiving Votes not stored by ESPN before the 2014 season.")
+        print(
+            "Warning: Others Receiving Votes not stored by ESPN before the 2014 season."
+        )
 
     # Compile into a list for returning
     #    Must return a list of strings
@@ -62,7 +64,9 @@ def dateprocessing(week, year):
     return datelist
 
 
-def apweeklyurlgenerator(date_list): #  week, year):
+def apweeklyurlgenerator(
+    date_list
+):  # date_list = result of dateprocessing() that's in list format (week, year)
     """ Generate a URL link for a specific week of AP Rankings. Preseason = week 1 """
     week = str(date_list[0])
     year = str(date_list[1])
@@ -101,13 +105,13 @@ def apweeklyurlgenerator(date_list): #  week, year):
 
     # Generate the URL
     # Is the week entered indicating the final week?
-    if week.lower() == "final":# in finallist:
+    if week.lower() == "final":  # in finallist:
         oldfinalurlexample = "http://www.espn.com/college-football/rankings/_/week/1/year/2017/seasontype/3"
         week1 = "1/year/"
         seasontype = "/seasontype/3"
         url = defaultlink + week1 + year + seasontype
     # Check for entries wanting the most up-to-date rankings
-    elif week.lower() == "current":# in currentlist:
+    elif week.lower() == "current":  # in currentlist:
         # just use the default link
         url = defaultlink  # default link
     # # Commented out b/c we want the user to get the results they want and not be confused by getting the current week
@@ -188,7 +192,7 @@ def gettoptfive(websitestrsearch):
             # print(ranking, outstring)
             teamname = outstring[
                 outstring.find(teamsearchstart)
-                + len(teamsearchstart): outstring.find(teamsearchend)
+                + len(teamsearchstart) : outstring.find(teamsearchend)
             ]
             print(ranking, teamname)
             nodecounter += 1
@@ -202,7 +206,14 @@ def gettoptfive(websitestrsearch):
             teamsinstrsearch = outstring.count(teamsearchstart)
             # tiecounter = teamsinstrsearch - 1 # Not really the case becasue the strsearch has a gob ton of teams
             if teamsinstrsearch > 1:
-                print("!!!!!!!!!", teamname, "is in a tie!!!! Total teams at", ranking, ":", teamsinstrsearch)
+                print(
+                    "!!!!!!!!!",
+                    teamname,
+                    "is in a tie!!!! Total teams at",
+                    ranking,
+                    ":",
+                    teamsinstrsearch,
+                )
                 searchno3 = (
                     'class="number">' + str(ranking + 2) + "<"
                 )  # you must put an exception jut in case there is greater than a 2 team tie; this only gets the ranking after 2 tied teams. If this was a 3 team tie, searching for x + 2 ranking would return None for the search
@@ -240,7 +251,7 @@ def gettoptfive(websitestrsearch):
                 # Append to tie team list
                 # Check if a_tie_team is actually nothing
                 #   This is the case for 2019 preseason #25: Stanford, ''
-                if a_tie_team != '':
+                if a_tie_team != "":
                     tieteamlist.append(a_tie_team)
                 else:
                     pass  # For now. Check and see if the tieteamlist append for the other non-blank team is a problem.
@@ -278,7 +289,9 @@ def gettoptfive(websitestrsearch):
                 ]
                 print(ranking, teamname)
             else:
-                print(searchno1new, "<-- search term aint in large strsearch neither")  ##This is a test print(statement
+                print(
+                    searchno1new, "<-- search term aint in large strsearch neither"
+                )  ##This is a test print(statement
                 teamname = "ERROR NO TEAM HERE"
 
         # ___
@@ -332,7 +345,9 @@ def gettoptfive(websitestrsearch):
             print(rank, team)
             inverserankings[team] = rank
     print(inverserankings)
-    print("______________________________________________________________________________")
+    print(
+        "______________________________________________________________________________"
+    )
     return inverserankings
 
 
@@ -383,15 +398,19 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
 
     apsearchterm = "AP Top 25"  # 'class="number">1'
     searchothersOG = 'class="title">Others receiving votes: </span> <!-- -->'
-    searchothersnewbold = 'class="fw-bold">Others receiving votes: </span>'  # Test for new formatting of this str
-    searchothers2019 = '''class="TableDetails__Headline">Others receiving votes: </span>'''
+    searchothersnewbold = (
+        'class="fw-bold">Others receiving votes: </span>'
+    )  # Test for new formatting of this str
+    searchothers2019 = (
+        """class="TableDetails__Headline">Others receiving votes: </span>"""
+    )
 
     # Test to see if new searchothers is the right way of searching now.
     searchothers = searchothers2019
     searchno2 = r"</p></div>\n</div>\n<div"  # </p></div>\n<div
     searchno2 = r"</p></div>\n<"  # /div'
     # searchno2 = r'</p></div>\n</div>\n</div>\n</div> <!-- // 50/50 Layout for Rankings'
-    searchno2 = r'</p><p><span class="'#fw-bold">'
+    searchno2 = r'</p><p><span class="'  # fw-bold">'
     teamsearchstart = '<span class="team-names">'
     teamsearchend = "</span><abbr title="
     weirdstr = "<!-- -->"
@@ -420,7 +439,7 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
         findothers = strsearch.find(searchothers)
         findend = strsearch.find(searchno2)
         # print(findothers)
-        outstring = strsearch[findothers + len(searchothers): findend]
+        outstring = strsearch[findothers + len(searchothers) : findend]
         # print(outstring)
         # print("String length:", len(outstring))
         outstringlist = outstring.strip().split(",")
@@ -429,7 +448,7 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
             if outstringlist[0] != othervote:
                 othervote = othervote[1:]
             space = othervote.rfind(" ")
-            pts = othervote[space + 1:]
+            pts = othervote[space + 1 :]
             team = othervote[:space]
             if weirdstr in team:
                 team = str(team.replace(weirdstr, ""))
@@ -442,7 +461,9 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
         print(tsixplus)
         pointorder = sorted(tsixplus, reverse=True)
 
-        print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+        print(
+            "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+        )
         # Find average of ties
         for score in pointorder:
             teamlist = tsixplus[score]
@@ -470,8 +491,12 @@ def othersreceivingvotes(websitestrsearch, dictofthettfive):
         return inverserankingdict
     else:
         print("GRAVE ERROR")
-        print("Check whether var <apsearchterm> and/or var <strsearch> in the search string and is the problem.")
-        print("Use problem solving code in the block b4 the previous if statement to do this")  # TROUBLESHOOTING header
+        print(
+            "Check whether var <apsearchterm> and/or var <strsearch> in the search string and is the problem."
+        )
+        print(
+            "Use problem solving code in the block b4 the previous if statement to do this"
+        )  # TROUBLESHOOTING header
 
 
 def mergerankings(top25dict, othervotesdict):
