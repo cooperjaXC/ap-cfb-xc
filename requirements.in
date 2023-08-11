@@ -1,0 +1,6 @@
+# Note: `requirements.in` can accept comments.
+requests
+cfbd
+bs4
+numpy
+pandas
