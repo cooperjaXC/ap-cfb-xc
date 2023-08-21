@@ -8,7 +8,8 @@ base_url = "api.collegefootballdata.com/"
 def swagger_ui_api_path_generator(
     req_type="rankings", year=2020, week=1, reg_v_post="regular"
 ):
-    """ Return a URL based upon input vars. """
+    """ Return a URL based upon input vars.
+    Original function that was in this file when updates started being applied."""
     year = str(year)
     teamurl = (r"https://api.collegefootballdata.com/teams/fbs?year=" + year,)
     confurl = (r"https://api.collegefootballdata.com/conferences",)
@@ -34,19 +35,21 @@ def swagger_ui_api_path_generator(
     return the_url
 
 
-rankings = req.get(swagger_ui_api_path_generator())  # week=2), timeout=10)
-rankings_json = rankings.json()
-# import json
-# json_data = json.loads(firstreq.text)
+def swagger_first_test():
+    """The first test of swagger API, chunked into a function for storage."""
+    rankings = req.get(swagger_ui_api_path_generator())  # week=2), timeout=10)
+    rankings_json = rankings.json()
+    # import json
+    # json_data = json.loads(firstreq.text)
 
-the_polls = rankings_json[0]["polls"]
-print(the_polls)
-for poll in the_polls:
-    if poll["poll"] == "AP Top 25":
-        # print(poll)
-        rankings = poll["ranks"]
-        # print(rankings)
-        [
-            print(rank["rank"], rank["school"], "-", rank["conference"])
-            for rank in rankings
-        ]
+    the_polls = rankings_json[0]["polls"]
+    print(the_polls)
+    for poll in the_polls:
+        if poll["poll"] == "AP Top 25":
+            # print(poll)
+            rankings = poll["ranks"]
+            # print(rankings)
+            [
+                print(rank["rank"], rank["school"], "-", rank["conference"])
+                for rank in rankings
+            ]
