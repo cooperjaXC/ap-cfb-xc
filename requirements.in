@@ -1,4 +1,5 @@
 # Note: `requirements.in` can accept comments.
+urllib3<2
 requests
 cfbd
 bs4
