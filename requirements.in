@@ -1,6 +1,6 @@
 # Note: `requirements.in` can accept comments.
 urllib3<2
-requests
+requests>=2.31
 cfbd
 bs4
 numpy
