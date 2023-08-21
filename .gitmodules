@@ -1,3 +1,0 @@
-[submodule "py_venv"]
-	path = py_venv
-	url = git@github.com:cooperjaXC/windows_python_venv.git
