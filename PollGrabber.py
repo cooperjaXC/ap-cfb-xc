@@ -18,7 +18,7 @@ def findnth(haystack, needle, n):
     return len(haystack) - len(parts[-1]) - len(needle)
 
 
-def dateprocessing(week, year):
+def dateprocessing(year, week):
     """ Processes raw inputs of week and year for downstream use in multiple functions """
     prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
     currentlist = ["current", "present", "default", None, str(None)]
@@ -61,7 +61,7 @@ def dateprocessing(week, year):
     # Compile into a list for returning
     #    Must return a list of strings
     datelist = [week, year]
-    return datelist
+    return year, week
 
 
 def apweeklyurlgenerator(
