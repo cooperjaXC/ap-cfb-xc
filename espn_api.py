@@ -74,7 +74,7 @@ def espn_api_url_generator(year=dt.now().year, week='current'):
         resp_json = default_response.json()
         # 2) grab the correct URL
         all_rankings_resp = resp_json['rankings']
-        ap_top_tf_resp = [rnk for rnk in all_rankings_resp if 'aptop25' in rnk['name'].lower().replace(" ","")][0]
+        ap_top_tf_resp = [rnk for rnk in all_rankings_resp if str(ap_poll_path_code) == rnk['id']][0]
         target_url = ap_top_tf_resp['$ref']
         # 3) transform the URL
         # # Remove all the crud after the "?"
