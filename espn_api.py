@@ -19,6 +19,7 @@ A few notes:
 """
 
 import requests
+from datetime import datetime as dt
 
 import PollGrabber as pg
 
@@ -26,7 +27,7 @@ espn_api = "http://site.api.espn.com/apis/site/v2/sports/football/college-footba
 historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
 
 
-def espn_api_url_generator(year, week):
+def espn_api_url_generator(year=dt.now().year, week='current'):
     """ Take a week and year request from the user and generate & return the correct ESPN API URL from it.
     Very similar to the PollGrabber.apweeklyurlgenerator() function from v1"""
 
