@@ -56,18 +56,42 @@ def espn_api_url_generator(year, week):
         url = base_espn_api_pth + year + season_type + week + chosen_poll_path
     # Check for entries wanting the most up-to-date rankings
     elif week.lower() == "current":  # in currentlist:
-        # just use the default link
-        url = espn_api  # default link
-    # # Commented out b/c we want the user to get the results they want and not be confused by getting the current week
-    # #     when they wanted another week. This will error out to let them know that.
-    # elif week is None:
-    #     # just use the default link by passing
-    #     pass
+        # The default link here returns a JSON in a slightly different format than the week-by-week JSON response.
+        # So, we can't just use the default link, eg `espn_api`  # default link
+        default_url = espn_api  # default link
+        # Instead, the default URL contains within its JSON response the correct, expected URL.
+        # # It just needs some slight tweaks.
+        # So, we need to
+        # 1) get the response from the default,
+        # 2) grab the correct URL,
+        # 3) transform it,
+        # and 4) set it as the URL for this function.
+        #
+        # 1) get the response from the default
+        default_response = requests.get(default_url)
+        # # Extract the JSON
+        resp_json = default_response.json()
+        # 2) grab the correct URL
+        all_rankings_resp = resp_json['rankings']
+        ap_top_tf_resp = [rnk for rnk in all_rankings_resp if 'aptop25' in rnk['name'].lower().replace(" ","")][0]
+        target_url = ap_top_tf_resp['$ref']
+        # 3) transform the URL
+        # # Remove all the crud after the "?"
+        # # Keep the part before the "?" character
+        after_remove_char = "?"
+        target_url = target_url.split(after_remove_char, 1)[0]
+        # # Replace the '.pvt' with '.com'
+        target_url = target_url.replace('.pvt', '.com')
+        # 4) set it as the URL for this function.
+        url = target_url
+        # Get rid of useless variables
+        del target_url, default_response, resp_json, all_rankings_resp,ap_top_tf_resp
     else:
         week = "/weeks/"+ str(week)
         season_type = "/types/2"
         url = base_espn_api_pth + year + season_type + week + chosen_poll_path
-    print("Week", week+",", year, "season")
+
+    print("Week", week.replace("/weeks/", "")+',', year, "season")
     return url
 
 
