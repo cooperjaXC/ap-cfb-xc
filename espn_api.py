@@ -28,6 +28,14 @@ historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/le
 reference_key = '$ref'
 
 
+def api_json_response(api_url):
+    """ Shortcut function for requests.get()ting APIs that return JSON results.
+    Functionized in case Requests ever changes how one accesses API responses
+    or all-encompassing changes to all instances of executing this process for this project are necessary. """
+    json_response = requests.get(api_url).json()
+    return json_response
+
+
 def espn_api_url_generator(year=dt.now().year, week='current'):
     """ Take a week and year request from the user and generate & return the correct ESPN API URL from it.
     Very similar to the PollGrabber.apweeklyurlgenerator() function from v1"""
