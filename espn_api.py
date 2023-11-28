@@ -28,6 +28,7 @@ historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/le
 reference_key = '$ref'
 conference_key = 'conference'
 key_shortName = 'shortName'
+did_not_score = "DNS"
 
 
 def api_json_response(api_url):
@@ -445,7 +446,7 @@ def all_conferences_in_rankings(formatted_rankings: dict) -> list:
 
 
 def teams_points_by_conference (formatted_rankings: dict) -> pd.DataFrame:
-    """ Get the scores for the conferences that appear in the rankings. """
+    """ Set up the conferences' dict to create the XC scores downstream. """
     present_conferences = all_conferences_in_rankings(formatted_rankings)
     conferences_df = pd.DataFrame(columns=present_conferences)
 
@@ -479,10 +480,30 @@ def teams_points_by_conference (formatted_rankings: dict) -> pd.DataFrame:
     return conferences_df
 
 
-def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bool = False):
+def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bool = False) -> dict:
     """ Get the scores for the conferences that appear in the rankings. """
+    if bool(four_team_race):
+        scoring_teams = 4
+    else:
+        scoring_teams = 5
 
-    return
+    scoring_dict = {}
+    for cnfcol in conferences_init_df.columns:
+        # teams_scoring = conferences_init_df[cnfcol].count
+        teams_scoring = conferences_init_df.count()[cnfcol]
+        if teams_scoring >= scoring_teams:
+            cutoff_teams_df = conferences_init_df[cnfcol][:scoring_teams]
+            if any(cutoff_teams_df.isna()):
+                # Shouldn't get here b/c of existing conditional. But just in case.
+                scoring_dict[cnfcol] = did_not_score
+            else:
+                scores_only_df = cutoff_teams_df.apply(lambda x: x[1] if ((not x[1] in [np.nan, None,'']) and (type(x[1]) in [float,int])) else np.nan)
+                scoring_dict[cnfcol] = scores_only_df.sum()
+        else:
+            scoring_dict[cnfcol] = did_not_score
+    print(scoring_dict)
+
+    return scoring_dict
 
 
 if __name__ == '__main__':
