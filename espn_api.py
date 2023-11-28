@@ -26,6 +26,7 @@ import PollGrabber as pg
 espn_api = "http://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
 historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
 reference_key = '$ref'
+conference_key = 'conference'
 
 
 def api_json_response(api_url):
@@ -103,10 +104,71 @@ def espn_api_url_generator(year=dt.now().year, week='current'):
     return url
 
 
-def get_team_info(team_api_url):
+def parse_conference_info(conference_api_url: str):
+    """
+    ESPN team APIs lead to 'group' URLs to identify who is in what conference.
+     We need to parse that API's JSON to figure out what conference it's referencing.
+
+     From https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4343861#gistcomment-4343861
+     And a list of NCAA Conference ids if anyone needs it:
+
+    Id = 80, Conf = FBS (I-A)
+    Id = 1, Conf = ACC
+    Id = 151, Conf = American
+    Id = 4, Conf = Big 12
+    Id = 5, Conf = Big Ten
+    Id = 12, Conf = C-USA
+    Id = 18, Conf = FBS Indep
+    Id = 15, Conf = MAC
+    Id = 17, Conf = Mountain West
+    Id = 9, Conf = Pac-12
+    Id = 8, Conf = SEC
+    Id = 37, Conf = Sun Belt
+    Id = 81, Conf = FCS (I-AA)
+    Id = 176, Conf = ASUN
+    Id = 20, Conf = Big Sky
+    Id = 40, Conf = Big South
+    Id = 48, Conf = CAA
+    """
+    # Example API endpoint:
+    # https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/groups/8?lang=en&region=us
+    cjson = api_json_response(conference_api_url)
+    # print(cjson)
+    # Sometimes this will return a team's division within conference. We want the full conference. Link to that.
+    parent_key = 'parent'
+    parent_group_url = cjson[parent_key][reference_key]
+    fbs_d1_url = r"http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/groups/80?lang=en&region=us"
+    tries = 0 # Adding a counter to prevent infinate loops
+    does_it_match = parent_group_url == fbs_d1_url
+    # print(does_it_match)
+    # Could also use isConference to work out the conference status. It leaves out divisions and FBS 1
+    isConference = bool(str(cjson['isConference']).title())
+    # print(isConference)
+    while (does_it_match is False) and (tries < 10):
+        # print(f"Group #{tries+1} was not valid conference. Trying to access it.")
+        # keep accessing the parent's URL's response till you get up to just under the NCAA FBS 1, ID = 80.
+        # print(parent_group_url == fbs_d1_url)
+        cjson = api_json_response(parent_group_url)
+        # print(cjson)
+        isConference = bool(str(cjson['isConference']).title())
+        parent_group_url = cjson[parent_key][reference_key]
+        does_it_match = parent_group_url == fbs_d1_url
+        if does_it_match:
+            # Breaking manually because the while loop isn't working as it should.
+            break
+        tries += 1
+        # print(tries, str(does_it_match), '\n--------')
+    if tries >= 10:
+        print("Your request to access conference API data has timed out; there was an error.")
+
+    return cjson
+
+
+def get_team_info(team_api_url: str):
     """ ESPN API Rankings embed a team API URL to identify who is in what ranking.
      We need to parse that API's JSON to figure out what team it's referencing. """
     teamjson = api_json_response(team_api_url)
+    # print(teamjson['nickname'])
 
     # TODO Parse the requests result for teams. The historical APIs return team URLs, not the team name.
     # Looks like this (example for UGA, 2023 week 3):
@@ -117,12 +179,67 @@ def get_team_info(team_api_url):
     # 'oddsRecords', 'athletes', 'venue', 'groups', 'ranks', 'statistics', 'leaders', 'links', 'injuries', 'notes',
     # 'againstTheSpreadRecords', 'awards', 'franchise', 'projection', 'events', 'coaches', 'college'])
     #
+    # Key keys (lol): "location" = team name; "name" = mascot; "nickname" = team name abbrev.;
+    # # "displayName" = location + name; "color" & "alternateColor" (use for graphs)
+    #
+    # EX for FSU:
+    # {
+    # $ref http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52?lang=en&region=us
+    # id 52
+    # guid fa181128-4809-a209-1add-d5a3b0cefd3c
+    # uid s:20~l:23~t:52
+    # alternateIds {'sdr': '5995'}
+    # slug florida-state-seminoles
+    # location Florida State
+    # name Seminoles
+    # nickname Florida St
+    # abbreviation FSU
+    # displayName Florida State Seminoles
+    # shortDisplayName Seminoles
+    # color 782f40
+    # alternateColor ceb888
+    # isActive True
+    # isAllStar False
+    # logos [{'href': 'https://a.espncdn.com/i/teamlogos/ncaa/500/52.png', 'width': 500, 'height': 500, 'alt': '', 'rel': ['full', 'default'], 'lastUpdated': '2018-06-05T12:08Z'}, {'href': 'https://a.espncdn.com/i/teamlogos/ncaa/500-dark/52.png', 'width': 500, 'height': 500, 'alt': '', 'rel': ['full', 'dark'], 'lastUpdated': '2018-06-05T12:08Z'}]
+    # record {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/record?lang=en&region=us'}
+    # oddsRecords {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/0/teams/52/odds-records?lang=en&region=us'}
+    # athletes {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/athletes?lang=en&region=us'}
+    # venue {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/venues/3697?lang=en&region=us', 'id': '3697', 'fullName': 'Doak Campbell Stadium', 'address': {'city': 'Tallahassee', 'state': 'FL', 'zipCode': '32304'}, 'capacity': 79560, 'grass': True, 'indoor': False, 'images': [{'href': 'https://a.espncdn.com/i/venues/college-football/day/interior/3697.jpg', 'width': 2000, 'height': 1125, 'alt': '', 'rel': ['full', 'day', 'interior']}]}
+    # groups {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/groups/1?lang=en&region=us'}
+    # ranks {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/ranks?lang=en&region=us'}
+    # statistics {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/statistics?lang=en&region=us'}
+    # leaders {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/leaders?lang=en&region=us'}
+    # links [{'language': 'en-US', 'rel': ['clubhouse', 'desktop', 'team'], 'href': 'https://www.espn.com/college-football/team/_/id/52/florida-state-seminoles', 'text': 'Clubhouse', 'shortText': 'Clubhouse', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['clubhouse', 'mobile', 'team'], 'href': 'http://www.espn.com/college-football/team/_/id/52/florida-state-seminoles', 'text': 'Clubhouse', 'shortText': 'Clubhouse', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['roster', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/team/roster/_/id/52', 'text': 'Roster', 'shortText': 'Roster', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['stats', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/team/stats/_/id/52', 'text': 'Statistics', 'shortText': 'Statistics', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['schedule', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/team/schedule/_/id/52', 'text': 'Schedule', 'shortText': 'Schedule', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['awards', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/awards/_/team/52', 'text': 'Awards', 'shortText': 'Awards', 'isExternal': False, 'isPremium': False}]
+    # injuries {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/teams/52/injuries?lang=en&region=us'}
+    # notes {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/teams/52/notes?lang=en&region=us'}
+    # againstTheSpreadRecords {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/ats?lang=en&region=us'}
+    # awards {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/awards?lang=en&region=us'}
+    # franchise {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/franchises/52?lang=en&region=us'}
+    # projection {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/projection?lang=en&region=us'}
+    # events {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/events?lang=en&region=us'}
+    # coaches {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/coaches?lang=en&region=us'}
+    # college {'$ref': 'http://sports.core.api.espn.com/v2/colleges/52?lang=en&region=us'}
+    # }
+
+    # Maybe we just keep this big record and just add sensical conference info to it. We may need some data downstream.
+    # # Can always come back and whittle the big dict down.
+
+    # Get the conference data from its API endpoint
+    conference_URL = teamjson['groups'][reference_key]
+    the_conference_json = parse_conference_info(conference_URL)
+    # Add the conference's dict to the team dict
+    teamjson[conference_key] = the_conference_json
+
+    return teamjson
 
 
-def get_top_tfive(top_twentyfive_json: dict):
+def get_top_tfive(top_twentyfive_json: list):
     """ Process the ESPN AP API response to pull a dictionary of the top 25 teams.
     Returns dictionary of the teams. """
-# len(top_tfive_json) = 25, 1 for each team.
+    #  #Try accepting the whole rankings json dict and parsing down from that.
+    # top_twentyfive_json = rankings_JSON['ranks']
+
+    # len(top_tfive_json) = 25, 1 for each team.
     # Establish a dictionary that will hold the results.
     # # To account for ties, the dicts will have keys of rankings and values of *lists* of teams.
     # # # Even though most rankings will only have on team's data in the list (in dict format), still keep list format.
@@ -130,10 +247,17 @@ def get_top_tfive(top_twentyfive_json: dict):
     for team in top_twentyfive_json:
         # Each team's keys: dict_keys(['current', 'previous', 'points', 'firstPlaceVotes', 'trend', 'record', 'team', 'date', 'lastUpdated'])
         team_api_url = team['team'][reference_key]
-        # Using the embedded team API, get all the info you need on that team.
-        team_info_dict = get_team_info(team_api_url)
         # Add the team info to the dictionary storing all this data.
         ranking = team['current']
+        # Using the embedded team API, get all the info you need on that team.
+        team_info_dict = get_team_info(team_api_url)
+
+        # Parse that data to get what you need like this below
+        # # Do this again later to work with the dict data you got.
+        team_name = team_info_dict['nickname']
+        teams_conference = team_info_dict[conference_key]["shortName"]
+        print(f"{ranking}: {team_name} ({teams_conference})")
+
         if ranking not in top_tfive_teams:
             # This is the first team at this ranking; add it to the dictionary.
             top_tfive_teams[ranking] = [team_info_dict]
