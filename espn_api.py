@@ -18,7 +18,7 @@ A few notes:
 * It does seem like there is receiving-votes data in there for your needs under the others array.
 """
 
-import requests
+import requests, numpy as np, pandas as pd
 from datetime import datetime as dt
 
 # import PollGrabber as pg
@@ -27,6 +27,7 @@ espn_api = "http://site.api.espn.com/apis/site/v2/sports/football/college-footba
 historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
 reference_key = '$ref'
 conference_key = 'conference'
+key_shortName = 'shortName'
 
 
 def api_json_response(api_url):
@@ -338,7 +339,7 @@ def others_receiving_votes(others_json: list, ranked_teams: int = 25) -> dict:
         # Parse that data to get what you need like this below
         # # Do this again later to work with the dict data you got.
         team_name = team_info_dict['nickname']
-        teams_conference = team_info_dict[conference_key]["shortName"]
+        teams_conference = team_info_dict[conference_key][key_shortName]
         print(f"{points} points: {team_name} ({teams_conference})")
 
         # Add the points and the team to the dict
@@ -430,6 +431,58 @@ def poll_grabber(espn_ap_link):
     xc_formatted_rankings = handle_ties(all_receiving_votes)
 
     return xc_formatted_rankings
+
+
+def all_conferences_in_rankings(formatted_rankings: dict) -> list:
+    """ Get the conferences that are included in the rankings for the given week."""
+    all_conferences = []
+    for rank in formatted_rankings:
+        for team_dict in formatted_rankings[rank]:
+            shortName = team_dict[conference_key][key_shortName]
+            if shortName not in all_conferences:
+                all_conferences.append(shortName)
+    return all_conferences
+
+
+def teams_points_by_conference (formatted_rankings: dict) -> pd.DataFrame:
+    """ Get the scores for the conferences that appear in the rankings. """
+    present_conferences = all_conferences_in_rankings(formatted_rankings)
+    conferences_df = pd.DataFrame(columns=present_conferences)
+
+    conference_pts_dict = {}
+
+    for rank in formatted_rankings:
+        for team_dict in formatted_rankings[rank]:
+            conferenceShortName = team_dict[conference_key][key_shortName]
+            team_name = team_dict['nickname']
+            print(f"{str(rank)} points: {team_name} ({conferenceShortName})")
+            if conferenceShortName not in conference_pts_dict:
+                conference_pts_dict[conferenceShortName] = [(team_name, rank)]
+            else:
+                conference_pts_dict[conferenceShortName].append((team_name, rank))
+    print(conference_pts_dict)
+
+    # Find the max number of teams any conference had.
+    max_n_ranked_teams = max([len(conference_pts_dict[c]) for c in  conference_pts_dict])
+    # Set up the dataframe
+    # # Add null items to the end of conferences w/o the max number of teams.
+    for cnfrnc in conference_pts_dict:
+        scoring_teams = conference_pts_dict[cnfrnc]
+        n_teams_scoring = len(scoring_teams)
+        nulls_to_fill = max_n_ranked_teams - n_teams_scoring
+        while nulls_to_fill > 0:
+            scoring_teams.append(np.nan)
+            nulls_to_fill -= 1
+        # Add teams to the dataframe
+        conferences_df[cnfrnc] = scoring_teams
+    print(conferences_df)
+    return conferences_df
+
+
+def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bool = False):
+    """ Get the scores for the conferences that appear in the rankings. """
+
+    return
 
 
 if __name__ == '__main__':
