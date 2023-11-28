@@ -21,7 +21,7 @@ A few notes:
 import requests
 from datetime import datetime as dt
 
-import PollGrabber as pg
+# import PollGrabber as pg
 
 espn_api = "http://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
 historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
@@ -37,12 +37,59 @@ def api_json_response(api_url):
     return json_response
 
 
-def espn_api_url_generator(year=dt.now().year, week='current'):
+def date_processing(year, week):
+    """ Processes raw inputs of week and year for downstream use in multiple functions """
+    prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
+    currentlist = ["current", "present", "default", None, str(None)]
+    finallist = ["final", "f", "complete", "total", "last", "fin"]
+
+    # YEAR FORMATTING
+    year = str(year)
+    # Format abbreviated dates for the 2000s
+    if len(year) != 4:
+        if len(year) == 2 and (year[0] == "1" or year[0] == "0"):
+            # Assume the entry was an abreviation of a year. Add the 20__ before it.
+            year = "20" + str(year)
+
+    # WEEK FORMATTING
+    # Preseason?
+    week = str(week)
+    if week.lower() in prelist:
+        week = "1"
+
+    # Current week?
+    elif week.lower() in currentlist:
+        week = "current"
+
+    # Final?
+    elif week.lower() in finallist:
+        week = "final"
+    # If the week entered is higher than 16, assume user wants final rankings.
+    try:
+        # 16 is the max # of regular season weeks allowed, tho usually 15. "CFB Leap Year." See 2014 & 2019
+        if int(week) > 16:
+            week = "final"
+    except:
+        pass
+
+    if int(year) < int(2014):
+        print(
+            "Warning: Others Receiving Votes not stored by ESPN before the 2014 season."
+        )
+
+    # Compile into a list for returning
+    #    Must return a list of strings
+    datelist = [week, year]
+    return year, week
+
+
+
+def espn_api_url_generator(year=dt.now().year, week='current') -> str:
     """ Take a week and year request from the user and generate & return the correct ESPN API URL from it.
     Very similar to the PollGrabber.apweeklyurlgenerator() function from v1"""
 
     # Properly format the date based on user input using a helper function
-    year, week = pg.dateprocessing(year=year, week=week)
+    year, week = date_processing(year=year, week=week)
 
     # Prepare substrings to create the URL
     aponlylinkespn2 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
@@ -104,7 +151,7 @@ def espn_api_url_generator(year=dt.now().year, week='current'):
     return url
 
 
-def parse_conference_info(conference_api_url: str):
+def parse_conference_info(conference_api_url: str) -> dict:
     """
     ESPN team APIs lead to 'group' URLs to identify who is in what conference.
      We need to parse that API's JSON to figure out what conference it's referencing.
@@ -164,13 +211,12 @@ def parse_conference_info(conference_api_url: str):
     return cjson
 
 
-def get_team_info(team_api_url: str):
+def get_team_info(team_api_url: str) -> dict:
     """ ESPN API Rankings embed a team API URL to identify who is in what ranking.
      We need to parse that API's JSON to figure out what team it's referencing. """
     teamjson = api_json_response(team_api_url)
     # print(teamjson['nickname'])
 
-    # TODO Parse the requests result for teams. The historical APIs return team URLs, not the team name.
     # Looks like this (example for UGA, 2023 week 3):
     # http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2021/teams/61?lang=en&region=us
     # RESULT JSON KEYS:
@@ -233,7 +279,7 @@ def get_team_info(team_api_url: str):
     return teamjson
 
 
-def get_top_tfive(top_twentyfive_json: list):
+def get_top_tfive(top_twentyfive_json: list) -> dict:
     """ Process the ESPN AP API response to pull a dictionary of the top 25 teams.
     Returns dictionary of the teams. """
     #  #Try accepting the whole rankings json dict and parsing down from that.
@@ -268,7 +314,7 @@ def get_top_tfive(top_twentyfive_json: list):
     return top_tfive_teams
 
 
-def others_receiving_votes(others_json: list, ranked_teams: int = 25):
+def others_receiving_votes(others_json: list, ranked_teams: int = 25) -> dict:
     """ Process the ESPN AP API response to pull a dictionary of the other teams receiving votes.
     Returns dictionary of the teams. """
     # Get Others Receiving Votes as a continuation of the rankings, 26 to X where X is max n(Teams receiving votes).
@@ -327,7 +373,7 @@ def others_receiving_votes(others_json: list, ranked_teams: int = 25):
     return other_teams
 
 
-def handle_ties(all_teams_receiving_votes_dict: dict):
+def handle_ties(all_teams_receiving_votes_dict: dict) -> dict:
     """ Sometimes teams receive the same number of points.
     In these scenarios, find the middle number for an XC score."""
     broken_ties_dict = {}
