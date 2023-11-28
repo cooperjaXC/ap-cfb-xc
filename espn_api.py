@@ -268,16 +268,61 @@ def get_top_tfive(top_twentyfive_json: list):
     return top_tfive_teams
 
 
-def others_receiving_votes(others_json: dict):
+def others_receiving_votes(others_json: list, ranked_teams: int = 25):
     """ Process the ESPN AP API response to pull a dictionary of the other teams receiving votes.
     Returns dictionary of the teams. """
     # Get Others Receiving Votes as a continuation of the rankings, 26 to X where X is max n(Teams receiving votes).
     # Similar to the 'top_tfive_teams' variable, establish a dictionary that will hold the results.
     # # To account for ties, the dicts will have keys of rankings and values of *lists* of teams.
     # # # Even though most rankings will only have on team's data in the list (in dict format), still keep list format.
-    other_teams = {}
 
-    # TODO Parse the JSON of 'others' to get the rankings and teams in the same format as get_top_tfive() returns.
+    # len(others_json) = X, 1 for each team, where x = Total - 25.
+    # Establish a dictionary that will hold the results.
+    # # To account for ties, the dicts will have keys of rankings and values of *lists* of teams.
+    other_teams = {}
+    sorting_points_dict = {}
+    for team in others_json:
+        # Each team's keys: dict_keys(['current', 'previous', 'points', 'firstPlaceVotes', 'trend', 'record', 'team', 'date', 'lastUpdated'])
+        team_api_url = team['team'][reference_key]
+        # Add the team info to the dictionary storing all this data.
+        points = float(team['points'])
+        # Using the embedded team API, get all the info you need on that team.
+        team_info_dict = get_team_info(team_api_url)
+
+        # Parse that data to get what you need like this below
+        # # Do this again later to work with the dict data you got.
+        team_name = team_info_dict['nickname']
+        teams_conference = team_info_dict[conference_key]["shortName"]
+        print(f"{points} points: {team_name} ({teams_conference})")
+
+        # Add the points and the team to the dict
+        if points not in sorting_points_dict:
+            # This is the first team at this ranking; add it to the dictionary.
+            sorting_points_dict[points] = [team_info_dict]
+        else:
+            # There is a tie, so append to the list rather than creating it.
+            sorting_points_dict[points].append(team_info_dict)
+    # print(sorting_points_dict)
+
+    # Sort the points from votes into >25 rankings.
+    next_ranking = ranked_teams +0
+    while sorting_points_dict:
+        # While the sorting points dict is not empty
+        max_remain_pts = max(sorting_points_dict)
+        # next_up_target_points = sorting_points_dict[max_remain_pts]
+        teams_to_add = sorting_points_dict[max_remain_pts]
+        num_teams_to_add = len(teams_to_add)
+        # Add teams to the dict based on their rankings
+        next_ranking = next_ranking + 1
+        other_teams[next_ranking] = teams_to_add
+        # Based on how many teams were added for each value &
+        # knowing that there will be a single stepper to the next ranking,
+        # properly define the next ranking that should be used.
+        next_ranking = next_ranking + (num_teams_to_add - 1)
+
+        # Remove the points from the sorting dict so the while loop can function
+        del sorting_points_dict[max_remain_pts]
+        # print(other_teams)
 
     return other_teams
 
@@ -293,13 +338,16 @@ def poll_grabber(espn_ap_link):
     # Get the Top 25 Teams
     top_tfive_json = rjson['ranks']
     top_twenty_five_teams = get_top_tfive(top_tfive_json)
+    # Figure out how many teams are ranked, including ties.
+    n_ranked_teams = sum([len(top_twenty_five_teams[t]) for t in list(range(1,26))])
+    # n_ranked_teams = len(top_twenty_five_teams) + (len(top_twenty_five_teams[25])-1)
     print("- - - - - - - -")
     # Get Others Receiving Votes as a continuation of the rankings, 26 to X where X is max n(Teams receiving votes).
     others = 'others'
     if others in rjson.keys():
         # Others received votes.
         ojson = rjson[others]
-        other_teams = others_receiving_votes(ojson)
+        other_teams = others_receiving_votes(ojson, n_ranked_teams)
     else:
         # Either no 26th team received votes (unlikely unless passing the CFP Top 25 poll) or there was an error.
         print("No other teams receiving votes this week.")
@@ -308,6 +356,8 @@ def poll_grabber(espn_ap_link):
     # Merge the results of the top 25 and the Others
     all_receiving_votes = top_twenty_five_teams.copy()
     all_receiving_votes.update(other_teams)
+
+    # TODO handle ties
 
     return all_receiving_votes
 
