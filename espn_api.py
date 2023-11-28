@@ -363,7 +363,7 @@ def poll_grabber(espn_ap_link):
     top_tfive_json = rjson['ranks']
     top_twenty_five_teams = get_top_tfive(top_tfive_json)
     # Figure out how many teams are ranked, including ties.
-    n_ranked_teams = sum([len(top_twenty_five_teams[t]) for t in list(range(1,26))])
+    n_ranked_teams = sum([len(top_twenty_five_teams[t]) for t in list(range(1, 26)) if t in top_twenty_five_teams])
     # n_ranked_teams = len(top_twenty_five_teams) + (len(top_twenty_five_teams[25])-1)
     print("- - - - - - - -")
     # Get Others Receiving Votes as a continuation of the rankings, 26 to X where X is max n(Teams receiving votes).
@@ -381,7 +381,6 @@ def poll_grabber(espn_ap_link):
     all_receiving_votes = top_twenty_five_teams.copy()
     all_receiving_votes.update(other_teams)
 
-    # TODO handle ties
     xc_formatted_rankings = handle_ties(all_receiving_votes)
 
     return xc_formatted_rankings
@@ -389,5 +388,6 @@ def poll_grabber(espn_ap_link):
 
 if __name__ == '__main__':
     # the_url = espn_api_url_generator(2021, 'final')
-    the_url = espn_api_url_generator(2023, 'current')
+    the_url = espn_api_url_generator(2023, 'current')  # Good choice; has tie at #21.
     print(the_url)
+    main_custom_format_rankings = poll_grabber(the_url)
