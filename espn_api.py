@@ -506,6 +506,35 @@ def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bo
     return scoring_dict
 
 
+def conference_scoring_order(scoring_dict: dict):
+    """ Once you have generated conference XC scores with calc_conference_scores(), we need to see who won!
+    Do that here. """
+    only_scoring_conferences = {}
+    for sc in scoring_dict:
+        if scoring_dict[sc] != did_not_score:
+            only_scoring_conferences[sc] = scoring_dict[sc]
+    print(only_scoring_conferences)
+    # Move that data back to a pandas DF for easy working.
+    # # Note: conference name is in the index.
+    onlyScoresDF=pd.DataFrame(only_scoring_conferences.values(), index=only_scoring_conferences.keys())
+    # Name the score column
+    xcsc = 'xc_score'
+    onlyScoresDF.columns = [xcsc]
+    # TODO get xcsc to integer format if possible, ie if all scores are floats with 0 in tenths space.
+    # Move conference name index to its own column, and eventually make that the first column.
+    onlyScoresDF['conference'] = onlyScoresDF.index
+    onlyScoresDF.reset_index(drop=True, inplace=True)
+    # Sort by scores in decending order. Lowest score wins!
+    onlyScoresDF = onlyScoresDF.sort_values(xcsc)
+    # TODO Turns out PD rank ranks like I did manually upstream. Apply the 5th/6th runner tiebreaker upstream and have it apply here.
+    onlyScoresDF['place'] = onlyScoresDF[xcsc].rank()
+    # Order the columns
+    onlyScoresDF= onlyScoresDF[['conference', 'place', xcsc]]
+    onlyScoresDF.reset_index(inplace=True, drop=True)
+
+    print(onlyScoresDF)
+
+
 if __name__ == '__main__':
     # the_url = espn_api_url_generator(2021, 'final')
     the_url = espn_api_url_generator(2023, 'current')  # Good choice; has tie at #21.
