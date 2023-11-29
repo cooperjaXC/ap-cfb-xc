@@ -480,6 +480,79 @@ def teams_points_by_conference (formatted_rankings: dict) -> pd.DataFrame:
     return conferences_df
 
 
+def standings_tiebreaker(scoring_dict: dict, scoring_teams: int, conferences_init_df: pd.DataFrame) -> dict:
+    """ Break any ties in the FINAL standings (not the points as they're being calculated)."""
+    tie_checker = {}
+    for fc in scoring_dict:
+        the_score = scoring_dict[fc]
+        if the_score != did_not_score:
+            # We have a valid score. Or should.
+            the_score = float(the_score)
+            if the_score not in tie_checker:
+                tie_checker[the_score] = [fc]
+            else:
+                tie_checker[the_score].append(fc)
+    for unique_score in tie_checker:
+        cs_with_score = tie_checker[unique_score]
+        if len(cs_with_score) > 1:
+            # We have a tie.
+            print(cs_with_score, "are in a tie with",unique_score, "XC pts.")
+            # So, go to the "6th man".
+            still_a_tie = True
+            tiebreaking_depth = scoring_teams
+            order_holding={}
+            order_counter = 0
+            while still_a_tie:
+                tiebreaking_depth = tiebreaking_depth + 1
+                next_man_up_df = conferences_init_df[cs_with_score][:tiebreaking_depth]
+                tiebreaking_teams = next_man_up_df[tiebreaking_depth-1:]
+                tiebreaking_teams = tiebreaking_teams.reset_index(drop = True)
+                eval_dict={}
+                for conf in tiebreaking_teams.columns:
+                     eval_dict[conf]= tiebreaking_teams[conf][0][1]
+                # A few scenarios now.
+                # Either one or some of the conferences but not all has no more scorers. Then, the teams that did have the 6th man wins.
+                # Or, both or more than one have no more scorers. This represents a true tie.
+                no_next_man_up = [confeval for confeval in eval_dict if eval_dict[confeval] in [np.nan, None]]
+                # if len(no_next_man_up) > 1:
+                #     # We have multiple conferences with little depth.
+
+                if (0 < len(no_next_man_up) and len(no_next_man_up) < len(cs_with_score)): # or (len(no_next_man_up) > 0 and len(no_next_man_up) < cs_with_score):
+                    # minimum of one conferences with a score and minimum of one conference without.
+                    if len(no_next_man_up)==1 and len(cs_with_score) == 1:
+                        # Normal 1 v 1 where one has a 6th team, the other doesn't.
+                        # # Add them to the order holding dict
+                        order_checker = 0
+                        while order_checker in order_holding:
+                            order_checker += 1
+                        order_holding[order_checker]=no_next_man_up[0]
+                        order_holding[order_checker+1] =[vcf for vcf in cs_with_score if vcf != no_next_man_up[0]]
+                        still_a_tie = False
+
+                elif len(no_next_man_up) == len(cs_with_score):
+                    # We have a true tie where all tied conferences are tied.
+                    # Essentially pass.
+                    pass
+                    still_a_tie = False
+                elif len(no_next_man_up) == 0:
+                    # Evaluate based on the merrits!
+                    tb_scores = eval_dict.values()
+                    # Are there any more ties?
+                else:
+                    # ?
+                    pass
+            # TODO Deal with the order holder dict to determine tiebreaking.
+            # Sort the order holder in reverse order.
+            # Then give each loser a +.1 to their score so they appear as having a higher / worse score to the pandas tiebreaker.
+            # Then, for the score in the final version, use the Excel equivelent of `floor(x, .5)` to remove the working .1.
+            # Or add a working score column with the .1 that gets excluded eventually.
+
+        else:
+            # No tie.
+            pass
+    return
+
+
 def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bool = False) -> dict:
     """ Get the scores for the conferences that appear in the rankings. """
     if bool(four_team_race):
@@ -503,7 +576,10 @@ def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bo
             scoring_dict[cnfcol] = did_not_score
     print(scoring_dict)
 
-    return scoring_dict
+    # Handle any ties that may have occurred.
+    scoring_dict_w_broken_ties = standings_tiebreaker(scoring_dict=scoring_dict, scoring_teams=scoring_teams, conferences_init_df=conferences_init_df)
+
+    return scoring_dict_w_broken_ties
 
 
 def conference_scoring_order(scoring_dict: dict):
