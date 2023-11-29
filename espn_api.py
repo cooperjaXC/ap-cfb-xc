@@ -445,7 +445,7 @@ def all_conferences_in_rankings(formatted_rankings: dict) -> list:
     return all_conferences
 
 
-def teams_points_by_conference (formatted_rankings: dict) -> pd.DataFrame:
+def teams_points_by_conference(formatted_rankings: dict) -> pd.DataFrame:
     """ Set up the conferences' dict to create the XC scores downstream. """
     present_conferences = all_conferences_in_rankings(formatted_rankings)
     conferences_df = pd.DataFrame(columns=present_conferences)
@@ -535,8 +535,20 @@ def conference_scoring_order(scoring_dict: dict):
     print(onlyScoresDF)
 
 
-if __name__ == '__main__':
-    # the_url = espn_api_url_generator(2021, 'final')
-    the_url = espn_api_url_generator(2023, 'current')  # Good choice; has tie at #21.
+def full_ap_xc_run(year, week):
+    """ From the year and week you want, return a full report of conferences' scores. """
+    the_url = espn_api_url_generator(year, week)
     print(the_url)
     main_custom_format_rankings = poll_grabber(the_url)
+    conference_points = teams_points_by_conference(main_custom_format_rankings)
+    calc_xc_scores = calc_conference_scores(conference_points)
+    xc_scoring = conference_scoring_order(calc_xc_scores)
+    # TODO figure out what exactly to return.
+    # Maybe make that conditional too.
+    # # Make an argument in this function to let user determine what type of result they want.
+    return xc_scoring
+
+
+if __name__ == '__main__':
+    # full_ap_xc_run = espn_api_url_generator(2021, 'final')
+    full_ap_xc_run = espn_api_url_generator(2023, 'current')  # Good choice; has tie at #21.
