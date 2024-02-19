@@ -1,7 +1,5 @@
 # Note: `requirements.in` can accept comments.
-urllib3<2
+urllib3>=1.26.18, <2.0
 requests>=2.31
-cfbd
-bs4
 numpy
 pandas

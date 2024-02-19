@@ -4,8 +4,8 @@ rem Make sure you set your base python interpreter path in the set_python_path.b
 ::@set PYTHON_PATH="%USERPROFILE%\AppData\Local\Programs\Python\Python38\python.exe"
 :: Or, dynamically set the python path for base downloaded python interpreters
 ::: Just set which version of python you're using
-::@set "PYTHON_VERSION=3.7"
-@set "PYTHON_VERSION=3.10"
+@set "PYTHON_VERSION=3.7"
+::@set "PYTHON_VERSION=3.10"
 @set PYTHON_PATH="%USERPROFILE%\AppData\Local\Programs\Python\Python%PYTHON_VERSION:.=%\python.exe"
 ::
 :: ArcGIS python path
