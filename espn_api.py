@@ -585,7 +585,7 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
         # Find the teams' scores in the conference_points dataframe
         # # Subset the tied conferences
         tied_conf_points = conference_points[tied_conferences['conference'].to_list()]
-        conference_df_columns = tied_conf_points.columns
+        conference_df_columns = tied_conf_points.columns.to_list()
         scores = []
         for conf in conference_df_columns:
             # Access the score for the first non-scoring team from each tied conference.
@@ -626,9 +626,13 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
         # y = ((1/2)*len(sorted_scores)) + 0.5
 
         # Update the 'place' column based on the 'tiebreaker_posit' column
-        # # I hope this works with multiple ties needing to be broken in one scoring DF... untested as of Feb 2024.
         tb_place_dict = create_breaking_dict(len(sorted_scores))
-        onlyScoresDF['place'] = onlyScoresDF['place'] + onlyScoresDF[tiebreak_posit_col].map(tb_place_dict).fillna(0)
+        # Conditionally execute the code only for records in conference_df_columns
+        # by creating a boolean mask where True values indicate records where conference is in `conference_df_columns`.
+        # # Helps manage multiple ties at different scores in the same week (ex: tie at #2 and #4
+        mask = onlyScoresDF['conference'].isin(conference_df_columns)
+        # onlyScoresDF['place'] = onlyScoresDF['place'] + onlyScoresDF[tiebreak_posit_col].map(tb_place_dict).fillna(0)
+        onlyScoresDF.loc[mask, 'place'] += onlyScoresDF[mask][tiebreak_posit_col].map(tb_place_dict).fillna(0)
 
         # # Convert 'place' column to integer type
         # Aborted; done downstream.
@@ -686,6 +690,8 @@ def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd
     # Prepare the output
     # Order the columns
     onlyScoresDF = onlyScoresDF[['conference', 'place', xcsc, tiebreak_posit_col]]
+    # Order the rows
+    onlyScoresDF = onlyScoresDF.sort_values(by=[xcsc, tiebreak_posit_col], ascending=[True, True])
     onlyScoresDF.reset_index(inplace=True, drop=True)
 
     print(onlyScoresDF)
@@ -697,7 +703,7 @@ def full_ap_xc_run(year, week, four_team_score: bool = False):
     """ From the year and week you want, return a full report of conferences' scores. """
     four_team_score = string_to_bool(four_team_score)
     the_url = espn_api_url_generator(year, week)
-    print(the_url)
+    # print(the_url)
     main_custom_format_rankings = poll_grabber(the_url)
     conference_points = teams_points_by_conference(main_custom_format_rankings)
     calc_xc_scores = calc_conference_scores(conference_points, four_team_race=four_team_score)
@@ -714,6 +720,7 @@ def full_ap_xc_run(year, week, four_team_score: bool = False):
 
 
 if __name__ == '__main__':
-    # full_ap_xc_run = espn_api_url_generator(2021, 'final')
-    the_url = espn_api_url_generator(2021, 2)  # Team Tie
-    full_ap_xc_run = espn_api_url_generator(2023, 14)  # Good choice; has tie at #21.
+    # result = full_ap_xc_run(2021, 'final')
+    result = full_ap_xc_run(2021, 2)  # Team Tie
+    # result = full_ap_xc_run(2023, 14)  # Good choice; has tie at #21.
+    # result = full_ap_xc_run(2021, 2, four_team_score=True)  # Test 4 team run.
