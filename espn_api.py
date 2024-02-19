@@ -31,6 +31,8 @@ reference_key = '$ref'
 conference_key = 'conference'
 key_shortName = 'shortName'
 did_not_score = "DNS"
+tiebreak_posit_col = 'tiebreaker_posit'
+
 
 def string_to_bool(string_to_become_bool, suppress_prints=False):
     """Converts true/false strings into boolean items for downstream python use."""
@@ -558,49 +560,160 @@ def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bo
     return scoring_dict
 
 
-def conference_scoring_order(scoring_dict: dict):
+def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame, xcsc: str, scoring_teams: int = 5):
+    # Find the tied conferences
+    tied_scores = onlyScoresDF[xcsc].loc[onlyScoresDF[xcsc].duplicated(keep=False)].unique()
+
+    def create_breaking_dict(max_tied_teams):
+        movements = {}
+        num_teams = max_tied_teams
+        for posit in range(1, num_teams + 1):
+            movement = posit - (num_teams + 1) / 2
+            movements[posit] = movement
+        return movements
+        # # Example of the types of dicts able to be returned
+        # breaking_dict = {2: {1:-.5, 2:+.5},
+        #                  3: {1:-1,2:0,3:+1},
+        #                  4:{1:-1.5,2:-.5,3:+.5,4:+1.5},
+        #                  5: {1: -2, 2: -1, 3: 0, 4: +1,5: +2}}
+
+    # Iterate over each tied conference
+    for tscore in tied_scores:
+        # Get the rows corresponding to the tied conference and reset the index
+        tied_conferences = onlyScoresDF[onlyScoresDF[xcsc] == tscore].reset_index(drop=True)
+
+        # Find the teams' scores in the conference_points dataframe
+        # # Subset the tied conferences
+        tied_conf_points = conference_points[tied_conferences['conference'].to_list()]
+        conference_df_columns = tied_conf_points.columns
+        scores = []
+        for conf in conference_df_columns:
+            # Access the score for the first non-scoring team from each tied conference.
+            try:
+                team_score = tied_conf_points[conf].iloc[scoring_teams][1]
+            except (KeyError, TypeError):
+                team_score = np.nan
+            scores.append((conf, team_score))
+
+        # Sort teams by their 6th runner's score
+        # scores.sort(key=lambda x: x[1])
+        # Separate scores with NaN values and sort the rest
+        sorted_scores = sorted([s for s in scores if not pd.isna(s[1])], key=lambda x: x[1])
+        # Handle NaN values
+        nan_scores = [(conf, team_score) for conf, team_score in scores if pd.isna(team_score)]
+        # Combine sorted scores and NaN scores
+        sorted_scores.extend(nan_scores)
+
+        # # Update the xc_score in the onlyScoresDF dataframe
+        # onlyScoresDF.loc[tied_conferences.index, xcsc] = sum(score for _, score in scores[:5]) + scores[5][1]
+
+        # Assign tiebreaker positions to the conferences
+        tiebreaker_posit = 1
+        previous_score = np.nan
+        for conf, team_score in sorted_scores:
+            if pd.isna(team_score):
+                # If the score is NaN, assign the tiebreaker position as 1
+                onlyScoresDF.loc[onlyScoresDF['conference'] == conf, tiebreak_posit_col] = tiebreaker_posit
+            elif team_score != previous_score:
+                # If the score is different from the previous one, update the tiebreaker position
+                onlyScoresDF.loc[onlyScoresDF['conference'] == conf, tiebreak_posit_col] = tiebreaker_posit
+                previous_score = team_score
+                # Only advance if the tiebraker position if there is a non-null scoring.
+                tiebreaker_posit += 1
+
+        # # Formula for determining the multiple of the place based on n(teams) tied:
+        # # # y= 1/2x+0.5
+        # y = ((1/2)*len(sorted_scores)) + 0.5
+
+        # Update the 'place' column based on the 'tiebreaker_posit' column
+        # # I hope this works with multiple ties needing to be broken in one scoring DF... untested as of Feb 2024.
+        tb_place_dict = create_breaking_dict(len(sorted_scores))
+        onlyScoresDF['place'] = onlyScoresDF['place'] + onlyScoresDF[tiebreak_posit_col].map(tb_place_dict).fillna(0)
+
+        # # Convert 'place' column to integer type
+        # Aborted; done downstream.
+        # onlyScoresDF['place'] = onlyScoresDF['place'].astype(int)
+
+    return onlyScoresDF
+
+
+def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd.DataFrame, scoring_teams: int = 5) -> pd.DataFrame:
     """ Once you have generated conference XC scores with calc_conference_scores(), we need to see who won!
     Do that here. """
+    # Subset those conferences that are scoring.
     only_scoring_conferences = {}
     for sc in scoring_dict:
         if scoring_dict[sc] != did_not_score:
             only_scoring_conferences[sc] = scoring_dict[sc]
     print(only_scoring_conferences)
+
+    # Get conferences scores.
     # Move that data back to a pandas DF for easy working.
     # # Note: conference name is in the index.
     onlyScoresDF=pd.DataFrame(only_scoring_conferences.values(), index=only_scoring_conferences.keys())
     # Name the score column
     xcsc = 'xc_score'
     onlyScoresDF.columns = [xcsc]
-    # TODO get xcsc to integer format if possible, ie if all scores are floats with 0 in tenths space.
+    # Get xcsc to integer format if possible, ie if all scores are floats with 0 in tenths space.
+    # # Step 1: Check if all values in xcsc can be converted to integers without losing information
+    can_convert_to_int = np.all(onlyScoresDF[xcsc] == onlyScoresDF[xcsc].astype(int))
+    if can_convert_to_int:
+        # # Step 2: Convert to integer
+        onlyScoresDF[xcsc] = onlyScoresDF[xcsc].astype(int)
     # Move conference name index to its own column, and eventually make that the first column.
     onlyScoresDF['conference'] = onlyScoresDF.index
     onlyScoresDF.reset_index(drop=True, inplace=True)
     # Sort by scores in decending order. Lowest score wins!
     onlyScoresDF = onlyScoresDF.sort_values(xcsc)
-    # TODO Turns out PD rank ranks like I did manually upstream. Apply the 5th/6th runner tiebreaker upstream and have it apply here.
-    onlyScoresDF['place'] = onlyScoresDF[xcsc].rank()
+
+    # Apply the place to each scoring conference.
+    place = 'place'
+    onlyScoresDF[place] = onlyScoresDF[xcsc].rank()
+    # Apply the 5th/6th runner tiebreaker upstream and have it apply here.
+    there_are_ties = onlyScoresDF[xcsc].duplicated(keep=False).any()
+    onlyScoresDF[tiebreak_posit_col] = None
+    if there_are_ties:
+        # Break those ties!
+        onlyScoresDF = team_tiebreaker(conference_points=conference_teams_scoring_df, onlyScoresDF=onlyScoresDF, xcsc=xcsc, scoring_teams=scoring_teams)
+
+    # Get `place` to integer format if possible, ie if all places are floats with 0 in tenths space.
+    # # Step 1: Check if all values in xcsc can be converted to integers without losing information
+    can_convert_to_int = np.all(onlyScoresDF[place] == onlyScoresDF[place].astype(int))
+    if can_convert_to_int:
+        # # Step 2: Convert to integer
+        onlyScoresDF[place] = onlyScoresDF[place].astype(int)
+
+    # Prepare the output
     # Order the columns
-    onlyScoresDF= onlyScoresDF[['conference', 'place', xcsc]]
+    onlyScoresDF = onlyScoresDF[['conference', 'place', xcsc, tiebreak_posit_col]]
     onlyScoresDF.reset_index(inplace=True, drop=True)
 
     print(onlyScoresDF)
 
+    return onlyScoresDF
 
-def full_ap_xc_run(year, week):
+
+def full_ap_xc_run(year, week, four_team_score: bool = False):
     """ From the year and week you want, return a full report of conferences' scores. """
+    four_team_score = string_to_bool(four_team_score)
     the_url = espn_api_url_generator(year, week)
     print(the_url)
     main_custom_format_rankings = poll_grabber(the_url)
     conference_points = teams_points_by_conference(main_custom_format_rankings)
-    calc_xc_scores = calc_conference_scores(conference_points)
-    xc_scoring = conference_scoring_order(calc_xc_scores)
+    calc_xc_scores = calc_conference_scores(conference_points, four_team_race=four_team_score)
+    if four_team_score:
+        steams = 4
+    else:
+        steams = 5
+    xc_scoring = conference_scoring_order(calc_xc_scores, conference_points, scoring_teams=steams)
     # TODO figure out what exactly to return.
     # Maybe make that conditional too.
     # # Make an argument in this function to let user determine what type of result they want.
+    # Or, package all the data together in a big dict that has conferences as key? More like my own custom JSON API response.
     return xc_scoring
 
 
 if __name__ == '__main__':
     # full_ap_xc_run = espn_api_url_generator(2021, 'final')
-    full_ap_xc_run = espn_api_url_generator(2023, 'current')  # Good choice; has tie at #21.
+    the_url = espn_api_url_generator(2021, 2)  # Team Tie
+    full_ap_xc_run = espn_api_url_generator(2023, 14)  # Good choice; has tie at #21.
