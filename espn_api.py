@@ -20,6 +20,8 @@ A few notes:
 
 import requests, numpy as np, pandas as pd
 from datetime import datetime as dt
+from distutils.util import strtobool
+
 
 # import PollGrabber as pg
 
@@ -29,6 +31,51 @@ reference_key = '$ref'
 conference_key = 'conference'
 key_shortName = 'shortName'
 did_not_score = "DNS"
+
+def string_to_bool(string_to_become_bool, suppress_prints=False):
+    """Converts true/false strings into boolean items for downstream python use."""
+    # https://stackoverflow.com/questions/715417/converting-from-a-string-to-boolean-in-python
+    tf_input = str(string_to_become_bool)
+    if str(tf_input).lower() in [
+        "tru",
+        "tr",
+        "truth",
+        "y",
+        "yes",
+        "1",
+        "yep",
+        "oui",
+        "si",
+        "vrai",
+        "cierto",
+        "please",
+        "ye",
+    ]:
+        tf_input = "true"
+    if str(tf_input).lower() in [
+        "fal",
+        "fa",
+        "fals",
+        "no",
+        "n",
+        "na",
+        "0",
+        "nope",
+        "non",
+        "faux",
+        "falsa",
+        "falso",
+    ]:
+        tf_input = "false"
+    try:
+        the_bool_trueorfalse = bool(strtobool(tf_input))
+    except ValueError:  # Exception: # as exc:
+        if suppress_prints is False:
+            print(tf_input, "is an invalid bool. Pass a valid value.")
+            # print(exc)
+        the_bool_trueorfalse = None
+
+    return the_bool_trueorfalse
 
 
 def api_json_response(api_url):
@@ -191,7 +238,9 @@ def parse_conference_info(conference_api_url: str) -> dict:
     does_it_match = parent_group_url == fbs_d1_url
     # print(does_it_match)
     # Could also use isConference to work out the conference status. It leaves out divisions and FBS 1
-    isConference = bool(str(cjson['isConference']).title())
+    isConference = string_to_bool(str(cjson['isConference']).title())
+    if isConference:
+        return cjson
     # print(isConference)
     while (does_it_match is False) and (tries < 10):
         # print(f"Group #{tries+1} was not valid conference. Trying to access it.")
@@ -199,7 +248,10 @@ def parse_conference_info(conference_api_url: str) -> dict:
         # print(parent_group_url == fbs_d1_url)
         cjson = api_json_response(parent_group_url)
         # print(cjson)
-        isConference = bool(str(cjson['isConference']).title())
+        # Could also use isConference to work out the conference status. It leaves out divisions and FBS 1
+        isConference = string_to_bool(str(cjson['isConference']).title())
+        if isConference:
+            return cjson
         parent_group_url = cjson[parent_key][reference_key]
         does_it_match = parent_group_url == fbs_d1_url
         if does_it_match:
