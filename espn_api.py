@@ -699,8 +699,19 @@ def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd
     return onlyScoresDF
 
 
-def full_ap_xc_run(year, week, four_team_score: bool = False):
-    """ From the year and week you want, return a full report of conferences' scores. """
+def full_ap_xc_run(year: int, week, four_team_score: bool = False):
+    """
+    From the year and week you want, return a full report of conferences' scores.
+
+    Returns:
+    - dict: A dictionary containing the following keys:
+        - "url": String of the ESPN API URL.
+        - "json_teams": JSON dictionary detailing each team in the rankings for [week].
+        - "conference_teams_df": pd.DataFrame of each conference's teams receiving votes for [week] in (team, ranking) format.
+        - "conference_scores_dict": Dictionary of {conference: cross-country 4 or 5 team total}.
+        - "conference_scores_df": pd.DataFrame of the conference XC race results with ties broken.
+
+    """
     four_team_score = string_to_bool(four_team_score)
     the_url = espn_api_url_generator(year, week)
     # print(the_url)
@@ -712,11 +723,18 @@ def full_ap_xc_run(year, week, four_team_score: bool = False):
     else:
         steams = 5
     xc_scoring = conference_scoring_order(calc_xc_scores, conference_points, scoring_teams=steams)
-    # TODO figure out what exactly to return.
-    # Maybe make that conditional too.
-    # # Make an argument in this function to let user determine what type of result they want.
-    # Or, package all the data together in a big dict that has conferences as key? More like my own custom JSON API response.
-    return xc_scoring
+
+    # Package all the data together in a big dict that includes each item defined here;
+    # # each has a possible downstream use.
+    # # Loosely structured custom JSON API response for a full data pull.
+    results_dict = {
+        "url": the_url,
+        "json_teams": main_custom_format_rankings,
+        "conference_teams_df": conference_points,
+        "conference_scores_dict": calc_xc_scores,
+        "conference_scores_df": xc_scoring
+    }
+    return results_dict
 
 
 if __name__ == '__main__':
