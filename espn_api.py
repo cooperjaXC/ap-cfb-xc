@@ -20,6 +20,8 @@ conference_key = 'conference'
 key_shortName = 'shortName'
 did_not_score = "DNS"
 tiebreak_posit_col = 'tiebreaker_posit'
+final = "final"
+current = "current"
 
 
 def string_to_bool(string_to_become_bool, suppress_prints=False):
@@ -76,58 +78,83 @@ def api_json_response(api_url):
     return json_response
 
 
-def date_processing(year, week):
+def what_week_is_it():
+    """What CFB week is it?"""
+    # Get current date
+    current_date = dt.now()
+
+    # Extract day, month, and year
+    day = current_date.day
+    month = current_date.month
+    year = current_date.year
+
+    # Determine week based on current date
+    if month < 8 or (month == 8 and day <= 20):
+        # It is the offseason, so default to last season.
+        year -= 1
+        week = final
+    else:
+        week = current
+
+    return year, week
+
+def date_processing(year=None, week=None) -> tuple:
     """ Processes raw inputs of week and year for downstream use in multiple functions """
     prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
-    currentlist = ["current", "present", "default", None, str(None), "now"]
-    finallist = ["final", "f", "complete", "total", "last", "fin"]
+    currentlist = [current, "present", "default", None, str(None), "now"]
+    finallist = [final, "f", "complete", "total", "last", "fin"]
+
+    # WEEK FORMATTING
+    if week is None:
+        week = current
+    # Preseason?
+    week = str(week)
+    if week.lower() in prelist:
+        week = "1"
+    # Current week?
+    elif week.lower() in currentlist:
+        week = current
+    # Final?
+    elif week.lower() in finallist:
+        week = final
+    # If the week entered is higher than 16, assume user wants final rankings.
+    try:
+        # 16 is the max # of regular season weeks allowed, tho usually 15. "CFB Leap Year." See 2014 & 2019
+        if int(week) > 16:
+            week = final
+    except:
+        pass
 
     # YEAR FORMATTING
+    this_year = dt.now().year
+    if year is None:
+        year = this_year
     year = str(year)
     # Format abbreviated dates for the 2000s
     if len(year) != 4:
         if len(year) == 2 and (year[0] == "1" or year[0] == "0"):
             # Assume the entry was an abreviation of a year. Add the 20__ before it.
             year = "20" + str(year)
-
-    # WEEK FORMATTING
-    # Preseason?
-    week = str(week)
-    if week.lower() in prelist:
-        week = "1"
-
-    # Current week?
-    elif week.lower() in currentlist:
-        week = "current"
-
-    # Final?
-    elif week.lower() in finallist:
-        week = "final"
-    # If the week entered is higher than 16, assume user wants final rankings.
-    try:
-        # 16 is the max # of regular season weeks allowed, tho usually 15. "CFB Leap Year." See 2014 & 2019
-        if int(week) > 16:
-            week = "final"
-    except:
-        pass
-
+    # Check if this is being run in the offseason.
+    if year == str(this_year):
+        year, _ = what_week_is_it()
+        year = str(year)
     if int(year) < int(2014):
         print(
             "Warning: Others Receiving Votes not stored by ESPN before the 2014 season."
         )
 
-    # Compile into a list for returning
-    #    Must return a list of strings
-    datelist = [week, year]
-    return year, week
+    # Compile for returning a tuple of strings
+    return str(year), str(week)
 
 
 
-def espn_api_url_generator(year=dt.now().year, week='current') -> str:
+def espn_api_url_generator(year=None, week=None) -> str:
     """ Take a week and year request from the user and generate & return the correct ESPN API URL from it.
     Very similar to the PollGrabber.apweeklyurlgenerator() function from v1"""
 
     # Properly format the date based on user input using a helper function
+    # # Will handle Null/None inputs by the user.
     year, week = date_processing(year=year, week=week)
 
     # Prepare substrings to create the URL
@@ -147,12 +174,12 @@ def espn_api_url_generator(year=dt.now().year, week='current') -> str:
     # base_espn_api_pth + year + season_type + week + chosen_poll_path
 
     # Is the week entered indicating the final week?
-    if week.lower() == "final":
+    if week.lower() == final:
         week = "/weeks/1"
         season_type = "/types/3"
         url = base_espn_api_pth + year + season_type + week + chosen_poll_path
     # Check for entries wanting the most up-to-date rankings
-    elif week.lower() == "current":  # in currentlist:
+    elif week.lower() == current:  # in currentlist:
         # The default link here returns a JSON in a slightly different format than the week-by-week JSON response.
         # So, we can't just use the default link, eg `espn_api`  # default link
         default_url = espn_api  # default link
@@ -260,59 +287,8 @@ def get_team_info(team_api_url: str) -> dict:
      We need to parse that API's JSON to figure out what team it's referencing. """
     teamjson = api_json_response(team_api_url)
     # print(teamjson['nickname'])
-
-    # Looks like this (example for UGA, 2023 week 3):
+    # # Looks like this (example for UGA, 2023 week 3):
     # http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2021/teams/61?lang=en&region=us
-    # RESULT JSON KEYS:
-    # dict_keys(['$ref', 'id', 'guid', 'uid', 'alternateIds', 'slug', 'location', 'name', 'nickname', 'abbreviation',
-    # 'displayName', 'shortDisplayName', 'color', 'alternateColor', 'isActive', 'isAllStar', 'logos', 'record',
-    # 'oddsRecords', 'athletes', 'venue', 'groups', 'ranks', 'statistics', 'leaders', 'links', 'injuries', 'notes',
-    # 'againstTheSpreadRecords', 'awards', 'franchise', 'projection', 'events', 'coaches', 'college'])
-    #
-    # Key keys (lol): "location" = team name; "name" = mascot; "nickname" = team name abbrev.;
-    # # "displayName" = location + name; "color" & "alternateColor" (use for graphs)
-    #
-    # EX for FSU:
-    # {
-    # $ref http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52?lang=en&region=us
-    # id 52
-    # guid fa181128-4809-a209-1add-d5a3b0cefd3c
-    # uid s:20~l:23~t:52
-    # alternateIds {'sdr': '5995'}
-    # slug florida-state-seminoles
-    # location Florida State
-    # name Seminoles
-    # nickname Florida St
-    # abbreviation FSU
-    # displayName Florida State Seminoles
-    # shortDisplayName Seminoles
-    # color 782f40
-    # alternateColor ceb888
-    # isActive True
-    # isAllStar False
-    # logos [{'href': 'https://a.espncdn.com/i/teamlogos/ncaa/500/52.png', 'width': 500, 'height': 500, 'alt': '', 'rel': ['full', 'default'], 'lastUpdated': '2018-06-05T12:08Z'}, {'href': 'https://a.espncdn.com/i/teamlogos/ncaa/500-dark/52.png', 'width': 500, 'height': 500, 'alt': '', 'rel': ['full', 'dark'], 'lastUpdated': '2018-06-05T12:08Z'}]
-    # record {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/record?lang=en&region=us'}
-    # oddsRecords {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/0/teams/52/odds-records?lang=en&region=us'}
-    # athletes {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/athletes?lang=en&region=us'}
-    # venue {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/venues/3697?lang=en&region=us', 'id': '3697', 'fullName': 'Doak Campbell Stadium', 'address': {'city': 'Tallahassee', 'state': 'FL', 'zipCode': '32304'}, 'capacity': 79560, 'grass': True, 'indoor': False, 'images': [{'href': 'https://a.espncdn.com/i/venues/college-football/day/interior/3697.jpg', 'width': 2000, 'height': 1125, 'alt': '', 'rel': ['full', 'day', 'interior']}]}
-    # groups {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/groups/1?lang=en&region=us'}
-    # ranks {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/ranks?lang=en&region=us'}
-    # statistics {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/statistics?lang=en&region=us'}
-    # leaders {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/leaders?lang=en&region=us'}
-    # links [{'language': 'en-US', 'rel': ['clubhouse', 'desktop', 'team'], 'href': 'https://www.espn.com/college-football/team/_/id/52/florida-state-seminoles', 'text': 'Clubhouse', 'shortText': 'Clubhouse', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['clubhouse', 'mobile', 'team'], 'href': 'http://www.espn.com/college-football/team/_/id/52/florida-state-seminoles', 'text': 'Clubhouse', 'shortText': 'Clubhouse', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['roster', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/team/roster/_/id/52', 'text': 'Roster', 'shortText': 'Roster', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['stats', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/team/stats/_/id/52', 'text': 'Statistics', 'shortText': 'Statistics', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['schedule', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/team/schedule/_/id/52', 'text': 'Schedule', 'shortText': 'Schedule', 'isExternal': False, 'isPremium': False}, {'language': 'en-US', 'rel': ['awards', 'desktop', 'team'], 'href': 'http://www.espn.com/college-football/awards/_/team/52', 'text': 'Awards', 'shortText': 'Awards', 'isExternal': False, 'isPremium': False}]
-    # injuries {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/teams/52/injuries?lang=en&region=us'}
-    # notes {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/teams/52/notes?lang=en&region=us'}
-    # againstTheSpreadRecords {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/teams/52/ats?lang=en&region=us'}
-    # awards {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/awards?lang=en&region=us'}
-    # franchise {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/franchises/52?lang=en&region=us'}
-    # projection {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/projection?lang=en&region=us'}
-    # events {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/events?lang=en&region=us'}
-    # coaches {'$ref': 'http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/teams/52/coaches?lang=en&region=us'}
-    # college {'$ref': 'http://sports.core.api.espn.com/v2/colleges/52?lang=en&region=us'}
-    # }
-
-    # Maybe we just keep this big record and just add sensical conference info to it. We may need some data downstream.
-    # # Can always come back and whittle the big dict down.
 
     # Get the conference data from its API endpoint
     conference_URL = teamjson['groups'][reference_key]
@@ -436,7 +412,7 @@ def handle_ties(all_teams_receiving_votes_dict: dict) -> dict:
             # average_rank = (rank * teamspervote) / teamspervote
             average_rank = sum(calc_range) / len(calc_range)
             broken_ties_dict[average_rank] = teams
-    print(broken_ties_dict)
+    # print(broken_ties_dict)
 
     return broken_ties_dict
 
@@ -687,7 +663,7 @@ def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd
     return onlyScoresDF
 
 
-def full_ap_xc_run(year: int, week, four_team_score: bool = False):
+def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     """
     From the year and week you want, return a full report of conferences' scores.
 
@@ -727,6 +703,10 @@ def full_ap_xc_run(year: int, week, four_team_score: bool = False):
 
 if __name__ == '__main__':
     # result = full_ap_xc_run(2021, 'final')
-    result = full_ap_xc_run(2021, 2)  # Team Tie
+    # result = full_ap_xc_run(2021, 2)  # Team Tie
     # result = full_ap_xc_run(2023, 14)  # Good choice; has tie at #21.
     # result = full_ap_xc_run(2021, 2, four_team_score=True)  # Test 4 team run.
+    # print(espn_api_url_generator(year=2016,week=3))
+    # print(espn_api_url_generator(week=3))
+    # print(espn_api_url_generator())
+    result = full_ap_xc_run()
