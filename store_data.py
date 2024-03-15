@@ -21,23 +21,51 @@ def prep_weekly_results(weekly_result_dict: dict) -> pd.DataFrame:
     return base_df
 
 
+def what_week_is_current(week, year):
+    """ The week is 'current' for the present year. But what week is that exactly numerically (or Final)?"""
+    year, week = epi.date_processing(year, week)
+    if week == epi.current:
+        # Is the 'current' week actually the final rankings of the season?
+        year, week = epi.what_week_is_it()
+        if week == epi.current:
+            # We have a 'current' week string that is not the final ranking of the year.
+            # We need to numerilize that for storing the data correctly.
+            week = epi.extract_week_from_url(epi.espn_api_url_generator(year, week))
+
+    return week
+
+
 def summarize_data(week, conference_score_tuple: list, n_teams_str: str = pent, existing_summary_df: pd.DataFrame = None):
+    """ """
+    preseason_title = epi.preseason.title()
+    final_title = epi.final.title()
     # Define the potential weeks
-    potential_weeks = ["Preseason", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6",
+    potential_weeks = [preseason_title, "Week 2", "Week 3", "Week 4", "Week 5", "Week 6",
                        "Week 7", "Week 8", "Week 9", "Week 10", "Week 11", "Week 12",
-                       "Week 13", "Week 14", "Week 15", "Week 16", "Final"]
+                       "Week 13", "Week 14", "Week 15", "Week 16", final_title]
 
     # Check if the week is in the potential weeks
-    week_str = epi.date_processing(2014,week)[1]
-    if week_str=='1':
-        week_str = "Preseason"
-    elif str(week) =='1':
-        week_str = "Preseason"
+    # Standardize the week formatting, including catching if it is the final AP ranking of the season.
+    dummy_year = 2014
+    week_str = epi.date_processing(dummy_year,week)[1]
+    if week_str == epi.current:
+        # We have a 'current' week string. We need to numerilize that.
+        week_str = epi.extract_week_from_url(epi.espn_api_url_generator(dummy_year,week_str))
+    # Make sure the preseason week is handled correctly
+    if week_str=='1' or str(week) =='1':
+        week_str = preseason_title
+    # Make sure the Final week is handled correctly
+    try:
+        if int(week) > 16 or week_str == '17':
+            week_str = final_title
+    except ValueError:
+        pass
     week_str = week_str.title()
-    if week_str not in ["Preseason", "Final"]:
+    # Not a book-end ranking week?
+    if week_str not in [preseason_title, final_title]:
         week_str = f"Week {week_str}"
     if week_str not in potential_weeks:
-        print("Week not found in potential weeks. Cannot insert data.")
+        print(f"Week '{week_str}' not found in potential weeks. Cannot insert data.")
         return
 
     # Define the summary dataset
@@ -70,7 +98,12 @@ def summarize_data(week, conference_score_tuple: list, n_teams_str: str = pent, 
     return summary_df
 
 
-def write_weekly_results(year, week, prepped_result_df: pd.DataFrame, four_team_race: bool = False):
+def write_weekly_results(year, week, prepped_result_df: pd.DataFrame, four_team_race: bool = False) -> pd.DataFrame:
+    """ Record the weekly results as individual CSVs & append that data to the summary statistics for the year and n(Team) race. """
+    # Manage input dates
+    year, week = epi.date_processing(year, week)
+    week = what_week_is_current(week=week,year=year)
+
     # Define base directory and subdirectories
     base_dir = os.path.join(os.getcwd(), "data", str(year))
     team_dir = quad if four_team_race else pent
@@ -106,7 +139,7 @@ def write_weekly_results(year, week, prepped_result_df: pd.DataFrame, four_team_
     return the_summary_data
 
 
-def store_weekly_results(year: int, week, four_team_score: bool = False):
+def store_weekly_results(year: int = None, week=None, four_team_score: bool = False):
     """Full process to store weekly results. """
     four_team_score = epi.string_to_bool(four_team_score)
     results_dict = epi.full_ap_xc_run(year, week, four_team_score=four_team_score)
@@ -135,6 +168,11 @@ def store_all_data_2014_to_present():
 if __name__ == '__main__':
     # Example usage:
     # stored = store_weekly_results(2021, 1, four_team_score = False)
-    # stored = store_weekly_results(2021, 2, four_team_score = False)
+    # stored = store_weekly_results()
+    # stored = store_weekly_results(2023, 'preseason', four_team_score = False)
     # print(stored)
-    store_all_data_2014_to_present()
+    stored = store_weekly_results(2014, 'current', four_team_score=False)
+    print(stored)
+    # stored = store_weekly_results(2023, 'final', four_team_score=False)
+    # print(stored)
+    # store_all_data_2014_to_present()

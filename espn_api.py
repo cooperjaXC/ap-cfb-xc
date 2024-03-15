@@ -14,7 +14,6 @@ from distutils.util import strtobool
 
 # Define multi-function variables
 espn_api = "http://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
-historical_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
 reference_key = '$ref'
 conference_key = 'conference'
 key_shortName = 'shortName'
@@ -22,6 +21,7 @@ did_not_score = "DNS"
 tiebreak_posit_col = 'tiebreaker_posit'
 final = "final"
 current = "current"
+preseason ="preseason"
 
 
 def string_to_bool(string_to_become_bool, suppress_prints=False):
@@ -100,7 +100,7 @@ def what_week_is_it():
 
 def date_processing(year=None, week=None) -> tuple:
     """ Processes raw inputs of week and year for downstream use in multiple functions """
-    prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
+    prelist = [preseason, "initial", "first", "init", "pre", str(0)]
     currentlist = [current, "present", "default", None, str(None), "now"]
     finallist = [final, "f", "complete", "total", "last", "fin"]
 
@@ -137,7 +137,10 @@ def date_processing(year=None, week=None) -> tuple:
             year = "20" + str(year)
     # Check if this is being run in the offseason.
     if year == str(this_year):
-        year, _ = what_week_is_it()
+        if week == current:
+            year, week = what_week_is_it()
+        else:
+            year, _ = what_week_is_it()
         year = str(year)
     if int(year) < int(2014):
         print(
@@ -146,7 +149,6 @@ def date_processing(year=None, week=None) -> tuple:
 
     # Compile for returning a tuple of strings
     return str(year), str(week)
-
 
 
 def espn_api_url_generator(year=None, week=None) -> str:
@@ -161,7 +163,7 @@ def espn_api_url_generator(year=None, week=None) -> str:
     aponlylinkespn2 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
     base_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/"
                               # "2023/types/2/weeks/1/rankings/1"
-    # defaultlink = historical_espn_api_pth
+    # defaultlink = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
 
     # Determine what type of poll you want
     ap_poll_path_code = "1"
@@ -174,40 +176,46 @@ def espn_api_url_generator(year=None, week=None) -> str:
     # base_espn_api_pth + year + season_type + week + chosen_poll_path
 
     # Is the week entered indicating the final week?
+    def final_week_vars():
+        fweek = "/weeks/1"
+        fseason_type = "/types/3"
+        return fweek,fseason_type,base_espn_api_pth + year + fseason_type + fweek + chosen_poll_path
     if week.lower() == final:
-        week = "/weeks/1"
-        season_type = "/types/3"
-        url = base_espn_api_pth + year + season_type + week + chosen_poll_path
+        week,season_type, url = final_week_vars()
     # Check for entries wanting the most up-to-date rankings
-    elif week.lower() == current:  # in currentlist:
-        # The default link here returns a JSON in a slightly different format than the week-by-week JSON response.
-        # So, we can't just use the default link, eg `espn_api`  # default link
-        default_url = espn_api  # default link
-        # Instead, the default URL contains within its JSON response the correct, expected URL.
-        # # It just needs some slight tweaks.
-        # So, we need to
-        # 1) get the response from the default,
-        # 2) grab the correct URL,
-        # 3) transform it,
-        # and 4) set it as the URL for this function.
-        #
-        # 1) get the response from the default & extract the JSON
-        resp_json = api_json_response(default_url)
-        # 2) grab the correct URL
-        all_rankings_resp = resp_json['rankings']
-        ap_top_tf_resp = [rnk for rnk in all_rankings_resp if str(ap_poll_path_code) == rnk['id']][0]
-        target_url = ap_top_tf_resp[reference_key]
-        # 3) transform the URL
-        # # Remove all the crud after the "?"
-        # # Keep the part before the "?" character
-        after_remove_char = "?"
-        target_url = target_url.split(after_remove_char, 1)[0]
-        # # Replace the '.pvt' with '.com'
-        target_url = target_url.replace('.pvt', '.com')
-        # 4) set it as the URL for this function.
-        url = target_url
-        # Get rid of useless variables
-        del target_url, resp_json, all_rankings_resp,ap_top_tf_resp
+    elif week.lower() == current:
+        if str(year) == str(what_week_is_it()[0]):
+            # The default link here returns a JSON in a slightly different format than the week-by-week JSON response.
+            # So, we can't just use the default link, eg `espn_api`  # default link
+            default_url = espn_api  # default link
+            # Instead, the default URL contains within its JSON response the correct, expected URL.
+            # # It just needs some slight tweaks.
+            # So, we need to
+            # 1) get the response from the default,
+            # 2) grab the correct URL,
+            # 3) transform it,
+            # and 4) set it as the URL for this function.
+            #
+            # 1) get the response from the default & extract the JSON
+            resp_json = api_json_response(default_url)
+            # 2) grab the correct URL
+            all_rankings_resp = resp_json['rankings']
+            ap_top_tf_resp = [rnk for rnk in all_rankings_resp if str(ap_poll_path_code) == rnk['id']][0]
+            target_url = ap_top_tf_resp[reference_key]
+            # 3) transform the URL
+            # # Remove all the crud after the "?"
+            # # Keep the part before the "?" character
+            after_remove_char = "?"
+            target_url = target_url.split(after_remove_char, 1)[0]
+            # # Replace the '.pvt' with '.com'
+            target_url = target_url.replace('.pvt', '.com')
+            # 4) set it as the URL for this function.
+            url = target_url
+            # Get rid of useless variables
+            del target_url, resp_json, all_rankings_resp,ap_top_tf_resp
+        else:
+            # The user likely means an older year's final rankings.
+            week, season_type, url = final_week_vars()
     else:
         week = "/weeks/"+ str(week)
         season_type = "/types/2"
@@ -216,6 +224,17 @@ def espn_api_url_generator(year=None, week=None) -> str:
     print("Week", week.replace("/weeks/", "")+',', year, "season")
     return url
 
+
+def extract_week_from_url(url:str) -> str:
+    """ From the ESPN API URL, figure out what week it is.
+    Use result of espn_api_url_generator() function as string input."""
+    # defaultlink = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
+    # Find the index of "weeks/"
+    index = url.find("weeks/") + len("weeks/")
+    # Extract the numeral after "weeks/"
+    week_num = url[index:].split("/")[0]
+    # print(week_num)
+    return week_num
 
 def parse_conference_info(conference_api_url: str) -> dict:
     """
@@ -314,7 +333,7 @@ def get_top_tfive(top_twentyfive_json: list) -> dict:
         # Each team's keys: dict_keys(['current', 'previous', 'points', 'firstPlaceVotes', 'trend', 'record', 'team', 'date', 'lastUpdated'])
         team_api_url = team['team'][reference_key]
         # Add the team info to the dictionary storing all this data.
-        ranking = team['current']
+        ranking = team[current]
         # Using the embedded team API, get all the info you need on that team.
         team_info_dict = get_team_info(team_api_url)
 
@@ -703,6 +722,9 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
 
 if __name__ == '__main__':
     # result = full_ap_xc_run(2021, 'final')
+    # print(date_processing(2014))
+    # print(espn_api_url_generator(2014))
+    # result = full_ap_xc_run(2014, 'current')
     # result = full_ap_xc_run(2021, 2)  # Team Tie
     # result = full_ap_xc_run(2023, 14)  # Good choice; has tie at #21.
     # result = full_ap_xc_run(2021, 2, four_team_score=True)  # Test 4 team run.
