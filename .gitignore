@@ -1,7 +1,11 @@
 *.idea
+*.idea/
 *.pyc
 *.lnk
 2019w2_number25tieissue_pythonoutput.txt
 pulledcodefromEspnAp.docx
 pulledcodefromEspnAp2.docx
 scratchfiles/
+venv/
+AP_XC _Shortcut.lnk
+Shortcut_RandomTournaments.lnk
