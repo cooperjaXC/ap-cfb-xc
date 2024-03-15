@@ -1,4 +1,5 @@
 import os, warnings
+from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 
@@ -7,6 +8,25 @@ import espn_api as epi
 quad = "4_team"
 pent = "5_team"
 
+
+def what_week_is_it():
+    "What CFB week is it?"
+    # Get current date
+    current_date = dt.now()
+
+    # Extract day, month, and year
+    day = current_date.day
+    month = current_date.month
+    year = current_date.year
+
+    # Determine week based on current date
+    if month < 8 or (month == 8 and day <= 20):
+        year -= 1
+        week = "final"
+    else:
+        week = "current"
+
+    return year, week
 
 def prep_weekly_results(weekly_result_dict: dict) -> pd.DataFrame:
     """Rely on the 'espn_api.full_ap_xc_run()' function as input.
@@ -114,10 +134,26 @@ def store_weekly_results(year: int, week, four_team_score: bool = False):
     return written_results
 
 
+def store_all_data_2014_to_present():
+    # Ensure the dates are in proper format
+    # year, week = epi.date_processing(year, week)
+    # if week == 'final':
+    year, week = what_week_is_it()
+    # Loop through years from 2014 to present year
+    for y in range(2014, year + 1):
+        # Loop through weeks from 1 to 17
+        for w in range(1, 18):
+            # Call store_weekly_results function twice, with four_team_score False and True
+            for four_team_score in [False, True]:
+                try:
+                    store_weekly_results(year=y, week=w, four_team_score=four_team_score)
+                except:
+                    print(f"Error running {y}'s week {w} AP XC ranking.\n  Likely hasn't occured yet.")
+
+
 if __name__ == '__main__':
     # Example usage:
     # stored = store_weekly_results(2021, 1, four_team_score = False)
-    stored = store_weekly_results(2021, 2, four_team_score = False)
-
-    print(stored)
-
+    # stored = store_weekly_results(2021, 2, four_team_score = False)
+    # print(stored)
+    store_all_data_2014_to_present()

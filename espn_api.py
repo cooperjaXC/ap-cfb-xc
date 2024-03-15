@@ -79,7 +79,7 @@ def api_json_response(api_url):
 def date_processing(year, week):
     """ Processes raw inputs of week and year for downstream use in multiple functions """
     prelist = ["preseason", "initial", "first", "init", "pre", str(0)]
-    currentlist = ["current", "present", "default", None, str(None)]
+    currentlist = ["current", "present", "default", None, str(None), "now"]
     finallist = ["final", "f", "complete", "total", "last", "fin"]
 
     # YEAR FORMATTING
