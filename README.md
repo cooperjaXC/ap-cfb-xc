@@ -1,9 +1,11 @@
 # AP College Football Cross-Country Scoring
+***A Data-Driven Approach to Determining Conference Supremacy***
 
 This repository implements a novel method for evaluating the best college football conferences
 using a cross-country scoring mechanism.
-This method ranks conferences based on the positions of their top teams in the final season polls,
-providing an objective comparison of conference strengths.
+This method ranks conferences based on the positions of their top teams in [the Associated Press's Top 25 rankings](https://apnews.com/hub/ap-top-25-college-football-poll)
+before, throughout, and at the end of each college football season.
+This provides an objective, measurable comparison of conference strength for every week of the season.
 
 ## Background
 
@@ -11,20 +13,23 @@ Inspired by the team scoring in cross-country racing,
 this method sums the "finishing positions," or the ranking, of the top five teams within each conference.
 The conference with the lowest total score is deemed the best,
 emphasizing overall depth and strength rather than just top-tier performance
-(i.e., whichever conference produced the most recent national champion).
+(like whichever conference produced the most recent national champion, or bogus math like detailed in the below tweet).
+
+<blockquote class="twitter-tweet" data-theme="dark"><p lang="en" dir="ltr">Take a look at the average AP Ranking by Power Five Conference 📊<br><br>Which conference surprises you the most? 👀 <a href="https://t.co/qJ0AWkQkOm">pic.twitter.com/qJ0AWkQkOm</a></p>&mdash; FOX College Football (@CFBONFOX) <a href="https://twitter.com/CFBONFOX/status/1615756033103626274?ref_src=twsrc%5Etfw">January 18, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 This approach was first introduced in 2015 and updated in 2019. You can read more about the method and its evolution in the following blog posts:
 - [2015: The Race for Supremacy](https://cooperconferencecolumn.wordpress.com/2015/08/25/the-race-for-supremacy-college-football-conferences-evaluated-by-a-cross-country-scoring-system/)
 - [2019: AP XC - An Update](https://cooperconferencecolumn.wordpress.com/2019/08/19/ap-xc-an-update/)
 
+This code is built upon the ESPN College Football API, shown by [Akshay Easwaran](https://github.com/akeaswaran) to have
+[hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
+with reliable AP ranking information back to 2014. Thus, this code is dependent upon the quality and stability of ESPN's API data structure.
+
 ## Repository Structure
 
-- `.gitignore`: Specifies files and directories to be ignored by Git.
-- `data/`: Directory containing input data files.
-- `espn_api.py`: Script for fetching data from the ESPN API.
-- `LICENSE`: License file for the repository.
-- `requirements.in`: File listing the Python dependencies for the project.
-- `store_data.py`: Script for storing data fetched from external sources.
+- [`data`](data): Directory containing input data files.
+- [`espn_api.py`](espn_api.py): Script for fetching data from the ESPN API.
+- [`store_data.py`](store_data.py): Script for storing data fetched from external sources.
 
 ## Python Environments
 Make sure all [required packages](requirements.in) are installed. You can do this in a few ways:
