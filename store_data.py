@@ -36,7 +36,16 @@ def what_week_is_current(week, year):
 
 
 def summarize_data(week, conference_score_tuple: list, n_teams_str: str = pent, existing_summary_df: pd.DataFrame = None):
-    """ """
+    """
+    Purpose: Summarizes data for a given week and conference score tuple. It standardizes the week formatting, handles potential errors, and writes the summary data to a file.
+Inputs:
+week: The week to summarize.
+conference_score_tuple: List of conference scores.
+n_teams_str: String indicating the number of teams (default is pent).
+existing_summary_df: Existing summary DataFrame (optional).
+Outputs:
+The summary data as a DataFrame.
+    """
     preseason_title = epi.preseason.title()
     final_title = epi.final.title()
     # Define the potential weeks

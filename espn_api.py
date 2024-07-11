@@ -98,6 +98,7 @@ def what_week_is_it():
 
     return year, week
 
+
 def date_processing(year=None, week=None) -> tuple:
     """ Processes raw inputs of week and year for downstream use in multiple functions """
     prelist = [preseason, "initial", "first", "init", "pre", str(0)]
@@ -235,6 +236,7 @@ def extract_week_from_url(url:str) -> str:
     week_num = url[index:].split("/")[0]
     # print(week_num)
     return week_num
+
 
 def parse_conference_info(conference_api_url: str) -> dict:
     """
