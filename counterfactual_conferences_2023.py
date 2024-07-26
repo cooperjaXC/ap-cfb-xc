@@ -161,6 +161,26 @@ def realign_teams(df):
                     print("- - - - - - - - - - - - - - - -")
 
     # TODO Now re-sort the teams and  re-calculate team scores
+    print(working_conf_dict,'\n')
+
+    def sort_conference_tuples(working_conf_dict):
+        """ Function to sort the tuples in each conference"""
+        sorted_dict = {}
+        for conference, teams in working_conf_dict.items():
+            # Sort the list of teams by the second item in the tuple (score), then by the first item (team name) if scores are equal
+            sorted_teams = sorted(teams, key=lambda x: (float(x[1]), x[0]) if x[1].replace('.', '', 1).isdigit() else (
+            float('inf'), x[0]))
+            sorted_dict[conference] = sorted_teams
+        return sorted_dict
+
+    # Sort the conference tuples
+    sorted_conf_dict = sort_conference_tuples(working_conf_dict)
+    # Remove conferences with no teams
+    sorted_conf_dict = {conf: teams for conf, teams in sorted_conf_dict.items() if teams}
+
+    # Print the sorted dictionary
+    for key, values in sorted_conf_dict.items():
+        print(f"{key}: {values}")
 
     return df
 
