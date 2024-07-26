@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 
 
@@ -16,8 +17,21 @@ def resort_columns(dataframe: pd.DataFrame):
     return dataframe
 
 
-def realign_teams(df) -> pd.DataFrame:
-    """Function to realign teams"""
+def clean_dataframe(df):
+    """ Clean the DataFrame by stripping whitespace and replacing empty strings with NaN """
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df.replace("", pd.NA, inplace=True)
+    return df
+
+def find_conference_column(df, conference):
+    """ Returns the index of the column for the target conference. """
+    for col in df.columns:
+        if conference in str(col):
+            return col
+    return None
+
+def realign_teams(df):
+    """ Function to realign teams """
     # Define the team movements
     team_movements = {
         'SEC': ['Oklahoma', 'Texas'],
@@ -27,61 +41,55 @@ def realign_teams(df) -> pd.DataFrame:
         'American': ['Charlotte', 'Florida Atlantic', 'North Texas', 'Rice', 'UAB', 'UTSA']
     }
 
-    # Function to find the column containing the specified conference
-    def find_conference_column(d_f, conference) -> int:
-        """ Returns the index of the column for the target conference. """
-        # print(d_f)
-        # print(conference)
-        for col in d_f.columns:
-            # print(str(col))
-            # cell_value = d_f.at[0, col]
-            # print(cell_value)
-            # if isinstance(col, str) and conference in col:
-            if conference in str(col):
-                # print("!!!!!!!!!!!!!!!!!!!!")
-                return col
-        # print("------------")
-        return None
-
     # Create a map of old to new conferences
     new_conference_map = {}
     for new_conference, teams in team_movements.items():
         for team in teams:
             new_conference_map[team] = new_conference
 
+    problem_teams = ("Washington", "Texas")
     # Iterate over each cell and update the conference
-    for row in range(1, len(df)):
-        for col in range(len(df.columns)):
+    for col in range(len(df.columns)):
+        for row in range(1, len(df)):
+        # for col in range(len(df.columns)):
             cell_value = df.iat[row, col]
             if isinstance(cell_value, str):
                 team_name = cell_value.strip("()").split(",")[0].strip("'")
-                # score = cell_value.strip("()").split(",")[1].strip("'")
+                print(team_name)
+                pyes = False
+                if team_name in problem_teams:
+                    pyes = True
+                    print(team_name)
                 if team_name in new_conference_map:
-                    # df.iat[row, col] = f"('{team_name}', '{score})"
                     move_to_conf = new_conference_map[team_name]
-                    print(move_to_conf,'\n"- - - - - - - - - -')
+                    if pyes:
+                        print(move_to_conf)
                     target_col = find_conference_column(df, move_to_conf)
-                    # Get the position of the column
+                    if target_col is None:
+                        print(f"Conference {move_to_conf} not found for team {team_name}.")
+                        continue
                     targ_column_position = df.columns.get_loc(target_col)
+
                     # Find the first unoccupied row in the target column
-                    target_row = None
-                    for roww in range(len(df)):
-                        # print(roww, target_col, targ_column_position)
-                        if pd.isna(df.iat[roww, targ_column_position]) or df.iat[roww, targ_column_position] == '':
-                            target_row = roww
-                            break
+
+                    # Find the first NaN index in column 'A'
+                    first_nan_index = df[target_col].isna().idxmax() if df[target_col].isna().any() else len(df)
+                    # If there is no NaN value in the column, extend the DataFrame
+                    if first_nan_index == len(df):
+                        df = df.append({col: np.nan for col in df.columns}, ignore_index=True)
+
+                    # target_row = None
+                    # for roww in range(len(df)):
+                    #     if pd.isna(df.iat[roww, targ_column_position]) or df.iat[roww, targ_column_position] == '':
+                    #         target_row = roww
+                    #         break
+
                     # Move the data
-                    if target_row is not None:
-                        # Set the target cell value in the new conference
-                        df.iat[target_row, targ_column_position] = cell_value
-
-                        # Clear the source cell value in the old conference.
-                        df.iat[row, col] = ""
-                    else:
-                        print(f"{team_name} is unable to be moved to {move_to_conf} because of a target-row definition issue.")
-
-    # Re-sort each column
-
+                    # if target_row is not None:
+                    df.iat[first_nan_index, targ_column_position] = cell_value
+                    df.iat[row, col] = ""
+                    # else:
+                    #     print(f"{team_name} is unable to be moved to {move_to_conf} because of a target-row definition issue.")
 
     return df
 
