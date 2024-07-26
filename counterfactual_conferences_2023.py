@@ -199,6 +199,28 @@ def realign_teams(df: pd.DataFrame, n_teams_score: int = 5):
     # Print the sorted dictionary
     for key, values in sorted_conf_dict.items():
         print(f"{key}: {values}")
+    print('\n')
+
+    # Now convert this dict back into a DF
+    # Create a list of columns for the DataFrame
+    columns = [conf for conf in sorted_conf_dict.keys()]
+
+    # Find the maximum number of teams in any conference
+    max_teams = max(len(teams) for teams in sorted_conf_dict.values())
+
+    # Create an empty DataFrame with the number of columns as there are conferences
+    df = pd.DataFrame(index=range(max_teams + 1), columns=range(len(columns)))
+
+    # Set the first row with the conference information
+    for i, conf in enumerate(columns):
+        df.iat[0, i] = conf
+
+    # Populate the DataFrame with the team tuples
+    for col_index, conf in enumerate(columns):
+        teams = sorted_conf_dict[conf]
+        for row_index, team in enumerate(teams, start=1):  # Start at row 1 to skip the header
+            df.iat[row_index, col_index] = team
+    print(df)
 
     return df
 
@@ -210,9 +232,9 @@ if __name__ == '__main__':
     df_5team = pd.read_csv(os.path.join(path_to_your_file, 'data/2023/5_team/2023_week_final.csv'), header=None)
 
     # Realign teams in both DataFrames
-    df_4team_realigned = realign_teams(df_4team)
-    df_5team_realigned = realign_teams(df_5team)
+    df_4team_realigned = realign_teams(df_4team, n_teams_score=4)
+    df_5team_realigned = realign_teams(df_5team, n_teams_score=5)
 
     # Save the updated DataFrames to CSV
-    df_4team_realigned.to_csv(os.path.join(path_to_your_file,'data/2023/4_team/2023_week_final_4team_realigned.csv'), index=False)
-    df_5team_realigned.to_csv(os.path.join(path_to_your_file,'data/2023/5_team/2023_week_final_5team_realigned.csv'), index=False)
+    df_4team_realigned.to_csv(os.path.join(path_to_your_file,'data/2023/4_team/2023_week_final_4team_realigned.csv'), index=False, header=False)
+    df_5team_realigned.to_csv(os.path.join(path_to_your_file,'data/2023/5_team/2023_week_final_5team_realigned.csv'), index=False, header=False)
