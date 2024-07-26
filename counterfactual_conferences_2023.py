@@ -30,7 +30,7 @@ def find_conference_column(df, conference):
             return col
     return None
 
-def realign_teams(df):
+def realign_teams(df: pd.DataFrame, n_teams_score: int = 5):
     """ Function to realign teams """
     # Ensure that the dataframe doesn't have any superfluous `'` characters in it.
     def clean_quotes(s):
@@ -160,7 +160,7 @@ def realign_teams(df):
                     working_conf_dict = move_team_to_new_conf(work_conf_d=working_conf_dict,team_to_move=team_being_realigned, move_to_conf=move_to_conf)
                     print("- - - - - - - - - - - - - - - -")
 
-    # TODO Now re-sort the teams and  re-calculate team scores
+    # Now re-sort the teams and  re-calculate team scores
     print(working_conf_dict,'\n')
 
     def sort_conference_tuples(working_conf_dict):
@@ -177,6 +177,24 @@ def realign_teams(df):
     sorted_conf_dict = sort_conference_tuples(working_conf_dict)
     # Remove conferences with no teams
     sorted_conf_dict = {conf: teams for conf, teams in sorted_conf_dict.items() if teams}
+
+    # Re-Score the conferences
+    def rescore_conferences(sort_conf_dict, X=5):
+        """Function to score each conference based on the sum of the lowest X scores"""
+        scored_dict = {}
+        for conference, teams in sort_conf_dict.items():
+            # Calculate the sum of the lowest X scores or set to 'DNS' if not enough teams
+            if len(teams) >= X:
+                lowest_scores_sum = sum(float(team[1]) for team in teams[:X])
+                new_conference_tuple = (conference[0], str(lowest_scores_sum))
+            else:
+                new_conference_tuple = (conference[0], 'DNS')
+
+            scored_dict[new_conference_tuple] = teams
+        return scored_dict
+
+    n_teams_score = int(n_teams_score)
+    sorted_conf_dict = rescore_conferences(sorted_conf_dict, n_teams_score)
 
     # Print the sorted dictionary
     for key, values in sorted_conf_dict.items():
