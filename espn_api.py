@@ -88,9 +88,10 @@ def what_week_is_it():
     month = current_date.month
     year = current_date.year
 
-    # Determine week based on current date
-    if month < 8 or (month == 8 and day <= 20):
-        # It is the offseason, so default to last season.
+    # Determine week based on current date.
+    #  The AP keeps releasing the preseason rankings earlier and earlier, so default August runs to the upcoming season.
+    if month < 8: # or (month == 8 and day <= 20):
+        # It is the off-season, so default to last season.
         year -= 1
         week = final
     else:
@@ -723,14 +724,14 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
 
 
 if __name__ == '__main__':
+    # Example usage:
     # result = full_ap_xc_run(2021, 'final')
-    # print(date_processing(2014))
-    # print(espn_api_url_generator(2014))
-    # result = full_ap_xc_run(2014, 'current')
     # result = full_ap_xc_run(2021, 2)  # Team Tie
     # result = full_ap_xc_run(2023, 14)  # Good choice; has tie at #21.
     # result = full_ap_xc_run(2021, 2, four_team_score=True)  # Test 4 team run.
     # print(espn_api_url_generator(year=2016,week=3))
     # print(espn_api_url_generator(week=3))
     # print(espn_api_url_generator())
+    #
+    # Run the most recent week's race.
     result = full_ap_xc_run()

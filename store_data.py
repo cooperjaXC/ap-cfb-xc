@@ -148,8 +148,8 @@ def write_weekly_results(year, week, prepped_result_df: pd.DataFrame, four_team_
     return the_summary_data
 
 
-def store_weekly_results(year: int = None, week=None, four_team_score: bool = False):
-    """Full process to store weekly results. """
+def store_weekly_results(year: int = None, week=None, four_team_score: bool = False) -> pd.DataFrame:
+    """ Full process to store weekly results and write them to the season's summary statistics. """
     four_team_score = epi.string_to_bool(four_team_score)
     results_dict = epi.full_ap_xc_run(year, week, four_team_score=four_team_score)
     base_rez_df = prep_weekly_results(results_dict)
@@ -179,9 +179,13 @@ if __name__ == '__main__':
     # stored = store_weekly_results(2021, 1, four_team_score = False)
     # stored = store_weekly_results()
     # stored = store_weekly_results(2023, 'preseason', four_team_score = False)
-    # print(stored)
-    stored = store_weekly_results(2014, 'current', four_team_score=False)
-    print(stored)
     # stored = store_weekly_results(2023, 'final', four_team_score=False)
     # print(stored)
+    #
+    # Default execution to store the most recent results.
+    store_weekly_results(four_team_score=True)
+    stored = store_weekly_results(four_team_score=False)
+    print(stored)
+    #
+    # Store all the data ESPN has on AP Rankings
     # store_all_data_2014_to_present()
