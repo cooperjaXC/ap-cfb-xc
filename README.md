@@ -1,6 +1,9 @@
 # AP College Football Cross-Country Scoring
 ***A Data-Driven Approach to Determining Conference Supremacy***
 
+![Generic badge](https://img.shields.io/badge/version-2.0.0-blue.svg)
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+
 This repository implements a novel method for evaluating the best college football conferences
 using a cross-country scoring mechanism.
 This method ranks conferences based on the positions of their top teams in [the Associated Press's Top 25 rankings](https://apnews.com/hub/ap-top-25-college-football-poll)
@@ -17,9 +20,10 @@ emphasizing overall depth and strength rather than just top-tier performance
 
 <blockquote class="twitter-tweet" data-theme="dark"><p lang="en" dir="ltr">Take a look at the average AP Ranking by Power Five Conference 📊<br><br>Which conference surprises you the most? 👀 <a href="https://t.co/qJ0AWkQkOm">pic.twitter.com/qJ0AWkQkOm</a></p>&mdash; FOX College Football (@CFBONFOX) <a href="https://twitter.com/CFBONFOX/status/1615756033103626274?ref_src=twsrc%5Etfw">January 18, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-This approach was first introduced in 2015 and updated in 2019. You can read more about the method and its evolution in the following blog posts:
+This approach was first introduced in 2015 and updated in 2019 and 2024. You can read more about the method and its evolution in the following blog posts:
 - [2015: The Race for Supremacy](https://cooperconferencecolumn.wordpress.com/2015/08/25/the-race-for-supremacy-college-football-conferences-evaluated-by-a-cross-country-scoring-system/)
 - [2019: AP XC - An Update](https://cooperconferencecolumn.wordpress.com/2019/08/19/ap-xc-an-update/)
+- [2024: Updating the race for conference realignments | Medium](https://medium.com/@jacooper1317/the-race-for-college-football-conference-supremacy-a-cross-country-scoring-method-af662221bb88)
 
 This code is built upon the ESPN College Football API, shown by [Akshay Easwaran](https://github.com/akeaswaran) to have
 [hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
@@ -87,7 +91,7 @@ Make sure to `git clone` the repository into a folder without a long file path.
 ## Usage
 
 1. **Fetch Data**:
-   - Use `espn_api.py` to fetch the latest college football data from ESPN.
+   - Use [`espn_api.py`](espn_api.py) to fetch the latest college football data from ESPN.
 
    - **Critical Functions**:
 
@@ -104,7 +108,7 @@ Make sure to `git clone` the repository into a folder without a long file path.
        - A dictionary containing the fetched data, including conference team data and conference scores.
 
 2. **Store Data**:
-   - Use `store_data.py` to store the fetched data into a suitable format for analysis.
+   - Use [`store_data.py`](store_data.py) to store the fetched data into a suitable format for analysis.
 
    - **Critical Functions**:
 
@@ -141,10 +145,30 @@ Make sure to `git clone` the repository into a folder without a long file path.
 
        **Outputs**: None
 
+3. **Counterfactual Conference Analysis**:
+   - Use [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py) to impose the 2024 conference membership schema onto the 2023 season results, previewing how the realigned conferences could perform in 2024.
+
+   - **Critical Functions**:
+
+     - **`realign_teams(df: pd.DataFrame, n_teams_score: int = 5)`**
+
+       **Purpose**: Realigns teams based on the 2024 conference membership schema and recalculates their standings using the 2023 season results. This function previews the future strength of each conference under the upcoming realignments.
+
+       **Inputs**:
+       - `df`: DataFrame containing the 2023 season results.
+       - `n_teams_score`: The number of top team scores to sum for each conference (default is 5).
+
+       **Outputs**:
+       - A DataFrame with teams realigned to their new conferences and the recalculated conference standings.
+
+
 ## Contributing
 
 Contributions are welcome!
 Please fork the repository and create a pull request with your changes.
+
+Thanks to [John-Lee-Cooper](https://github.com/John-Lee-Cooper), [seanreid5454](https://github.com/seanreid5454), &
+[akeaswaran](https://github.com/akeaswaran) for their thought partnership and good ideas over the years on this project.
 
 ## License
 
