@@ -18,7 +18,7 @@ The conference with the lowest total score is deemed the best,
 emphasizing overall depth and strength rather than just top-tier performance
 (like whichever conference produced the most recent national champion, or bogus math like detailed in the below tweet).
 
-<blockquote class="twitter-tweet" data-theme="dark"><p lang="en" dir="ltr">Take a look at the average AP Ranking by Power Five Conference 📊<br><br>Which conference surprises you the most? 👀 <a href="https://t.co/qJ0AWkQkOm">pic.twitter.com/qJ0AWkQkOm</a></p>&mdash; FOX College Football (@CFBONFOX) <a href="https://twitter.com/CFBONFOX/status/1615756033103626274?ref_src=twsrc%5Etfw">January 18, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<blockquote class="twitter-tweet" data-theme="dark"><p lang="en" dir="ltr">Take a look at the average AP Ranking by Power Five Conference 📊<br><br>Which conference surprises you the most? 👀 <a href="https://t.co/qJ0AWkQkOm">pic.twitter.com/qJ0AWkQkOm</a></p>&mdash; FOX College Football (@CFBONFOX) <a href="https://twitter.com/CFBONFOX/status/1615756033103626274?ref_src=twsrc%5Etfw">January 18, 2023</a></blockquote>
 
 This approach was first introduced in 2015 and updated in 2019 and 2024. You can read more about the method and its evolution in the following blog posts:
 - [2015: The Race for Supremacy](https://cooperconferencecolumn.wordpress.com/2015/08/25/the-race-for-supremacy-college-football-conferences-evaluated-by-a-cross-country-scoring-system/)
