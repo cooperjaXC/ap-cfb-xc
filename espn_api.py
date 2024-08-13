@@ -13,15 +13,17 @@ from datetime import datetime as dt
 from distutils.util import strtobool
 
 # Define multi-function variables
-espn_api = "http://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
-reference_key = '$ref'
-conference_key = 'conference'
-key_shortName = 'shortName'
+espn_api = (
+    "http://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings"
+)
+reference_key = "$ref"
+conference_key = "conference"
+key_shortName = "shortName"
 did_not_score = "DNS"
-tiebreak_posit_col = 'tiebreaker_posit'
+tiebreak_posit_col = "tiebreaker_posit"
 final = "final"
 current = "current"
-preseason ="preseason"
+preseason = "preseason"
 
 
 def string_to_bool(string_to_become_bool, suppress_prints=False):
@@ -90,7 +92,7 @@ def what_week_is_it():
 
     # Determine week based on current date.
     #  The AP keeps releasing the preseason rankings earlier and earlier, so default August runs to the upcoming season.
-    if month < 8: # or (month == 8 and day <= 20):
+    if month < 8:  # or (month == 8 and day <= 20):
         # It is the off-season, so default to last season.
         year -= 1
         week = final
@@ -164,7 +166,7 @@ def espn_api_url_generator(year=None, week=None) -> str:
     # Prepare substrings to create the URL
     aponlylinkespn2 = r"http://www.espn.com/college-football/rankings/_/poll/1/week/"
     base_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/"
-                              # "2023/types/2/weeks/1/rankings/1"
+    # "2023/types/2/weeks/1/rankings/1"
     # defaultlink = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
 
     # Determine what type of poll you want
@@ -181,9 +183,14 @@ def espn_api_url_generator(year=None, week=None) -> str:
     def final_week_vars():
         fweek = "/weeks/1"
         fseason_type = "/types/3"
-        return fweek,fseason_type,base_espn_api_pth + year + fseason_type + fweek + chosen_poll_path
+        return (
+            fweek,
+            fseason_type,
+            base_espn_api_pth + year + fseason_type + fweek + chosen_poll_path,
+        )
+
     if week.lower() == final:
-        week,season_type, url = final_week_vars()
+        week, season_type, url = final_week_vars()
     # Check for entries wanting the most up-to-date rankings
     elif week.lower() == current:
         if str(year) == str(what_week_is_it()[0]):
@@ -201,8 +208,10 @@ def espn_api_url_generator(year=None, week=None) -> str:
             # 1) get the response from the default & extract the JSON
             resp_json = api_json_response(default_url)
             # 2) grab the correct URL
-            all_rankings_resp = resp_json['rankings']
-            ap_top_tf_resp = [rnk for rnk in all_rankings_resp if str(ap_poll_path_code) == rnk['id']][0]
+            all_rankings_resp = resp_json["rankings"]
+            ap_top_tf_resp = [
+                rnk for rnk in all_rankings_resp if str(ap_poll_path_code) == rnk["id"]
+            ][0]
             target_url = ap_top_tf_resp[reference_key]
             # 3) transform the URL
             # # Remove all the crud after the "?"
@@ -210,24 +219,24 @@ def espn_api_url_generator(year=None, week=None) -> str:
             after_remove_char = "?"
             target_url = target_url.split(after_remove_char, 1)[0]
             # # Replace the '.pvt' with '.com'
-            target_url = target_url.replace('.pvt', '.com')
+            target_url = target_url.replace(".pvt", ".com")
             # 4) set it as the URL for this function.
             url = target_url
             # Get rid of useless variables
-            del target_url, resp_json, all_rankings_resp,ap_top_tf_resp
+            del target_url, resp_json, all_rankings_resp, ap_top_tf_resp
         else:
             # The user likely means an older year's final rankings.
             week, season_type, url = final_week_vars()
     else:
-        week = "/weeks/"+ str(week)
+        week = "/weeks/" + str(week)
         season_type = "/types/2"
         url = base_espn_api_pth + year + season_type + week + chosen_poll_path
 
-    print("Week", week.replace("/weeks/", "")+',', year, "season")
+    print("Week", week.replace("/weeks/", "") + ",", year, "season")
     return url
 
 
-def extract_week_from_url(url:str) -> str:
+def extract_week_from_url(url: str) -> str:
     """ From the ESPN API URL, figure out what week it is.
     Use result of espn_api_url_generator() function as string input."""
     # defaultlink = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
@@ -270,14 +279,14 @@ def parse_conference_info(conference_api_url: str) -> dict:
     cjson = api_json_response(conference_api_url)
     # print(cjson)
     # Sometimes this will return a team's division within conference. We want the full conference. Link to that.
-    parent_key = 'parent'
+    parent_key = "parent"
     parent_group_url = cjson[parent_key][reference_key]
     fbs_d1_url = r"http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/groups/80?lang=en&region=us"
-    tries = 0 # Adding a counter to prevent infinate loops
+    tries = 0  # Adding a counter to prevent infinate loops
     does_it_match = parent_group_url == fbs_d1_url
     # print(does_it_match)
     # Could also use isConference to work out the conference status. It leaves out divisions and FBS 1
-    isConference = string_to_bool(str(cjson['isConference']).title())
+    isConference = string_to_bool(str(cjson["isConference"]).title())
     if isConference:
         return cjson
     # print(isConference)
@@ -288,7 +297,7 @@ def parse_conference_info(conference_api_url: str) -> dict:
         cjson = api_json_response(parent_group_url)
         # print(cjson)
         # Could also use isConference to work out the conference status. It leaves out divisions and FBS 1
-        isConference = string_to_bool(str(cjson['isConference']).title())
+        isConference = string_to_bool(str(cjson["isConference"]).title())
         if isConference:
             return cjson
         parent_group_url = cjson[parent_key][reference_key]
@@ -299,7 +308,9 @@ def parse_conference_info(conference_api_url: str) -> dict:
         tries += 1
         # print(tries, str(does_it_match), '\n--------')
     if tries >= 10:
-        print("Your request to access conference API data has timed out; there was an error.")
+        print(
+            "Your request to access conference API data has timed out; there was an error."
+        )
 
     return cjson
 
@@ -313,7 +324,7 @@ def get_team_info(team_api_url: str) -> dict:
     # http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2021/teams/61?lang=en&region=us
 
     # Get the conference data from its API endpoint
-    conference_URL = teamjson['groups'][reference_key]
+    conference_URL = teamjson["groups"][reference_key]
     the_conference_json = parse_conference_info(conference_URL)
     # Add the conference's dict to the team dict
     teamjson[conference_key] = the_conference_json
@@ -334,7 +345,7 @@ def get_top_tfive(top_twentyfive_json: list) -> dict:
     top_tfive_teams = {}
     for team in top_twentyfive_json:
         # Each team's keys: dict_keys(['current', 'previous', 'points', 'firstPlaceVotes', 'trend', 'record', 'team', 'date', 'lastUpdated'])
-        team_api_url = team['team'][reference_key]
+        team_api_url = team["team"][reference_key]
         # Add the team info to the dictionary storing all this data.
         ranking = team[current]
         # Using the embedded team API, get all the info you need on that team.
@@ -342,7 +353,7 @@ def get_top_tfive(top_twentyfive_json: list) -> dict:
 
         # Parse that data to get what you need like this below
         # # Do this again later to work with the dict data you got.
-        team_name = team_info_dict['nickname']
+        team_name = team_info_dict["nickname"]
         teams_conference = team_info_dict[conference_key]["shortName"]
         print(f"{ranking}: {team_name} ({teams_conference})")
 
@@ -371,15 +382,15 @@ def others_receiving_votes(others_json: list, ranked_teams: int = 25) -> dict:
     sorting_points_dict = {}
     for team in others_json:
         # Each team's keys: dict_keys(['current', 'previous', 'points', 'firstPlaceVotes', 'trend', 'record', 'team', 'date', 'lastUpdated'])
-        team_api_url = team['team'][reference_key]
+        team_api_url = team["team"][reference_key]
         # Add the team info to the dictionary storing all this data.
-        points = float(team['points'])
+        points = float(team["points"])
         # Using the embedded team API, get all the info you need on that team.
         team_info_dict = get_team_info(team_api_url)
 
         # Parse that data to get what you need like this below
         # # Do this again later to work with the dict data you got.
-        team_name = team_info_dict['nickname']
+        team_name = team_info_dict["nickname"]
         teams_conference = team_info_dict[conference_key][key_shortName]
         print(f"{points} points: {team_name} ({teams_conference})")
 
@@ -393,7 +404,7 @@ def others_receiving_votes(others_json: list, ranked_teams: int = 25) -> dict:
     # print(sorting_points_dict)
 
     # Sort the points from votes into >25 rankings.
-    next_ranking = ranked_teams +0
+    next_ranking = ranked_teams + 0
     while sorting_points_dict:
         # While the sorting points dict is not empty
         max_remain_pts = max(sorting_points_dict)
@@ -448,14 +459,20 @@ def poll_grabber(espn_ap_link):
     # dict_keys(['$ref', 'id', 'name', 'shortName', 'type', 'occurrence', 'date', 'headline', 'shortHeadline', 'season',
     # # 'lastUpdated', 'ranks', 'others', 'droppedOut', 'availability'])
     # Get the Top 25 Teams
-    top_tfive_json = rjson['ranks']
+    top_tfive_json = rjson["ranks"]
     top_twenty_five_teams = get_top_tfive(top_tfive_json)
     # Figure out how many teams are ranked, including ties.
-    n_ranked_teams = sum([len(top_twenty_five_teams[t]) for t in list(range(1, 26)) if t in top_twenty_five_teams])
+    n_ranked_teams = sum(
+        [
+            len(top_twenty_five_teams[t])
+            for t in list(range(1, 26))
+            if t in top_twenty_five_teams
+        ]
+    )
     # n_ranked_teams = len(top_twenty_five_teams) + (len(top_twenty_five_teams[25])-1)
     print("- - - - - - - -")
     # Get Others Receiving Votes as a continuation of the rankings, 26 to X where X is max n(Teams receiving votes).
-    others = 'others'
+    others = "others"
     if others in rjson.keys():
         # Others received votes.
         ojson = rjson[others]
@@ -495,7 +512,7 @@ def teams_points_by_conference(formatted_rankings: dict) -> pd.DataFrame:
     for rank in formatted_rankings:
         for team_dict in formatted_rankings[rank]:
             conferenceShortName = team_dict[conference_key][key_shortName]
-            team_name = team_dict['nickname']
+            team_name = team_dict["nickname"]
             print(f"{str(rank)} points: {team_name} ({conferenceShortName})")
             if conferenceShortName not in conference_pts_dict:
                 conference_pts_dict[conferenceShortName] = [(team_name, rank)]
@@ -504,7 +521,7 @@ def teams_points_by_conference(formatted_rankings: dict) -> pd.DataFrame:
     print(conference_pts_dict)
 
     # Find the max number of teams any conference had.
-    max_n_ranked_teams = max([len(conference_pts_dict[c]) for c in  conference_pts_dict])
+    max_n_ranked_teams = max([len(conference_pts_dict[c]) for c in conference_pts_dict])
     # Set up the dataframe
     # # Add null items to the end of conferences w/o the max number of teams.
     for cnfrnc in conference_pts_dict:
@@ -520,7 +537,9 @@ def teams_points_by_conference(formatted_rankings: dict) -> pd.DataFrame:
     return conferences_df
 
 
-def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bool = False) -> dict:
+def calc_conference_scores(
+    conferences_init_df: pd.DataFrame, four_team_race: bool = False
+) -> dict:
     """ Get the scores for the conferences that appear in the rankings. """
     if bool(four_team_race):
         scoring_teams = 4
@@ -537,7 +556,14 @@ def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bo
                 # Shouldn't get here b/c of existing conditional. But just in case.
                 scoring_dict[cnfcol] = did_not_score
             else:
-                scores_only_df = cutoff_teams_df.apply(lambda x: x[1] if ((not x[1] in [np.nan, None,'']) and (type(x[1]) in [float,int])) else np.nan)
+                scores_only_df = cutoff_teams_df.apply(
+                    lambda x: x[1]
+                    if (
+                        (not x[1] in [np.nan, None, ""])
+                        and (type(x[1]) in [float, int])
+                    )
+                    else np.nan
+                )
                 scoring_dict[cnfcol] = scores_only_df.sum()
         else:
             scoring_dict[cnfcol] = did_not_score
@@ -546,9 +572,16 @@ def calc_conference_scores(conferences_init_df: pd.DataFrame, four_team_race: bo
     return scoring_dict
 
 
-def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame, xcsc: str, scoring_teams: int = 5):
+def team_tiebreaker(
+    conference_points: pd.DataFrame,
+    onlyScoresDF: pd.DataFrame,
+    xcsc: str,
+    scoring_teams: int = 5,
+):
     # Find the tied conferences
-    tied_scores = onlyScoresDF[xcsc].loc[onlyScoresDF[xcsc].duplicated(keep=False)].unique()
+    tied_scores = (
+        onlyScoresDF[xcsc].loc[onlyScoresDF[xcsc].duplicated(keep=False)].unique()
+    )
 
     def create_breaking_dict(max_tied_teams):
         movements = {}
@@ -566,11 +599,13 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
     # Iterate over each tied conference
     for tscore in tied_scores:
         # Get the rows corresponding to the tied conference and reset the index
-        tied_conferences = onlyScoresDF[onlyScoresDF[xcsc] == tscore].reset_index(drop=True)
+        tied_conferences = onlyScoresDF[onlyScoresDF[xcsc] == tscore].reset_index(
+            drop=True
+        )
 
         # Find the teams' scores in the conference_points dataframe
         # # Subset the tied conferences
-        tied_conf_points = conference_points[tied_conferences['conference'].to_list()]
+        tied_conf_points = conference_points[tied_conferences["conference"].to_list()]
         conference_df_columns = tied_conf_points.columns.to_list()
         scores = []
         for conf in conference_df_columns:
@@ -584,9 +619,13 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
         # Sort teams by their 6th runner's score
         # scores.sort(key=lambda x: x[1])
         # Separate scores with NaN values and sort the rest
-        sorted_scores = sorted([s for s in scores if not pd.isna(s[1])], key=lambda x: x[1])
+        sorted_scores = sorted(
+            [s for s in scores if not pd.isna(s[1])], key=lambda x: x[1]
+        )
         # Handle NaN values
-        nan_scores = [(conf, team_score) for conf, team_score in scores if pd.isna(team_score)]
+        nan_scores = [
+            (conf, team_score) for conf, team_score in scores if pd.isna(team_score)
+        ]
         # Combine sorted scores and NaN scores
         sorted_scores.extend(nan_scores)
 
@@ -599,10 +638,14 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
         for conf, team_score in sorted_scores:
             if pd.isna(team_score):
                 # If the score is NaN, assign the tiebreaker position as 1
-                onlyScoresDF.loc[onlyScoresDF['conference'] == conf, tiebreak_posit_col] = tiebreaker_posit
+                onlyScoresDF.loc[
+                    onlyScoresDF["conference"] == conf, tiebreak_posit_col
+                ] = tiebreaker_posit
             elif team_score != previous_score:
                 # If the score is different from the previous one, update the tiebreaker position
-                onlyScoresDF.loc[onlyScoresDF['conference'] == conf, tiebreak_posit_col] = tiebreaker_posit
+                onlyScoresDF.loc[
+                    onlyScoresDF["conference"] == conf, tiebreak_posit_col
+                ] = tiebreaker_posit
                 previous_score = team_score
                 # Only advance if the tiebraker position if there is a non-null scoring.
                 tiebreaker_posit += 1
@@ -616,9 +659,11 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
         # Conditionally execute the code only for records in conference_df_columns
         # by creating a boolean mask where True values indicate records where conference is in `conference_df_columns`.
         # # Helps manage multiple ties at different scores in the same week (ex: tie at #2 and #4
-        mask = onlyScoresDF['conference'].isin(conference_df_columns)
+        mask = onlyScoresDF["conference"].isin(conference_df_columns)
         # onlyScoresDF['place'] = onlyScoresDF['place'] + onlyScoresDF[tiebreak_posit_col].map(tb_place_dict).fillna(0)
-        onlyScoresDF.loc[mask, 'place'] += onlyScoresDF[mask][tiebreak_posit_col].map(tb_place_dict).fillna(0)
+        onlyScoresDF.loc[mask, "place"] += (
+            onlyScoresDF[mask][tiebreak_posit_col].map(tb_place_dict).fillna(0)
+        )
 
         # # Convert 'place' column to integer type
         # Aborted; done downstream.
@@ -627,7 +672,11 @@ def team_tiebreaker(conference_points: pd.DataFrame, onlyScoresDF: pd.DataFrame,
     return onlyScoresDF
 
 
-def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd.DataFrame, scoring_teams: int = 5) -> pd.DataFrame:
+def conference_scoring_order(
+    scoring_dict: dict,
+    conference_teams_scoring_df: pd.DataFrame,
+    scoring_teams: int = 5,
+) -> pd.DataFrame:
     """ Once you have generated conference XC scores with calc_conference_scores(), we need to see who won!
     Do that here. """
     # Subset those conferences that are scoring.
@@ -640,9 +689,11 @@ def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd
     # Get conferences scores.
     # Move that data back to a pandas DF for easy working.
     # # Note: conference name is in the index.
-    onlyScoresDF=pd.DataFrame(only_scoring_conferences.values(), index=only_scoring_conferences.keys())
+    onlyScoresDF = pd.DataFrame(
+        only_scoring_conferences.values(), index=only_scoring_conferences.keys()
+    )
     # Name the score column
-    xcsc = 'xc_score'
+    xcsc = "xc_score"
     onlyScoresDF.columns = [xcsc]
     # Get xcsc to integer format if possible, ie if all scores are floats with 0 in tenths space.
     # # Step 1: Check if all values in xcsc can be converted to integers without losing information
@@ -651,20 +702,25 @@ def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd
         # # Step 2: Convert to integer
         onlyScoresDF[xcsc] = onlyScoresDF[xcsc].astype(int)
     # Move conference name index to its own column, and eventually make that the first column.
-    onlyScoresDF['conference'] = onlyScoresDF.index
+    onlyScoresDF["conference"] = onlyScoresDF.index
     onlyScoresDF.reset_index(drop=True, inplace=True)
     # Sort by scores in decending order. Lowest score wins!
     onlyScoresDF = onlyScoresDF.sort_values(xcsc)
 
     # Apply the place to each scoring conference.
-    place = 'place'
+    place = "place"
     onlyScoresDF[place] = onlyScoresDF[xcsc].rank()
     # Apply the 5th/6th runner tiebreaker upstream and have it apply here.
     there_are_ties = onlyScoresDF[xcsc].duplicated(keep=False).any()
     onlyScoresDF[tiebreak_posit_col] = None
     if there_are_ties:
         # Break those ties!
-        onlyScoresDF = team_tiebreaker(conference_points=conference_teams_scoring_df, onlyScoresDF=onlyScoresDF, xcsc=xcsc, scoring_teams=scoring_teams)
+        onlyScoresDF = team_tiebreaker(
+            conference_points=conference_teams_scoring_df,
+            onlyScoresDF=onlyScoresDF,
+            xcsc=xcsc,
+            scoring_teams=scoring_teams,
+        )
 
     # Get `place` to integer format if possible, ie if all places are floats with 0 in tenths space.
     # # Step 1: Check if all values in xcsc can be converted to integers without losing information
@@ -675,9 +731,11 @@ def conference_scoring_order(scoring_dict: dict, conference_teams_scoring_df: pd
 
     # Prepare the output
     # Order the columns
-    onlyScoresDF = onlyScoresDF[['conference', 'place', xcsc, tiebreak_posit_col]]
+    onlyScoresDF = onlyScoresDF[["conference", "place", xcsc, tiebreak_posit_col]]
     # Order the rows
-    onlyScoresDF = onlyScoresDF.sort_values(by=[xcsc, tiebreak_posit_col], ascending=[True, True])
+    onlyScoresDF = onlyScoresDF.sort_values(
+        by=[xcsc, tiebreak_posit_col], ascending=[True, True]
+    )
     onlyScoresDF.reset_index(inplace=True, drop=True)
 
     print(onlyScoresDF)
@@ -703,12 +761,16 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     # print(the_url)
     main_custom_format_rankings = poll_grabber(the_url)
     conference_points = teams_points_by_conference(main_custom_format_rankings)
-    calc_xc_scores = calc_conference_scores(conference_points, four_team_race=four_team_score)
+    calc_xc_scores = calc_conference_scores(
+        conference_points, four_team_race=four_team_score
+    )
     if four_team_score:
         steams = 4
     else:
         steams = 5
-    xc_scoring = conference_scoring_order(calc_xc_scores, conference_points, scoring_teams=steams)
+    xc_scoring = conference_scoring_order(
+        calc_xc_scores, conference_points, scoring_teams=steams
+    )
 
     # Package all the data together in a big dict that includes each item defined here;
     # # each has a possible downstream use.
@@ -718,12 +780,12 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
         "json_teams": main_custom_format_rankings,
         "conference_teams_df": conference_points,
         "conference_scores_dict": calc_xc_scores,
-        "conference_scores_df": xc_scoring
+        "conference_scores_df": xc_scoring,
     }
     return results_dict
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example usage:
     # result = full_ap_xc_run(2021, 'final')
     # result = full_ap_xc_run(2021, 2)  # Team Tie
