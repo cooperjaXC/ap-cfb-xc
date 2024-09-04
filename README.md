@@ -93,6 +93,11 @@ Make sure to `git clone` the repository into a folder without a long file path.
 
 ## Usage
 
+To execute a full run that pulls the latest AP rankings from ESPN and scores them as a cross-country meet,
+execute and run the [`store_data.py`](store_data.py) file.
+
+### Specialized Uses
+
 1. **Fetch Data**:
    - Use [`espn_api.py`](espn_api.py) to fetch the latest college football data from ESPN.
 
