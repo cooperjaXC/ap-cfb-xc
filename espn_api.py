@@ -760,6 +760,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     the_url = espn_api_url_generator(year, week)
     # print(the_url)
     main_custom_format_rankings = poll_grabber(the_url)
+    print()
     conference_points = teams_points_by_conference(main_custom_format_rankings)
     calc_xc_scores = calc_conference_scores(
         conference_points, four_team_race=four_team_score
