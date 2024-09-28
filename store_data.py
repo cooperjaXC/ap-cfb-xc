@@ -188,6 +188,9 @@ def store_weekly_results(
     """ Full process to store weekly results and write them to the season's summary statistics. """
     four_team_score = epi.string_to_bool(four_team_score)
     results_dict = epi.full_ap_xc_run(year, week, four_team_score=four_team_score)
+    print("-----------------------\n")
+    epi.pretty_print(results_dict)
+    print("\n-----------------------")
     base_rez_df = prep_weekly_results(results_dict)
     written_results = write_weekly_results(
         year=year,
@@ -228,8 +231,8 @@ if __name__ == "__main__":
     # print(stored)
     #
     # Default execution to store the most recent results.
-    store_weekly_results(four_team_score=True)
-    stored = store_weekly_results(four_team_score=False)
+    store_weekly_results(four_team_score=True, week=4)
+    stored = store_weekly_results(four_team_score=False, week=4)
     print(stored)
     #
     # Store all the data ESPN has on AP Rankings

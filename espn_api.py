@@ -786,6 +786,45 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     return results_dict
 
 
+def pretty_print(the_results_dict: dict):
+    """ Prints the results of a weekly run in a downstream-usable manner. """
+    team_conf_df = the_results_dict["conference_teams_df"]
+    confscoresdict = the_results_dict["conference_scores_dict"]
+    core_four = ['SEC', 'Big Ten', 'ACC', 'Big 12']
+    include_confs = core_four + [c for c, s in confscoresdict.items() if c not in core_four and s != "DNS"]
+    retain_df = team_conf_df[include_confs]
+
+    # Function to format tuples as "Team: Score" and replace NaNs with empty strings
+    def format_tuple(cell):
+        if pd.isna(cell):  # Check if it's NaN
+            return ""
+        if isinstance(cell, tuple):  # Check if it's a tuple
+            team, score = cell
+            return f"{team}: {score}"
+        return cell
+
+    # Apply the formatting to the entire DataFrame
+    formatted_df = retain_df.applymap(format_tuple)
+
+    # Create the new first row with the conference names and scores
+    first_row = {col: f"{col}: {confscoresdict.get(col, 'N/A')}" for col in formatted_df.columns}
+
+    # Create the second row with six dashes
+    second_row = {col: "------" for col in formatted_df.columns}
+
+    # Convert both rows into DataFrames
+    first_row_df = pd.DataFrame([first_row])
+    second_row_df = pd.DataFrame([second_row])
+
+    # Concatenate the new rows with the existing DataFrame
+    formatted_df = pd.concat([first_row_df, second_row_df, formatted_df], ignore_index=True)
+
+    # Temporarily set the display options only for this print
+    with pd.option_context('display.max_columns', None, 'display.max_colwidth', None):
+        print(formatted_df.to_string(index=False, header=False))
+    print("\n@ap_cfb_xc | @SECGeographer")
+
+
 if __name__ == "__main__":
     # Example usage:
     # result = full_ap_xc_run(2021, 'final')
