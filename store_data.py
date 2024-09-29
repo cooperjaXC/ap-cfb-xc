@@ -173,7 +173,7 @@ def write_weekly_results(
     # Write updated summary statistics to CSV
     try:
         the_summary_data.to_csv(summary_file, index=False)
-        print("Summary data has been successfully written to", summary_file)
+        print("Summary data has been successfully written to", summary_file, "\n")
     except Exception as e:
         warnings.warn(
             "Unable to write summary data to {}. Error: {}".format(summary_file, str(e))
@@ -231,8 +231,8 @@ if __name__ == "__main__":
     # print(stored)
     #
     # Default execution to store the most recent results.
-    store_weekly_results(four_team_score=True, week=4)
-    stored = store_weekly_results(four_team_score=False, week=4)
+    store_weekly_results(four_team_score=True) #  , week=4)
+    stored = store_weekly_results(four_team_score=False) #  , week=4)
     print(stored)
     #
     # Store all the data ESPN has on AP Rankings

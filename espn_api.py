@@ -754,7 +754,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
         - "conference_teams_df": pd.DataFrame of each conference's teams receiving votes for [week] in (team, ranking) format.
         - "conference_scores_dict": Dictionary of {conference: cross-country 4 or 5 team total}.
         - "conference_scores_df": pd.DataFrame of the conference XC race results with ties broken.
-
+        - "scoring_teams": integer of the number of teams required to generate a score for a conference.
     """
     four_team_score = string_to_bool(four_team_score)
     the_url = espn_api_url_generator(year, week)
@@ -765,10 +765,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     calc_xc_scores = calc_conference_scores(
         conference_points, four_team_race=four_team_score
     )
-    if four_team_score:
-        steams = 4
-    else:
-        steams = 5
+    steams = 4 if four_team_score else 5
     xc_scoring = conference_scoring_order(
         calc_xc_scores, conference_points, scoring_teams=steams
     )
@@ -782,6 +779,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
         "conference_teams_df": conference_points,
         "conference_scores_dict": calc_xc_scores,
         "conference_scores_df": xc_scoring,
+        "scoring_teams": steams,
     }
     return results_dict
 
@@ -806,8 +804,14 @@ def pretty_print(the_results_dict: dict):
     # Apply the formatting to the entire DataFrame
     formatted_df = retain_df.applymap(format_tuple)
 
+    # # Create the new first row with the conference names and scores
+    # first_row = {col: f"({
+    #     the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference']==col, 'place'].values[0]
+    # }) {col}: {confscoresdict.get(col, 'N/A')}" for col in formatted_df.columns}
     # Create the new first row with the conference names and scores
-    first_row = {col: f"{col}: {confscoresdict.get(col, 'N/A')}" for col in formatted_df.columns}
+    first_row = {
+        col: f"({the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values[0] if len(the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values) > 0 else 'N/A'}) {col}: {confscoresdict.get(col, 'N/A')}" for col in formatted_df.columns
+    }
 
     # Create the second row with six dashes
     second_row = {col: "------" for col in formatted_df.columns}
@@ -819,9 +823,18 @@ def pretty_print(the_results_dict: dict):
     # Concatenate the new rows with the existing DataFrame
     formatted_df = pd.concat([first_row_df, second_row_df, formatted_df], ignore_index=True)
 
+    # Insert the line of dashes between the 5th and 6th records (after index 6, which is index 7 after the headers)
+    line_of_dashes = {col: "------" for col in formatted_df.columns}
+
+    # Insert this row in the correct position (index 8, after 5 data rows and 2 header rows)
+    n_scoring_teams = the_results_dict["scoring_teams"]
+    eyeloc = 6 if n_scoring_teams == 4 else 7
+    formatted_df = pd.concat([formatted_df.iloc[:eyeloc], pd.DataFrame([line_of_dashes]), formatted_df.iloc[eyeloc:]],
+                             ignore_index=True)
+
     # Temporarily set the display options only for this print
     with pd.option_context('display.max_columns', None, 'display.max_colwidth', None):
-        print(formatted_df.to_string(index=False, header=False))
+        print(formatted_df.to_string(index=True, header=False))
     print("\n@ap_cfb_xc | @SECGeographer")
 
 
