@@ -130,8 +130,35 @@ The summary data as a DataFrame.
     return summary_df
 
 
+def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
+    """ This will print the summary statistics for the whole year (thus far) in an aesthetically pleasing manner for use in reports, social media posts, etc."""
+    whole_year_df = whole_year_df.set_index(whole_year_df.columns[0])
+    # Step 1: Remove columns that are all null after the header
+    df_cleaned = whole_year_df.dropna(axis=1, how='all')
+    # Step 2: Find the last row with non-null values for each column
+    # Find the last row with non-null values
+    last_valid_row = df_cleaned.apply(lambda col: col.last_valid_index())
+    most_current_week_row = max(last_valid_row)
+    # use_row_series = last_valid_row.apply(lambda x: most_current_week_row)
+    if type(most_current_week_row)==str:
+        use_row_score_series = df_cleaned.apply(lambda col: col.loc[most_current_week_row])
+    else:
+        use_row_score_series = df_cleaned.apply(lambda col: col.iloc[most_current_week_row])
+    # Step 3: Reorder the columns by the last valid value in ascending order
+    df_sorted = df_cleaned[use_row_score_series.sort_values(na_position='last').index]
+    # Step 4: Print
+    print("-----------------------\n")
+    # Set option to display all columns
+    pd.set_option('display.max_columns', None)
+    print(df_sorted)
+    print("\n@ap_cfb_xc | @SECGeographer")
+    print("\n-----------------------")
+
+    return df_sorted
+
+
 def write_weekly_results(
-    year, week, prepped_result_df: pd.DataFrame, four_team_race: bool = False
+    year, week, prepped_result_df: pd.DataFrame, four_team_race: bool = False, pretty_print: bool = True
 ) -> pd.DataFrame:
     """ Record the weekly results as individual CSVs & append that data to the summary statistics for the year and n(Team) race. """
     # Manage input dates
@@ -170,6 +197,10 @@ def write_weekly_results(
         existing_summary_df=e_summary_stats,
     )
 
+    if epi.string_to_bool(pretty_print):
+        # Generate a nice-looking output of the summary data.
+        pretty_print_year_data(the_summary_data)
+
     # Write updated summary statistics to CSV
     try:
         the_summary_data.to_csv(summary_file, index=False)
@@ -183,20 +214,21 @@ def write_weekly_results(
 
 
 def store_weekly_results(
-    year: int = None, week=None, four_team_score: bool = False
+    year: int = None, week=None, four_team_score: bool = False, prettyprint: bool = True
 ) -> pd.DataFrame:
     """ Full process to store weekly results and write them to the season's summary statistics. """
     four_team_score = epi.string_to_bool(four_team_score)
     results_dict = epi.full_ap_xc_run(year, week, four_team_score=four_team_score)
-    print("-----------------------\n")
-    epi.pretty_print(results_dict)
-    print("\n-----------------------")
+    prettyprint = epi.string_to_bool(prettyprint)
+    if prettyprint:
+        epi.pretty_print_week_data(results_dict)
     base_rez_df = prep_weekly_results(results_dict)
     written_results = write_weekly_results(
         year=year,
         week=week,
         four_team_race=four_team_score,
         prepped_result_df=base_rez_df,
+        pretty_print=prettyprint
     )
     return written_results
 
@@ -231,8 +263,8 @@ if __name__ == "__main__":
     # print(stored)
     #
     # Default execution to store the most recent results.
-    store_weekly_results(four_team_score=True) #  , week=4)
-    stored = store_weekly_results(four_team_score=False) #  , week=4)
+    store_weekly_results(four_team_score=True, prettyprint=False) #  , week=4)
+    stored = store_weekly_results(four_team_score=False, prettyprint=True) #  , week=4)
     print(stored)
     #
     # Store all the data ESPN has on AP Rankings

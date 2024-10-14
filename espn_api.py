@@ -784,7 +784,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     return results_dict
 
 
-def pretty_print(the_results_dict: dict):
+def pretty_print_week_data(the_results_dict: dict):
     """ Prints the results of a weekly run in a downstream-usable manner. """
     team_conf_df = the_results_dict["conference_teams_df"]
     confscoresdict = the_results_dict["conference_scores_dict"]
@@ -831,9 +831,13 @@ def pretty_print(the_results_dict: dict):
     formatted_df.insert(0, 'Position', positions)
 
     # Temporarily set the display options only for this print
+    print("-----------------------\n")
     with pd.option_context('display.max_columns', None, 'display.max_colwidth', None):
         print(formatted_df.to_string(index=False, header=False))
     print("\n@ap_cfb_xc | @SECGeographer")
+    print("\n-----------------------")
+
+    return formatted_df
 
 
 if __name__ == "__main__":
