@@ -132,9 +132,11 @@ The summary data as a DataFrame.
 
 def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
     """ This will print the summary statistics for the whole year (thus far) in an aesthetically pleasing manner for use in reports, social media posts, etc."""
+    # Set the week label as the index
     whole_year_df = whole_year_df.set_index(whole_year_df.columns[0])
-    # Step 1: Remove columns that are all null after the header
+    # Step 1: Remove rows and columns that have all null values
     df_cleaned = whole_year_df.dropna(axis=1, how='all')
+    df_cleaned = df_cleaned.dropna(axis=0, how="all")
     # Step 2: Find the last row with non-null values for each column
     # Find the last row with non-null values
     last_valid_row = df_cleaned.apply(lambda col: col.last_valid_index())
@@ -263,7 +265,7 @@ if __name__ == "__main__":
     # print(stored)
     #
     # Default execution to store the most recent results.
-    store_weekly_results(four_team_score=True, prettyprint=False) #  , week=4)
+    # store_weekly_results(four_team_score=True, prettyprint=False) #  , week=4)
     stored = store_weekly_results(four_team_score=False, prettyprint=True) #  , week=4)
     print(stored)
     #
