@@ -265,9 +265,9 @@ if __name__ == "__main__":
     # print(stored)
     #
     # Default execution to store the most recent results.
-    # store_weekly_results(four_team_score=True, prettyprint=False) #  , week=4)
+    store_weekly_results(four_team_score=True, prettyprint=False) #  , week=4)
     stored = store_weekly_results(four_team_score=False, prettyprint=True) #  , week=4)
-    print(stored)
+    # print(stored)
     #
     # Store all the data ESPN has on AP Rankings
     # store_all_data_2014_to_present()
