@@ -148,7 +148,9 @@ def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
         use_row_score_series = df_cleaned.apply(lambda col: col.iloc[most_current_week_row])
     # Step 3: Reorder the columns by the last valid value in ascending order
     df_sorted = df_cleaned[use_row_score_series.sort_values(na_position='last').index]
-    # Step 4: Print
+    # Step 4: Set those weeks when a conference with scoring did not score.
+    df_sorted = df_sorted.fillna("DNS")
+    # Step 5: Print
     print("-----------------------\n")
     # Set option to display all columns
     pd.set_option('display.max_columns', None)
@@ -265,9 +267,9 @@ if __name__ == "__main__":
     # print(stored)
     #
     # Default execution to store the most recent results.
-    store_weekly_results(four_team_score=True, prettyprint=False) #  , week=4)
-    stored = store_weekly_results(four_team_score=False, prettyprint=True) #  , week=4)
-    # print(stored)
+    store_weekly_results(four_team_score=True, prettyprint=True)
+    print('\n\n\n\n')
+    store_weekly_results(four_team_score=False, prettyprint=True)
     #
     # Store all the data ESPN has on AP Rankings
     # store_all_data_2014_to_present()
