@@ -7,7 +7,7 @@ You can change the seasons and weeks values appropriately to get historical data
 and...you can get data on bowl/playoff games with a types value of 3 and weeks value of 1.
 There is also receiving-votes data in there under the others array.
 """
-
+import re
 import requests, numpy as np, pandas as pd
 from datetime import datetime as dt
 from distutils.util import strtobool
@@ -830,6 +830,19 @@ def pretty_print_week_data(the_results_dict: dict):
     # Add the positions as the first column
     formatted_df.insert(0, 'Position', positions)
 
+    # Sort columns based on the ranking in parentheses in the first row
+    def get_ranking(header):
+        match = re.search(r"\((\d+|N/A)\)", header)
+        if match:
+            rank = match.group(1)
+            return int(rank) if rank.isdigit() else float('inf')
+        return float('inf')
+
+    # Extract the actual column names and reorder them based on rankings
+    columns_except_position = formatted_df.columns[1:]
+    sorted_columns = ['Position'] + sorted(columns_except_position, key=lambda col: get_ranking(formatted_df.iloc[0][col]))
+    formatted_df = formatted_df[sorted_columns]
+
     # Temporarily set the display options only for this print
     print("-----------------------\n")
     with pd.option_context('display.max_columns', None, 'display.max_colwidth', None):
@@ -851,4 +864,5 @@ if __name__ == "__main__":
     # print(espn_api_url_generator())
     #
     # Run the most recent week's race.
-    result = full_ap_xc_run()
+    result = full_ap_xc_run(four_team_score=False)  # True)  #
+    pretty_print_week_data(result)
