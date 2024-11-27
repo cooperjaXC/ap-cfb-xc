@@ -864,5 +864,6 @@ if __name__ == "__main__":
     # print(espn_api_url_generator())
     #
     # Run the most recent week's race.
-    result = full_ap_xc_run(four_team_score=False)  # True)  #
+    # pretty_print_week_data(full_ap_xc_run(four_team_score=True))
+    result = full_ap_xc_run(four_team_score=False)
     pretty_print_week_data(result)
