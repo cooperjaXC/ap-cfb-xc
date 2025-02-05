@@ -788,8 +788,10 @@ def pretty_print_week_data(the_results_dict: dict):
     """ Prints the results of a weekly run in a downstream-usable manner. """
     team_conf_df = the_results_dict["conference_teams_df"]
     confscoresdict = the_results_dict["conference_scores_dict"]
-    core_four = ['SEC', 'Big Ten', 'ACC', 'Big 12']
-    include_confs = core_four + [c for c, s in confscoresdict.items() if c not in core_four and s != "DNS"]
+    core_four = ["SEC", "Big Ten", "ACC", "Big 12"]
+    include_confs = core_four + [
+        c for c, s in confscoresdict.items() if c not in core_four and s != "DNS"
+    ]
     retain_df = team_conf_df[include_confs]
 
     # Function to format tuples as "Team: Score" and replace NaNs with empty strings
@@ -806,7 +808,8 @@ def pretty_print_week_data(the_results_dict: dict):
 
     # Create the new first row with the conference names and scores
     first_row = {
-        col: f"({the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values[0] if len(the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values) > 0 else 'N/A'}) {col}: {confscoresdict.get(col, 'N/A')}" for col in formatted_df.columns
+        col: f"({the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values[0] if len(the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values) > 0 else 'N/A'}) {col}: {confscoresdict.get(col, 'N/A')}"
+        for col in formatted_df.columns
     }
 
     # Create the second row with six dashes
@@ -815,37 +818,53 @@ def pretty_print_week_data(the_results_dict: dict):
     first_row_df = pd.DataFrame([first_row])
     second_row_df = pd.DataFrame([second_row])
     # Concatenate the new rows with the existing DataFrame
-    formatted_df = pd.concat([first_row_df, second_row_df, formatted_df], ignore_index=True)
+    formatted_df = pd.concat(
+        [first_row_df, second_row_df, formatted_df], ignore_index=True
+    )
 
     # Insert the line of dashes between the 5th and 6th records (after index 6, which is index 7 after the headers)
     line_of_dashes = {col: "------" for col in formatted_df.columns}
     # Insert this row in the correct position (index 8, after 5 data rows and 2 header rows)
     n_scoring_teams = the_results_dict["scoring_teams"]
     eyeloc = 6 if n_scoring_teams == 4 else 7
-    formatted_df = pd.concat([formatted_df.iloc[:eyeloc], pd.DataFrame([line_of_dashes]), formatted_df.iloc[eyeloc:]],ignore_index=True)
+    formatted_df = pd.concat(
+        [
+            formatted_df.iloc[:eyeloc],
+            pd.DataFrame([line_of_dashes]),
+            formatted_df.iloc[eyeloc:],
+        ],
+        ignore_index=True,
+    )
 
     # Create a positional numbering column
     # Skip first two rows and the eyeloc row
-    positions = [''] * 2 + [str(i) for i in range(1, n_scoring_teams+1)] + [''] + [str(i) for i in range(eyeloc - 1, len(formatted_df)-2)]
+    positions = (
+        [""] * 2
+        + [str(i) for i in range(1, n_scoring_teams + 1)]
+        + [""]
+        + [str(i) for i in range(eyeloc - 1, len(formatted_df) - 2)]
+    )
     # Add the positions as the first column
-    formatted_df.insert(0, 'Position', positions)
+    formatted_df.insert(0, "Position", positions)
 
     # Sort columns based on the ranking in parentheses in the first row
     def get_ranking(header):
         match = re.search(r"\((\d+|N/A)\)", header)
         if match:
             rank = match.group(1)
-            return int(rank) if rank.isdigit() else float('inf')
-        return float('inf')
+            return int(rank) if rank.isdigit() else float("inf")
+        return float("inf")
 
     # Extract the actual column names and reorder them based on rankings
     columns_except_position = formatted_df.columns[1:]
-    sorted_columns = ['Position'] + sorted(columns_except_position, key=lambda col: get_ranking(formatted_df.iloc[0][col]))
+    sorted_columns = ["Position"] + sorted(
+        columns_except_position, key=lambda col: get_ranking(formatted_df.iloc[0][col])
+    )
     formatted_df = formatted_df[sorted_columns]
 
     # Temporarily set the display options only for this print
     print("-----------------------\n")
-    with pd.option_context('display.max_columns', None, 'display.max_colwidth', None):
+    with pd.option_context("display.max_columns", None, "display.max_colwidth", None):
         print(formatted_df.to_string(index=False, header=False))
     print("\n@ap_cfb_xc | @SECGeographer")
     print("\n-----------------------")

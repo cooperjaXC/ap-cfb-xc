@@ -135,25 +135,29 @@ def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
     # Set the week label as the index
     whole_year_df = whole_year_df.set_index(whole_year_df.columns[0])
     # Step 1: Remove rows and columns that have all null values
-    df_cleaned = whole_year_df.dropna(axis=1, how='all')
+    df_cleaned = whole_year_df.dropna(axis=1, how="all")
     df_cleaned = df_cleaned.dropna(axis=0, how="all")
     # Step 2: Find the last row with non-null values for each column
     # Find the last row with non-null values
     last_valid_row = df_cleaned.apply(lambda col: col.last_valid_index())
     most_current_week_row = max(last_valid_row)
     # use_row_series = last_valid_row.apply(lambda x: most_current_week_row)
-    if type(most_current_week_row)==str:
-        use_row_score_series = df_cleaned.apply(lambda col: col.loc[most_current_week_row])
+    if type(most_current_week_row) == str:
+        use_row_score_series = df_cleaned.apply(
+            lambda col: col.loc[most_current_week_row]
+        )
     else:
-        use_row_score_series = df_cleaned.apply(lambda col: col.iloc[most_current_week_row])
+        use_row_score_series = df_cleaned.apply(
+            lambda col: col.iloc[most_current_week_row]
+        )
     # Step 3: Reorder the columns by the last valid value in ascending order
-    df_sorted = df_cleaned[use_row_score_series.sort_values(na_position='last').index]
+    df_sorted = df_cleaned[use_row_score_series.sort_values(na_position="last").index]
     # Step 4: Set those weeks when a conference with scoring did not score.
     df_sorted = df_sorted.fillna("DNS")
     # Step 5: Print
     print("-----------------------\n")
     # Set option to display all columns
-    pd.set_option('display.max_columns', None)
+    pd.set_option("display.max_columns", None)
     print(df_sorted)
     print("\n@ap_cfb_xc | @SECGeographer")
     print("\n-----------------------")
@@ -162,7 +166,11 @@ def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def write_weekly_results(
-    year, week, prepped_result_df: pd.DataFrame, four_team_race: bool = False, pretty_print: bool = True
+    year,
+    week,
+    prepped_result_df: pd.DataFrame,
+    four_team_race: bool = False,
+    pretty_print: bool = True,
 ) -> pd.DataFrame:
     """ Record the weekly results as individual CSVs & append that data to the summary statistics for the year and n(Team) race. """
     # Manage input dates
@@ -232,7 +240,7 @@ def store_weekly_results(
         week=week,
         four_team_race=four_team_score,
         prepped_result_df=base_rez_df,
-        pretty_print=prettyprint
+        pretty_print=prettyprint,
     )
     return written_results
 
@@ -268,7 +276,7 @@ if __name__ == "__main__":
     #
     # Default execution to store the most recent results.
     store_weekly_results(four_team_score=True, prettyprint=True)
-    print('\n\n\n\n')
+    print("\n\n\n\n")
     store_weekly_results(four_team_score=False, prettyprint=True)
     #
     # Store all the data ESPN has on AP Rankings
