@@ -52,44 +52,8 @@ This is not recommended as other python projects or repositories may require dif
 
 ### 2) Virtual Environments
 Setting up a virtual python environment (venv) is recommended to ensure no dependency conflicts 
-across your personal projects or with other developers on this project. 
-
-To create or update your venv, this repository includes a tool to do this on Windows operating systems. 
-
-#### Windows `py_venv` Tool
-The [`py_venv`](py_venv) subdirectory includes setup files that can create your venv for you. 
-
-To do this, first open the [`.\py_venv\set_python_path.bat`](py_venv/set_python_path.bat) in a text editor.
-Set the `PYTHON_PATH` variable to the base interpreter off of which you want the venv to be built.
-
-* Recommended: use your interpreter that was included in your ArcGIS Pro installation. 
-This will ensure you will have all geoprocessing functions accessible in your venv.
-
-Then, execute the following in a **Windows command prompt** with the current directory set to the root of this repo:
-
-```shell
-.\py_venv\setup.bat
-```
-
-This batch file will install a virtual python environment for you in the [`py_venv` subdirectory](py_venv) 
-based on the specifications in the [`.\requirements.in` file](requirements.in). 
-
-The [`.\py_venv\requirements.txt` file](py_venv/requirements.txt) is generated at the time of the venv setup.
-It indicates the most recent development environment in which this repository was developed. 
-It is a full `pip freeze` of the development environment.
-If you have any package dependency issues, you can reference the [`.\py_venv\requirements.txt`](py_venv/requirements.txt)
- file to compare with your current environment. 
-
-Remember to reference the newly created venv as your new python interpreter. 
-This will be located at `.\py_venv\venv\Scripts\python.exe`.
-
-To activate the venv directly in the Windows command prompt, enter
-```shell
-.\py_venv\venv\Scripts\activate
-```
-
-Warning: housing venvs in locations with excessively long paths may cause errors in installing or importing packages.
-Make sure to `git clone` the repository into a folder without a long file path.
+across your personal projects or with other developers on this project.
+See below for executing this on windows operating systems.
 
 ## Usage
 
@@ -181,3 +145,39 @@ Thanks to [John-Lee-Cooper](https://github.com/John-Lee-Cooper), [seanreid5454](
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## Windows `py_venv` Tool
+To create or update your venv, this repository includes a tool to do this on Windows operating systems. 
+The [`py_venv`](py_venv) subdirectory includes setup files that can create your venv for you. 
+
+To do this, first open the [`.\py_venv\set_python_path.bat`](py_venv/set_python_path.bat) in a text editor.
+Set the `PYTHON_PATH` variable to the base interpreter off of which you want the venv to be built.
+
+* Recommended: use your interpreter that was included in your ArcGIS Pro installation. 
+This will ensure you will have all geoprocessing functions accessible in your venv.
+
+Then, execute the following in a **Windows command prompt** with the current directory set to the root of this repo:
+
+```shell
+.\py_venv\setup.bat
+```
+
+This batch file will install a virtual python environment for you in the [`py_venv` subdirectory](py_venv) 
+based on the specifications in the [`.\requirements.in` file](requirements.in). 
+
+The [`.\py_venv\requirements.txt` file](py_venv/requirements.txt) is generated at the time of the venv setup.
+It indicates the most recent development environment in which this repository was developed. 
+It is a full `pip freeze` of the development environment.
+If you have any package dependency issues, you can reference the [`.\py_venv\requirements.txt`](py_venv/requirements.txt)
+ file to compare with your current environment. 
+
+Remember to reference the newly created venv as your new python interpreter. 
+This will be located at `.\py_venv\venv\Scripts\python.exe`.
+
+To activate the venv directly in the Windows command prompt, enter
+```shell
+.\py_venv\venv\Scripts\activate
+```
+
+Warning: housing venvs in locations with excessively long paths may cause errors in installing or importing packages.
+Make sure to `git clone` the repository into a folder without a long file path.
