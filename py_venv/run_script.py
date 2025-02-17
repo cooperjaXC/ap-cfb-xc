@@ -23,10 +23,7 @@ from pathlib import Path
 
 
 def run_script(
-    script_name: str,
-    src_dir: str = "",
-    venv_dir: str = "venv",
-    level: int = 0,
+    script_name: str, src_dir: str = "", venv_dir: str = "venv", level: int = 0
 ) -> None:
     """
         Run the python script after activate its virtual environment.

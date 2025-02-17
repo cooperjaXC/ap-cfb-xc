@@ -1,7 +1,7 @@
 # AP College Football Cross-Country Scoring
 ***A Data-Driven Approach to Determining Conference Supremacy***
 
-![Generic badge](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Generic badge](https://img.shields.io/badge/version-2.1.0-blue.svg)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 This repository implements a novel method for evaluating the best college football conferences
@@ -26,7 +26,7 @@ This approach was first introduced in 2015 and updated in 2019 and 2024. You can
 - [2024: Updating the race for conference realignments | Medium](https://medium.com/@jacooper1317/the-race-for-college-football-conference-supremacy-a-cross-country-scoring-method-af662221bb88)
 
 The results of this work from 2012-2023:
-![Results_Graph](APXC_2012-23_5team2.jpg)
+![Results_Graph](APXC_2012-24_5team.png)
 
 This code is built upon the ESPN College Football API, shown by [Akshay Easwaran](https://github.com/akeaswaran) to have
 [hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
@@ -52,44 +52,8 @@ This is not recommended as other python projects or repositories may require dif
 
 ### 2) Virtual Environments
 Setting up a virtual python environment (venv) is recommended to ensure no dependency conflicts 
-across your personal projects or with other developers on this project. 
-
-To create or update your venv, this repository includes a tool to do this on Windows operating systems. 
-
-#### Windows `py_venv` Tool
-The [`py_venv`](py_venv) subdirectory includes setup files that can create your venv for you. 
-
-To do this, first open the [`.\py_venv\set_python_path.bat`](py_venv/set_python_path.bat) in a text editor.
-Set the `PYTHON_PATH` variable to the base interpreter off of which you want the venv to be built.
-
-* Recommended: use your interpreter that was included in your ArcGIS Pro installation. 
-This will ensure you will have all geoprocessing functions accessible in your venv.
-
-Then, execute the following in a **Windows command prompt** with the current directory set to the root of this repo:
-
-```shell
-.\py_venv\setup.bat
-```
-
-This batch file will install a virtual python environment for you in the [`py_venv` subdirectory](py_venv) 
-based on the specifications in the [`.\requirements.in` file](requirements.in). 
-
-The [`.\py_venv\requirements.txt` file](py_venv/requirements.txt) is generated at the time of the venv setup.
-It indicates the most recent development environment in which this repository was developed. 
-It is a full `pip freeze` of the development environment.
-If you have any package dependency issues, you can reference the [`.\py_venv\requirements.txt`](py_venv/requirements.txt)
- file to compare with your current environment. 
-
-Remember to reference the newly created venv as your new python interpreter. 
-This will be located at `.\py_venv\venv\Scripts\python.exe`.
-
-To activate the venv directly in the Windows command prompt, enter
-```shell
-.\py_venv\venv\Scripts\activate
-```
-
-Warning: housing venvs in locations with excessively long paths may cause errors in installing or importing packages.
-Make sure to `git clone` the repository into a folder without a long file path.
+across your personal projects or with other developers on this project.
+See below for executing this on windows operating systems.
 
 ## Usage
 
@@ -181,3 +145,39 @@ Thanks to [John-Lee-Cooper](https://github.com/John-Lee-Cooper), [seanreid5454](
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## Windows `py_venv` Tool
+To create or update your venv, this repository includes a tool to do this on Windows operating systems. 
+The [`py_venv`](py_venv) subdirectory includes setup files that can create your venv for you. 
+
+To do this, first open the [`.\py_venv\set_python_path.bat`](py_venv/set_python_path.bat) in a text editor.
+Set the `PYTHON_PATH` variable to the base interpreter off of which you want the venv to be built.
+
+* Recommended: use your interpreter that was included in your ArcGIS Pro installation. 
+This will ensure you will have all geoprocessing functions accessible in your venv.
+
+Then, execute the following in a **Windows command prompt** with the current directory set to the root of this repo:
+
+```shell
+.\py_venv\setup.bat
+```
+
+This batch file will install a virtual python environment for you in the [`py_venv` subdirectory](py_venv) 
+based on the specifications in the [`.\requirements.in` file](requirements.in). 
+
+The [`.\py_venv\requirements.txt` file](py_venv/requirements.txt) is generated at the time of the venv setup.
+It indicates the most recent development environment in which this repository was developed. 
+It is a full `pip freeze` of the development environment.
+If you have any package dependency issues, you can reference the [`.\py_venv\requirements.txt`](py_venv/requirements.txt)
+ file to compare with your current environment. 
+
+Remember to reference the newly created venv as your new python interpreter. 
+This will be located at `.\py_venv\venv\Scripts\python.exe`.
+
+To activate the venv directly in the Windows command prompt, enter
+```shell
+.\py_venv\venv\Scripts\activate
+```
+
+Warning: housing venvs in locations with excessively long paths may cause errors in installing or importing packages.
+Make sure to `git clone` the repository into a folder without a long file path.

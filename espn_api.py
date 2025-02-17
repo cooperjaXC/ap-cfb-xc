@@ -7,7 +7,7 @@ You can change the seasons and weeks values appropriately to get historical data
 and...you can get data on bowl/playoff games with a types value of 3 and weeks value of 1.
 There is also receiving-votes data in there under the others array.
 """
-
+import re
 import requests, numpy as np, pandas as pd
 from datetime import datetime as dt
 from distutils.util import strtobool
@@ -754,7 +754,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
         - "conference_teams_df": pd.DataFrame of each conference's teams receiving votes for [week] in (team, ranking) format.
         - "conference_scores_dict": Dictionary of {conference: cross-country 4 or 5 team total}.
         - "conference_scores_df": pd.DataFrame of the conference XC race results with ties broken.
-
+        - "scoring_teams": integer of the number of teams required to generate a score for a conference.
     """
     four_team_score = string_to_bool(four_team_score)
     the_url = espn_api_url_generator(year, week)
@@ -765,10 +765,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
     calc_xc_scores = calc_conference_scores(
         conference_points, four_team_race=four_team_score
     )
-    if four_team_score:
-        steams = 4
-    else:
-        steams = 5
+    steams = 4 if four_team_score else 5
     xc_scoring = conference_scoring_order(
         calc_xc_scores, conference_points, scoring_teams=steams
     )
@@ -782,8 +779,97 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
         "conference_teams_df": conference_points,
         "conference_scores_dict": calc_xc_scores,
         "conference_scores_df": xc_scoring,
+        "scoring_teams": steams,
     }
     return results_dict
+
+
+def pretty_print_week_data(the_results_dict: dict):
+    """ Prints the results of a weekly run in a downstream-usable manner. """
+    team_conf_df = the_results_dict["conference_teams_df"]
+    confscoresdict = the_results_dict["conference_scores_dict"]
+    core_four = ["SEC", "Big Ten", "ACC", "Big 12"]
+    include_confs = core_four + [
+        c for c, s in confscoresdict.items() if c not in core_four and s != "DNS"
+    ]
+    retain_df = team_conf_df[include_confs]
+
+    # Function to format tuples as "Team: Score" and replace NaNs with empty strings
+    def format_tuple(cell):
+        if pd.isna(cell):  # Check if it's NaN
+            return ""
+        if isinstance(cell, tuple):  # Check if it's a tuple
+            team, score = cell
+            return f"{team}: {score}"
+        return cell
+
+    # Apply the formatting to the entire DataFrame
+    formatted_df = retain_df.applymap(format_tuple)
+
+    # Create the new first row with the conference names and scores
+    first_row = {
+        col: f"({the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values[0] if len(the_results_dict['conference_scores_df'].loc[the_results_dict['conference_scores_df']['conference'] == col, 'place'].values) > 0 else 'N/A'}) {col}: {confscoresdict.get(col, 'N/A')}"
+        for col in formatted_df.columns
+    }
+
+    # Create the second row with six dashes
+    second_row = {col: "------" for col in formatted_df.columns}
+    # Convert both rows into DataFrames
+    first_row_df = pd.DataFrame([first_row])
+    second_row_df = pd.DataFrame([second_row])
+    # Concatenate the new rows with the existing DataFrame
+    formatted_df = pd.concat(
+        [first_row_df, second_row_df, formatted_df], ignore_index=True
+    )
+
+    # Insert the line of dashes between the 5th and 6th records (after index 6, which is index 7 after the headers)
+    line_of_dashes = {col: "------" for col in formatted_df.columns}
+    # Insert this row in the correct position (index 8, after 5 data rows and 2 header rows)
+    n_scoring_teams = the_results_dict["scoring_teams"]
+    eyeloc = 6 if n_scoring_teams == 4 else 7
+    formatted_df = pd.concat(
+        [
+            formatted_df.iloc[:eyeloc],
+            pd.DataFrame([line_of_dashes]),
+            formatted_df.iloc[eyeloc:],
+        ],
+        ignore_index=True,
+    )
+
+    # Create a positional numbering column
+    # Skip first two rows and the eyeloc row
+    positions = (
+        [""] * 2
+        + [str(i) for i in range(1, n_scoring_teams + 1)]
+        + [""]
+        + [str(i) for i in range(eyeloc - 1, len(formatted_df) - 2)]
+    )
+    # Add the positions as the first column
+    formatted_df.insert(0, "Position", positions)
+
+    # Sort columns based on the ranking in parentheses in the first row
+    def get_ranking(header):
+        match = re.search(r"\((\d+|N/A)\)", header)
+        if match:
+            rank = match.group(1)
+            return int(rank) if rank.isdigit() else float("inf")
+        return float("inf")
+
+    # Extract the actual column names and reorder them based on rankings
+    columns_except_position = formatted_df.columns[1:]
+    sorted_columns = ["Position"] + sorted(
+        columns_except_position, key=lambda col: get_ranking(formatted_df.iloc[0][col])
+    )
+    formatted_df = formatted_df[sorted_columns]
+
+    # Temporarily set the display options only for this print
+    print("-----------------------\n")
+    with pd.option_context("display.max_columns", None, "display.max_colwidth", None):
+        print(formatted_df.to_string(index=False, header=False))
+    print("\n@ap_cfb_xc | @SECGeographer")
+    print("\n-----------------------")
+
+    return formatted_df
 
 
 if __name__ == "__main__":
@@ -797,4 +883,6 @@ if __name__ == "__main__":
     # print(espn_api_url_generator())
     #
     # Run the most recent week's race.
-    result = full_ap_xc_run()
+    # pretty_print_week_data(full_ap_xc_run(four_team_score=True))
+    result = full_ap_xc_run(four_team_score=False)
+    pretty_print_week_data(result)
