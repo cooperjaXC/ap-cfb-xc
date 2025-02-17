@@ -26,7 +26,7 @@ This approach was first introduced in 2015 and updated in 2019 and 2024. You can
 - [2024: Updating the race for conference realignments | Medium](https://medium.com/@jacooper1317/the-race-for-college-football-conference-supremacy-a-cross-country-scoring-method-af662221bb88)
 
 The results of this work from 2012-2023:
-![Results_Graph](APXC_2012-23_5team2.jpg)
+![Results_Graph](APXC_2012-24_5team.png)
 
 This code is built upon the ESPN College Football API, shown by [Akshay Easwaran](https://github.com/akeaswaran) to have
 [hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
