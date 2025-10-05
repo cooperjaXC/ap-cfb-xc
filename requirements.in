@@ -1,5 +1,5 @@
-# Note: `requirements.in` can accept comments.
-urllib3>=1.26.18, <2.0
+urllib3>=1.26.18
 requests>=2.31
 numpy
 pandas
+matplotlib

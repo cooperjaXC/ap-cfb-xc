@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 """
-Note: This is incomplete. Issue #19 needs to be implemented here. https://github.com/cooperjaXC/ap-cfb-xc/issues/19
+Note: This is incomplete. Issue #19 needs to be implemented here.
+https://github.com/cooperjaXC/ap-cfb-xc/issues/19
 """
 
 
