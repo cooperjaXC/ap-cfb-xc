@@ -10,7 +10,7 @@ There is also receiving-votes data in there under the others array.
 import re
 import requests, numpy as np, pandas as pd
 from datetime import datetime as dt
-from distutils.util import strtobool
+from setuptools._distutils.util import strtobool
 
 # Define multi-function variables
 espn_api = (
