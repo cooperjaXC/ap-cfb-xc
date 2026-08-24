@@ -36,8 +36,6 @@ def generate_graph(summary_stats_df) -> plt.plot:
         line.set_markerfacecolor("white")
     # Invert y-axis
     plt.gca().invert_yaxis()
-    # Invert x-axis tick labels
-    plt.gca().invert_xaxis()
 
     # Make a legend
     plt.legend()
