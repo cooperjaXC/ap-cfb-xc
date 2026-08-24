@@ -23,6 +23,7 @@ CONFERENCE_COLORS = {
     "ACC": "#FF3B3B",  # red
     "Big 12": "#B266FF",  # purple
     "American": "#FF9500",  # orange (AAC) - reserved, rarely scores
+    "Pac-12": "#87CEFA",  # light blue - defunct as of 2024, but present in historical seasons
 }
 FALLBACK_COLORS = ["#B0B0B0", "#3DDC84", "#FF6EC7", "#00E5FF", "#C0FF00"]
 
@@ -52,7 +53,7 @@ def _color_for_conference(name, fallback_cycle):
     return CONFERENCE_COLORS.get(name) or next(fallback_cycle)
 
 
-def generate_graph(summary_stats_df) -> plt.plot:
+def generate_graph(summary_stats_df, title: str = "Weekly Results") -> plt.plot:
     """ """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
@@ -71,7 +72,7 @@ def generate_graph(summary_stats_df) -> plt.plot:
         _glow_plot(ax, df_cleaned.index, df_cleaned[column], color, column)
 
     # Customize the plot
-    ax.set_title("Weekly Results", color=TEXT_COLOR, fontsize=16, fontweight="bold", pad=20)
+    ax.set_title(title, color=TEXT_COLOR, fontsize=16, fontweight="bold", pad=20)
     ax.grid(True, color=GRID_COLOR, linewidth=0.5, alpha=0.6)
 
     # X-axis ticks along the top, angled, left-to-right chronological order
@@ -100,6 +101,19 @@ def generate_graph(summary_stats_df) -> plt.plot:
         text.set_color(TEXT_COLOR)
 
     fig.tight_layout()
+
+    # Watermark, bottom-right corner, below the legend
+    fig.text(
+        0.99,
+        0.01,
+        "@ap_cfb_xc",
+        color=TEXT_COLOR,
+        alpha=0.6,
+        fontsize=9,
+        style="italic",
+        ha="right",
+        va="bottom",
+    )
 
     # Show the plot
     plt.show()
@@ -142,7 +156,9 @@ def graph_year(year: int, num_scoring_teams: int = 5) -> plt.plot:
     # summary CSVs index their rows under "AP_XC_{N}_Team_Race" rather than "Week"
     idx_header = f"AP_XC_{team_dir.title()}_Race"
     df.rename(columns={idx_header: "Week"}, inplace=True)
-    return generate_graph(df)
+
+    title = f"CFP AP {year} XC — {num_scoring_teams} Teams"
+    return generate_graph(df, title=title)
 
 
 def graph_all_data():
@@ -153,8 +169,8 @@ def graph_all_data():
     for it in os.listdir(data_dir):
         fp = os.path.join(data_dir, it)
         print(it, os.path.isdir(fp))
-        for sd in os.listdir(fp):
-            fps = os.path.join(fp, sd)
+        for subdir in os.listdir(fp):
+            fps = os.path.join(fp, subdir)
             for item in os.listdir(fps):
                 if item.endswith(tss):
                     new_name = item.replace(tss, "_team_graph.csv")
