@@ -5,6 +5,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
+import store_data as sd
+
 """
 Note: This is incomplete. Issue #19 needs to be implemented here.
 https://github.com/cooperjaXC/ap-cfb-xc/issues/19
@@ -116,6 +118,33 @@ def save_graph(plot: plt.plot, out_path: str):
     return out_path
 
 
+def most_recent_year(data_dir: str = None) -> int:
+    """Return the highest year (as int) present as a subdirectory of `data/`."""
+    data_dir = data_dir or os.path.join(os.path.abspath(os.curdir), "data")
+    years = [int(entry) for entry in os.listdir(data_dir) if entry.isdigit()]
+    return max(years)
+
+
+def graph_year(year: int, num_scoring_teams: int = 5) -> plt.plot:
+    """Graph a single season's summary statistics.
+
+    :param year: season year, e.g. 2024
+    :param num_scoring_teams: 4 or 5 (top-N teams summed per conference); defaults to 5
+    """
+    if num_scoring_teams not in (4, 5):
+        raise ValueError("num_scoring_teams must be 4 or 5")
+
+    team_dir = sd.quad if num_scoring_teams == 4 else sd.pent
+    summary_file = os.path.join(
+        os.path.abspath(os.curdir), "data", str(year), team_dir, f"{year}_{team_dir}_summary_statistics.csv"
+    )
+    df = pd.read_csv(summary_file)
+    # summary CSVs index their rows under "AP_XC_{N}_Team_Race" rather than "Week"
+    idx_header = f"AP_XC_{team_dir.title()}_Race"
+    df.rename(columns={idx_header: "Week"}, inplace=True)
+    return generate_graph(df)
+
+
 def graph_all_data():
     """ Graph all the data in the repo."""
     tss = "_team_summary_statistics.csv"
@@ -134,25 +163,4 @@ def graph_all_data():
 
 
 if __name__ == "__main__":
-    # Example DataFrame
-    data = {
-        "Week": [
-            "Preseason",
-            "Week 2",
-            "Week 3",
-            "Week 4",
-            "Week 5",
-            "Week 6",
-            "Week 7",
-            "Week 8",
-            "Week 9",
-            "Week 10",
-        ],
-        "SEC": [49, 37, 37, 32, 32, 33, 35, 36, 43, 35.5],
-        "ACC": [72, 78, 76, 87, 84, 84, 77, 77, 76.5, 85],
-        "Big Ten": [71, 67, 74, 80, None, 83, 74, 66, 66, 63.5],
-        "Big 12": [95.5, 89, 81, 88, 94, 90, 79.5, 86, None, 96],
-    }
-
-    df = pd.DataFrame(data)
-    generate_graph(df)
+    graph_year(most_recent_year(), num_scoring_teams=5)
