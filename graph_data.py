@@ -183,6 +183,46 @@ def graph_year(year: int, num_scoring_teams: int = 5) -> plt.plot:
     return generate_graph(df, title=title)
 
 
+def graph_final_rankings_by_year(num_scoring_teams: int = 5) -> plt.plot:
+    """Graph each conference's Final-week score across every season on record (one point per year),
+    using the same styling as graph_year().
+
+    :param num_scoring_teams: 4 or 5 (top-N teams summed per conference); defaults to 5
+    """
+    if num_scoring_teams not in (4, 5):
+        raise ValueError("num_scoring_teams must be 4 or 5")
+
+    team_dir = sd.quad if num_scoring_teams == 4 else sd.pent
+    idx_header = f"AP_XC_{team_dir.title()}_Race"
+    data_dir = os.path.join(os.path.abspath(os.curdir), "data")
+
+    years = sorted(int(entry) for entry in os.listdir(data_dir) if entry.isdigit())
+    final_rows = {}
+    for year in years:
+        summary_file = os.path.join(data_dir, str(year), team_dir, f"{year}_{team_dir}_summary_statistics.csv")
+        if not os.path.exists(summary_file):
+            continue
+        season_df = pd.read_csv(summary_file).set_index(idx_header)
+        if "Final" in season_df.index:
+            final_rows[str(year)] = season_df.loc["Final"]
+
+    final_by_year_df = pd.DataFrame.from_dict(final_rows, orient="index")
+    final_by_year_df.index.name = "Week"
+    final_by_year_df.reset_index(inplace=True)
+
+    title = f"CFP AP Final XC — {num_scoring_teams} Teams ({years[0]}-{years[-1]})"
+    return generate_graph(final_by_year_df, title=title)
+
+
+def run_final_rankings_graphs():
+    """Regenerate the all-time Final-rankings-by-year graphs for both 4-team and 5-team scoring and
+    save them to `images/` under fixed filenames."""
+    for num_scoring_teams in (4, 5):
+        plot = graph_final_rankings_by_year(num_scoring_teams=num_scoring_teams)
+        save_graph(plot, f"final_rankings_by_year_{num_scoring_teams}team.png")
+        plot.close("all")
+
+
 def run_all_weekly_graphs():
     """Regenerate the current-week 4-team and 5-team graphs for the most recent year and save them
     to `images/`, overwriting whatever was there before. Meant to run on a weekly schedule so the
