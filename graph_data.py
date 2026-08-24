@@ -128,7 +128,29 @@ def get_graph_from_file(csv_path: str) -> plt.plot:
     return graph
 
 
-def save_graph(plot: plt.plot, out_path: str):
+def save_graph(plot: plt.plot, file_name: str = None) -> str:
+    """Save the current figure held by `plot` (the return value of generate_graph()/graph_year())
+    as a PNG under <repo root>/images/, creating that directory if it doesn't exist.
+
+    :param plot: the matplotlib.pyplot module returned by generate_graph()/graph_year()
+    :param file_name: output filename; defaults to the graph's title if not given
+    """
+    fig = plot.gcf()
+
+    if file_name is None:
+        file_name = fig.axes[0].get_title()
+
+    for invalid_char in '<>:"/\\|?*':
+        file_name = file_name.replace(invalid_char, "_")
+    file_name = file_name.strip()
+    if not file_name.lower().endswith(".png"):
+        file_name += ".png"
+
+    image_dir = os.path.join(os.path.abspath(os.curdir), "images")
+    os.makedirs(image_dir, exist_ok=True)
+
+    out_path = os.path.join(image_dir, file_name)
+    fig.savefig(out_path, facecolor=fig.get_facecolor())
     return out_path
 
 
