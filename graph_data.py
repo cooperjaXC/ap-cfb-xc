@@ -1,11 +1,53 @@
+import itertools
 import os
+
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 
 """
 Note: This is incomplete. Issue #19 needs to be implemented here.
 https://github.com/cooperjaXC/ap-cfb-xc/issues/19
 """
+
+# Conference shortName -> line color, matching the "halogen glow on charcoal"
+# look used in past @SECGeographer / @ap_cfb_xc posts. Conferences not listed
+# here (Mountain West, CUSA, Sun Belt, MAC, Pac-12, Patriot, FBS Indep., etc.)
+# fall back to FALLBACK_COLORS below — they rarely field enough ranked teams
+# to score, so no fixed color was ever established for them.
+CONFERENCE_COLORS = {
+    "SEC": "#1E90FF",  # blue
+    "Big Ten": "#FFD500",  # yellow
+    "ACC": "#FF3B3B",  # red
+    "Big 12": "#B266FF",  # purple
+    "American": "#FF9500",  # orange (AAC) - reserved, rarely scores
+}
+FALLBACK_COLORS = ["#B0B0B0", "#3DDC84", "#FF6EC7", "#00E5FF", "#C0FF00"]
+
+BACKGROUND_COLOR = "#2B2B2B"
+GRID_COLOR = "#555555"
+TEXT_COLOR = "#E8E8E8"
+
+
+def _glow_plot(ax, x, y, color, label):
+    """Draw a line with a soft halogen-style glow by layering translucent strokes."""
+    for linewidth, alpha in ((8, 0.05), (5, 0.10), (3, 0.18)):
+        ax.plot(x, y, color=color, linewidth=linewidth, alpha=alpha, solid_capstyle="round")
+    ax.plot(
+        x,
+        y,
+        color=color,
+        linewidth=2,
+        marker="o",
+        markersize=6,
+        markerfacecolor=color,
+        markeredgecolor=color,
+        label=label,
+    )
+
+
+def _color_for_conference(name, fallback_cycle):
+    return CONFERENCE_COLORS.get(name) or next(fallback_cycle)
 
 
 def generate_graph(summary_stats_df) -> plt.plot:
@@ -16,37 +58,46 @@ def generate_graph(summary_stats_df) -> plt.plot:
     # Drop rows and columns with all NaN values
     df_cleaned = summary_stats_df.dropna(axis=0, how="all").dropna(axis=1, how="all")
 
-    # Plot the data
-    plt.figure(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.patch.set_facecolor(BACKGROUND_COLOR)
+    ax.set_facecolor(BACKGROUND_COLOR)
+
+    # Plot the data, one glowing line per conference
+    fallback_cycle = itertools.cycle(FALLBACK_COLORS)
     for column in df_cleaned.columns:
-        plt.plot(df_cleaned.index, df_cleaned[column], marker="o", label=column)
+        color = _color_for_conference(column, fallback_cycle)
+        _glow_plot(ax, df_cleaned.index, df_cleaned[column], color, column)
 
     # Customize the plot
-    plt.title("Weekly Results")
-    plt.xlabel("Week")
-    plt.ylabel("Scores")
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.gca().set_facecolor("black")
+    ax.set_title("Weekly Results", color=TEXT_COLOR, fontsize=16, fontweight="bold", pad=20)
+    ax.grid(True, color=GRID_COLOR, linewidth=0.5, alpha=0.6)
 
-    # Customize the color of lines and markers
-    colors = ["cyan", "yellow", "lime", "magenta"]
-    for i, line in enumerate(plt.gca().get_lines()):
-        line.set_color(colors[i])
-        line.set_markersize(8)
-        line.set_markerfacecolor("white")
-    # Invert y-axis
-    plt.gca().invert_yaxis()
+    # X-axis ticks along the top, angled, left-to-right chronological order
+    ax.xaxis.set_ticks_position("top")
+    ax.xaxis.set_label_position("top")
+    ax.tick_params(axis="x", colors=TEXT_COLOR, rotation=45)
+    ax.tick_params(axis="y", colors=TEXT_COLOR)
+    for tick_label in ax.get_xticklabels():
+        tick_label.set_ha("left")
 
-    # Make a legend
-    plt.legend()
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc='middle right')
+    # Y-axis: best (lowest) score at the top, gridlines every 5 points
+    ax.yaxis.set_major_locator(MultipleLocator(5))
+    ax.invert_yaxis()
 
-    # Add a border around the graph
-    plt.gca().spines["top"].set_visible(True)
-    plt.gca().spines["right"].set_visible(True)
-    plt.gca().spines["bottom"].set_visible(True)
-    plt.gca().spines["left"].set_visible(True)
+    for spine in ax.spines.values():
+        spine.set_color(GRID_COLOR)
+
+    # Legend along the bottom, one column per conference, no border
+    legend = ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.05),
+        ncol=len(df_cleaned.columns),
+        frameon=False,
+    )
+    for text in legend.get_texts():
+        text.set_color(TEXT_COLOR)
+
+    fig.tight_layout()
 
     # Show the plot
     plt.show()
@@ -99,7 +150,7 @@ if __name__ == "__main__":
         ],
         "SEC": [49, 37, 37, 32, 32, 33, 35, 36, 43, 35.5],
         "ACC": [72, 78, 76, 87, 84, 84, 77, 77, 76.5, 85],
-        "B1G": [71, 67, 74, 80, None, 83, 74, 66, 66, 63.5],
+        "Big Ten": [71, 67, 74, 80, None, 83, 74, 66, 66, 63.5],
         "Big 12": [95.5, 89, 81, 88, 94, 90, 79.5, 86, None, 96],
     }
 
