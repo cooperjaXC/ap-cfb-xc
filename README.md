@@ -10,6 +10,12 @@ This method ranks conferences based on the positions of their top teams in [the 
 before, throughout, and at the end of each college football season.
 This provides an objective, measurable comparison of conference strength for every week of the season.
 
+## Current Results
+### 5-Team
+![five team](images/current_week_5team.png)
+### 4-Team
+![four team](images/current_week_4team.png)
+
 ## Background
 
 Inspired by the team scoring in cross-country racing,

@@ -183,6 +183,17 @@ def graph_year(year: int, num_scoring_teams: int = 5) -> plt.plot:
     return generate_graph(df, title=title)
 
 
+def run_all_weekly_graphs():
+    """Regenerate the current-week 4-team and 5-team graphs for the most recent year and save them
+    to `images/`, overwriting whatever was there before. Meant to run on a weekly schedule so the
+    images referenced from the README stay current under fixed filenames."""
+    year = most_recent_year()
+    for num_scoring_teams in (4, 5):
+        plot = graph_year(year, num_scoring_teams=num_scoring_teams)
+        save_graph(plot, f"current_week_{num_scoring_teams}team.png")
+        plot.close("all")
+
+
 def graph_all_data():
     """ Graph all the data in the repo."""
     tss = "_team_summary_statistics.csv"
