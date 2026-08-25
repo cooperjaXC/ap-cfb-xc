@@ -53,7 +53,7 @@ def _color_for_conference(name, fallback_cycle):
     return CONFERENCE_COLORS.get(name) or next(fallback_cycle)
 
 
-def generate_graph(summary_stats_df, title: str = "Weekly Results") -> plt.plot:
+def generate_graph(summary_stats_df, title: str = "Weekly Results", show: bool = True) -> plt.plot:
     """ """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
@@ -116,15 +116,16 @@ def generate_graph(summary_stats_df, title: str = "Weekly Results") -> plt.plot:
     )
 
     # Show the plot
-    plt.show()
+    if show:
+        plt.show()
 
     return plt
 
 
-def get_graph_from_file(csv_path: str) -> plt.plot:
+def get_graph_from_file(csv_path: str, show: bool = True) -> plt.plot:
     """Shortcut wrapper to get the summary statistics graph from a file"""
     df = pd.read_csv(csv_path)
-    graph = generate_graph(df)
+    graph = generate_graph(df, show=show)
     return graph
 
 
@@ -161,11 +162,12 @@ def most_recent_year(data_dir: str = None) -> int:
     return max(years)
 
 
-def graph_year(year: int, num_scoring_teams: int = 5) -> plt.plot:
+def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.plot:
     """Graph a single season's summary statistics.
 
     :param year: season year, e.g. 2024
     :param num_scoring_teams: 4 or 5 (top-N teams summed per conference); defaults to 5
+    :param show: whether to display the plot window; defaults to True
     """
     if num_scoring_teams not in (4, 5):
         raise ValueError("num_scoring_teams must be 4 or 5")
@@ -180,14 +182,15 @@ def graph_year(year: int, num_scoring_teams: int = 5) -> plt.plot:
     df.rename(columns={idx_header: "Week"}, inplace=True)
 
     title = f"CFP AP {year} XC — {num_scoring_teams} Teams"
-    return generate_graph(df, title=title)
+    return generate_graph(df, title=title, show=show)
 
 
-def graph_final_rankings_by_year(num_scoring_teams: int = 5) -> plt.plot:
+def graph_final_rankings_by_year(num_scoring_teams: int = 5, show: bool = True) -> plt.plot:
     """Graph each conference's Final-week score across every season on record (one point per year),
     using the same styling as graph_year().
 
     :param num_scoring_teams: 4 or 5 (top-N teams summed per conference); defaults to 5
+    :param show: whether to display the plot window; defaults to True
     """
     if num_scoring_teams not in (4, 5):
         raise ValueError("num_scoring_teams must be 4 or 5")
@@ -211,14 +214,15 @@ def graph_final_rankings_by_year(num_scoring_teams: int = 5) -> plt.plot:
     final_by_year_df.reset_index(inplace=True)
 
     title = f"CFP AP Final XC — {num_scoring_teams} Teams ({years[0]}-{years[-1]})"
-    return generate_graph(final_by_year_df, title=title)
+    return generate_graph(final_by_year_df, title=title, show=show)
 
 
 def run_final_rankings_graphs():
     """Regenerate the all-time Final-rankings-by-year graphs for both 4-team and 5-team scoring and
-    save them to `images/` under fixed filenames."""
+    save them to `images/` under fixed filenames. Runs headless (no plot windows) since this is meant
+    for unattended/weekly execution."""
     for num_scoring_teams in (4, 5):
-        plot = graph_final_rankings_by_year(num_scoring_teams=num_scoring_teams)
+        plot = graph_final_rankings_by_year(num_scoring_teams=num_scoring_teams, show=False)
         save_graph(plot, f"final_rankings_by_year_{num_scoring_teams}team.png")
         plot.close("all")
 
@@ -226,10 +230,11 @@ def run_final_rankings_graphs():
 def run_all_weekly_graphs():
     """Regenerate the current-week 4-team and 5-team graphs for the most recent year and save them
     to `images/`, overwriting whatever was there before. Meant to run on a weekly schedule so the
-    images referenced from the README stay current under fixed filenames."""
+    images referenced from the README stay current under fixed filenames; runs headless (no plot
+    windows) since this is meant for unattended execution."""
     year = most_recent_year()
     for num_scoring_teams in (4, 5):
-        plot = graph_year(year, num_scoring_teams=num_scoring_teams)
+        plot = graph_year(year, num_scoring_teams=num_scoring_teams, show=False)
         save_graph(plot, f"current_week_{num_scoring_teams}team.png")
         plot.close("all")
 
