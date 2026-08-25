@@ -181,7 +181,7 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     idx_header = f"AP_XC_{team_dir.title()}_Race"
     df.rename(columns={idx_header: "Week"}, inplace=True)
 
-    title = f"CFP AP {year} XC — {num_scoring_teams} Teams"
+    title = f"CFB AP {year} XC — {num_scoring_teams} Teams"
     return generate_graph(df, title=title, show=show)
 
 
@@ -213,7 +213,7 @@ def graph_final_rankings_by_year(num_scoring_teams: int = 5, show: bool = True) 
     final_by_year_df.index.name = "Week"
     final_by_year_df.reset_index(inplace=True)
 
-    title = f"CFP AP Final XC — {num_scoring_teams} Teams ({years[0]}-{years[-1]})"
+    title = f"CFB AP Final XC — {num_scoring_teams} Teams ({years[0]}-{years[-1]})"
     return generate_graph(final_by_year_df, title=title, show=show)
 
 
