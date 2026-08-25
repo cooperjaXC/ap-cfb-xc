@@ -1,14 +1,23 @@
 # AP College Football Cross-Country Scoring
 ***A Data-Driven Approach to Determining Conference Supremacy***
 
-![Generic badge](https://img.shields.io/badge/version-2.1.0-blue.svg)
-<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[//]: https://img.shields.io/badge/python-3.10%E2%80%933.13-E6BD29.svg
+
+![Generic badge](https://img.shields.io/badge/version-2.2.0-blue.svg)
+[![Python versions](https://img.shields.io/badge/python-3.12-E6BD29.svg)](https://www.python.org/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://black.readthedocs.io/)
 
 This repository implements a novel method for evaluating the best college football conferences
 using a cross-country scoring mechanism.
 This method ranks conferences based on the positions of their top teams in [the Associated Press's Top 25 rankings](https://apnews.com/hub/ap-top-25-college-football-poll)
 before, throughout, and at the end of each college football season.
 This provides an objective, measurable comparison of conference strength for every week of the season.
+
+## Current Results
+### 5-Team
+![five team](images/current_week_5team.png)
+### 4-Team
+![four team](images/current_week_4team.png)
 
 ## Background
 
@@ -26,7 +35,7 @@ This approach was first introduced in 2015 and updated in 2019 and 2024. You can
 - [2024: Updating the race for conference realignments | Medium](https://medium.com/@jacooper1317/the-race-for-college-football-conference-supremacy-a-cross-country-scoring-method-af662221bb88)
 
 The results of this work from 2012-2023:
-![Results_Graph](APXC_2012-24_5team.png)
+![Results_Graph](images/final_rankings_by_year_5team.png)
 
 This code is built upon the ESPN College Football API, shown by [Akshay Easwaran](https://github.com/akeaswaran) to have
 [hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
