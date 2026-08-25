@@ -21,13 +21,15 @@ REPO_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Locate the project's venv relative to the repo root - no hardcoded machine paths.
 # Checks for a native Linux/macOS venv first, then a Windows venv (accessed via
-# WSL or Git Bash / MINGW64), converting its path so the Windows python.exe can
-# resolve it correctly.
+# WSL or Git Bash / MINGW64). The interpreter path itself is left POSIX-style so
+# this shell can find and exec it directly; only the script path handed to that
+# (Windows) interpreter as an argument needs converting, since it's the Windows
+# python.exe process - not this shell - that has to resolve it.
 if [[ -f "$REPO_DIR/venv/bin/python" ]]; then
     PYTHON_PATH="$REPO_DIR/venv/bin/python"
     SCRIPT_PATH="$REPO_DIR/weekly_update.py"
 elif [[ -f "$REPO_DIR/venv/Scripts/python.exe" ]]; then
-    PYTHON_PATH="$(convert_path "$REPO_DIR/venv/Scripts/python.exe")"
+    PYTHON_PATH="$REPO_DIR/venv/Scripts/python.exe"
     SCRIPT_PATH="$(convert_path "$REPO_DIR/weekly_update.py")"
 else
     echo "Error: no venv found under $REPO_DIR/venv"
