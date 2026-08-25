@@ -35,7 +35,9 @@ TEXT_COLOR = "#E8E8E8"
 def _glow_plot(ax, x, y, color, label):
     """Draw a line with a soft halogen-style glow by layering translucent strokes."""
     for linewidth, alpha in ((8, 0.05), (5, 0.10), (3, 0.18)):
-        ax.plot(x, y, color=color, linewidth=linewidth, alpha=alpha, solid_capstyle="round")
+        ax.plot(
+            x, y, color=color, linewidth=linewidth, alpha=alpha, solid_capstyle="round"
+        )
     ax.plot(
         x,
         y,
@@ -53,7 +55,9 @@ def _color_for_conference(name, fallback_cycle):
     return CONFERENCE_COLORS.get(name) or next(fallback_cycle)
 
 
-def generate_graph(summary_stats_df, title: str = "Weekly Results", show: bool = True) -> plt.plot:
+def generate_graph(
+    summary_stats_df, title: str = "Weekly Results", show: bool = True
+) -> plt.plot:
     """ """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
@@ -176,7 +180,11 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
 
     team_dir = sd.quad if num_scoring_teams == 4 else sd.pent
     summary_file = os.path.join(
-        os.path.abspath(os.curdir), "data", str(year), team_dir, f"{year}_{team_dir}_summary_statistics.csv"
+        os.path.abspath(os.curdir),
+        "data",
+        str(year),
+        team_dir,
+        f"{year}_{team_dir}_summary_statistics.csv",
     )
     df = pd.read_csv(summary_file)
     # summary CSVs index their rows under "AP_XC_{N}_Team_Race" rather than "Week"
@@ -187,7 +195,9 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     return generate_graph(df, title=title, show=show)
 
 
-def graph_final_rankings_by_year(num_scoring_teams: int = 5, show: bool = True) -> plt.plot:
+def graph_final_rankings_by_year(
+    num_scoring_teams: int = 5, show: bool = True
+) -> plt.plot:
     """Graph each conference's Final-week score across every season on record (one point per year),
     using the same styling as graph_year().
 
@@ -204,7 +214,9 @@ def graph_final_rankings_by_year(num_scoring_teams: int = 5, show: bool = True) 
     years = sorted(int(entry) for entry in os.listdir(data_dir) if entry.isdigit())
     final_rows = {}
     for year in years:
-        summary_file = os.path.join(data_dir, str(year), team_dir, f"{year}_{team_dir}_summary_statistics.csv")
+        summary_file = os.path.join(
+            data_dir, str(year), team_dir, f"{year}_{team_dir}_summary_statistics.csv"
+        )
         if not os.path.exists(summary_file):
             continue
         season_df = pd.read_csv(summary_file).set_index(idx_header)
@@ -224,7 +236,9 @@ def run_final_rankings_graphs():
     save them to `images/` under fixed filenames. Runs headless (no plot windows) since this is meant
     for unattended/weekly execution."""
     for num_scoring_teams in (4, 5):
-        plot = graph_final_rankings_by_year(num_scoring_teams=num_scoring_teams, show=False)
+        plot = graph_final_rankings_by_year(
+            num_scoring_teams=num_scoring_teams, show=False
+        )
         save_graph(plot, f"final_rankings_by_year_{num_scoring_teams}team.png")
         plot.close("all")
 
@@ -242,7 +256,7 @@ def run_all_weekly_graphs():
 
 
 def graph_all_data():
-    """ Graph all the data in the repo."""
+    """Graph all the data in the repo."""
     tss = "_team_summary_statistics.csv"
     data_dir = os.path.join(os.path.abspath(os.curdir), "data")
 

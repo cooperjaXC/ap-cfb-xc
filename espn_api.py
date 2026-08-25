@@ -7,6 +7,7 @@ You can change the seasons and weeks values appropriately to get historical data
 and...you can get data on bowl/playoff games with a types value of 3 and weeks value of 1.
 There is also receiving-votes data in there under the others array.
 """
+
 import re
 import requests, numpy as np, pandas as pd
 from datetime import datetime as dt
@@ -73,9 +74,10 @@ def string_to_bool(string_to_become_bool, suppress_prints=False):
 
 
 def api_json_response(api_url):
-    """ Shortcut function for requests.get()ting APIs that return JSON results.
+    """Shortcut function for requests.get()ting APIs that return JSON results.
     Functionized in case Requests ever changes how one accesses API responses
-    or all-encompassing changes to all instances of executing this process for this project are necessary. """
+    or all-encompassing changes to all instances of executing this process for this project are necessary.
+    """
     json_response = requests.get(api_url).json()
     return json_response
 
@@ -103,7 +105,7 @@ def what_week_is_it():
 
 
 def date_processing(year=None, week=None) -> tuple:
-    """ Processes raw inputs of week and year for downstream use in multiple functions """
+    """Processes raw inputs of week and year for downstream use in multiple functions"""
     prelist = [preseason, "initial", "first", "init", "pre", str(0)]
     currentlist = [current, "present", "default", None, str(None), "now"]
     finallist = [final, "f", "complete", "total", "last", "fin"]
@@ -156,7 +158,7 @@ def date_processing(year=None, week=None) -> tuple:
 
 
 def espn_api_url_generator(year=None, week=None) -> str:
-    """ Take a week and year request from the user and generate & return the correct ESPN API URL from it.
+    """Take a week and year request from the user and generate & return the correct ESPN API URL from it.
     Very similar to the PollGrabber.apweeklyurlgenerator() function from v1"""
 
     # Properly format the date based on user input using a helper function
@@ -237,7 +239,7 @@ def espn_api_url_generator(year=None, week=None) -> str:
 
 
 def extract_week_from_url(url: str) -> str:
-    """ From the ESPN API URL, figure out what week it is.
+    """From the ESPN API URL, figure out what week it is.
     Use result of espn_api_url_generator() function as string input."""
     # defaultlink = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2023/types/2/weeks/1/rankings/1"
     # Find the index of "weeks/"
@@ -316,8 +318,8 @@ def parse_conference_info(conference_api_url: str) -> dict:
 
 
 def get_team_info(team_api_url: str) -> dict:
-    """ ESPN API Rankings embed a team API URL to identify who is in what ranking.
-     We need to parse that API's JSON to figure out what team it's referencing. """
+    """ESPN API Rankings embed a team API URL to identify who is in what ranking.
+    We need to parse that API's JSON to figure out what team it's referencing."""
     teamjson = api_json_response(team_api_url)
     # print(teamjson['nickname'])
     # # Looks like this (example for UGA, 2023 week 3):
@@ -333,8 +335,8 @@ def get_team_info(team_api_url: str) -> dict:
 
 
 def get_top_tfive(top_twentyfive_json: list) -> dict:
-    """ Process the ESPN AP API response to pull a dictionary of the top 25 teams.
-    Returns dictionary of the teams. """
+    """Process the ESPN AP API response to pull a dictionary of the top 25 teams.
+    Returns dictionary of the teams."""
     #  #Try accepting the whole rankings json dict and parsing down from that.
     # top_twentyfive_json = rankings_JSON['ranks']
 
@@ -368,8 +370,8 @@ def get_top_tfive(top_twentyfive_json: list) -> dict:
 
 
 def others_receiving_votes(others_json: list, ranked_teams: int = 25) -> dict:
-    """ Process the ESPN AP API response to pull a dictionary of the other teams receiving votes.
-    Returns dictionary of the teams. """
+    """Process the ESPN AP API response to pull a dictionary of the other teams receiving votes.
+    Returns dictionary of the teams."""
     # Get Others Receiving Votes as a continuation of the rankings, 26 to X where X is max n(Teams receiving votes).
     # Similar to the 'top_tfive_teams' variable, establish a dictionary that will hold the results.
     # # To account for ties, the dicts will have keys of rankings and values of *lists* of teams.
@@ -427,7 +429,7 @@ def others_receiving_votes(others_json: list, ranked_teams: int = 25) -> dict:
 
 
 def handle_ties(all_teams_receiving_votes_dict: dict) -> dict:
-    """ Sometimes teams receive the same number of points.
+    """Sometimes teams receive the same number of points.
     In these scenarios, find the middle number for an XC score."""
     broken_ties_dict = {}
     # Find average of ties
@@ -451,8 +453,8 @@ def handle_ties(all_teams_receiving_votes_dict: dict) -> dict:
 
 
 def poll_grabber(espn_ap_link):
-    """ Use requests to grab the AP Poll from ESPN's website,
-    the link to which is generated by apweeklyurlgenerator() """
+    """Use requests to grab the AP Poll from ESPN's website,
+    the link to which is generated by apweeklyurlgenerator()"""
     print(espn_ap_link)
     # Get the ESPN AP Top 25 rankings & Parse the JSON response
     rjson = api_json_response(espn_ap_link)
@@ -492,7 +494,7 @@ def poll_grabber(espn_ap_link):
 
 
 def all_conferences_in_rankings(formatted_rankings: dict) -> list:
-    """ Get the conferences that are included in the rankings for the given week."""
+    """Get the conferences that are included in the rankings for the given week."""
     all_conferences = []
     for rank in formatted_rankings:
         for team_dict in formatted_rankings[rank]:
@@ -503,7 +505,7 @@ def all_conferences_in_rankings(formatted_rankings: dict) -> list:
 
 
 def teams_points_by_conference(formatted_rankings: dict) -> pd.DataFrame:
-    """ Set up the conferences' dict to create the XC scores downstream. """
+    """Set up the conferences' dict to create the XC scores downstream."""
     present_conferences = all_conferences_in_rankings(formatted_rankings)
     conferences_df = pd.DataFrame(columns=present_conferences)
 
@@ -540,7 +542,7 @@ def teams_points_by_conference(formatted_rankings: dict) -> pd.DataFrame:
 def calc_conference_scores(
     conferences_init_df: pd.DataFrame, four_team_race: bool = False
 ) -> dict:
-    """ Get the scores for the conferences that appear in the rankings. """
+    """Get the scores for the conferences that appear in the rankings."""
     if bool(four_team_race):
         scoring_teams = 4
     else:
@@ -557,12 +559,14 @@ def calc_conference_scores(
                 scoring_dict[cnfcol] = did_not_score
             else:
                 scores_only_df = cutoff_teams_df.apply(
-                    lambda x: x[1]
-                    if (
-                        (not x[1] in [np.nan, None, ""])
-                        and (type(x[1]) in [float, int])
+                    lambda x: (
+                        x[1]
+                        if (
+                            (not x[1] in [np.nan, None, ""])
+                            and (type(x[1]) in [float, int])
+                        )
+                        else np.nan
                     )
-                    else np.nan
                 )
                 scoring_dict[cnfcol] = scores_only_df.sum()
         else:
@@ -677,8 +681,8 @@ def conference_scoring_order(
     conference_teams_scoring_df: pd.DataFrame,
     scoring_teams: int = 5,
 ) -> pd.DataFrame:
-    """ Once you have generated conference XC scores with calc_conference_scores(), we need to see who won!
-    Do that here. """
+    """Once you have generated conference XC scores with calc_conference_scores(), we need to see who won!
+    Do that here."""
     # Subset those conferences that are scoring.
     only_scoring_conferences = {}
     for sc in scoring_dict:
@@ -785,7 +789,7 @@ def full_ap_xc_run(year: int = None, week=None, four_team_score: bool = False):
 
 
 def pretty_print_week_data(the_results_dict: dict):
-    """ Prints the results of a weekly run in a downstream-usable manner. """
+    """Prints the results of a weekly run in a downstream-usable manner."""
     team_conf_df = the_results_dict["conference_teams_df"]
     confscoresdict = the_results_dict["conference_scores_dict"]
     core_four = ["SEC", "Big Ten", "ACC", "Big 12"]

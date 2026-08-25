@@ -5,7 +5,7 @@ import pandas as pd
 
 def resort_columns(dataframe: pd.DataFrame):
     def sort_key(item):
-        """ Function to sort tuples by the second item in the tuple """
+        """Function to sort tuples by the second item in the tuple"""
         if isinstance(item, str):
             try:
                 return float(item.split(",")[1].strip(") '"))
@@ -19,14 +19,14 @@ def resort_columns(dataframe: pd.DataFrame):
 
 
 def clean_dataframe(df):
-    """ Clean the DataFrame by stripping whitespace and replacing empty strings with NaN """
+    """Clean the DataFrame by stripping whitespace and replacing empty strings with NaN"""
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     df.replace("", pd.NA, inplace=True)
     return df
 
 
 def find_conference_column(df, conference):
-    """ Returns the index of the column for the target conference. """
+    """Returns the index of the column for the target conference."""
     for col in df.columns:
         if conference in str(col):
             return col
@@ -34,10 +34,11 @@ def find_conference_column(df, conference):
 
 
 def realign_teams(df: pd.DataFrame, n_teams_score: int = 5):
-    """ Function to realign teams """
+    """Function to realign teams"""
+
     # Ensure that the dataframe doesn't have any superfluous `'` characters in it.
     def clean_quotes(s):
-        """ Function to clean single quotes from a string """
+        """Function to clean single quotes from a string"""
         if isinstance(s, str):
             return s.replace("'", "")
         return s
@@ -47,7 +48,7 @@ def realign_teams(df: pd.DataFrame, n_teams_score: int = 5):
 
     # Establish the existing conferences & their scores in a dictionary.
     def parse_tuple_string(s):
-        """ Function to parse tuples from strings """
+        """Function to parse tuples from strings"""
         match = re.match(r"\(([^,]+),\s*([^)]+)\)", s)
         if match:
             return (match.group(1).strip(), match.group(2).strip())
@@ -195,15 +196,17 @@ def realign_teams(df: pd.DataFrame, n_teams_score: int = 5):
     print(working_conf_dict, "\n")
 
     def sort_conference_tuples(working_conf_dict):
-        """ Function to sort the tuples in each conference"""
+        """Function to sort the tuples in each conference"""
         sorted_dict = {}
         for conference, teams in working_conf_dict.items():
             # Sort the list of teams by the second item in the tuple (score), then by the first item (team name) if scores are equal
             sorted_teams = sorted(
                 teams,
-                key=lambda x: (float(x[1]), x[0])
-                if x[1].replace(".", "", 1).isdigit()
-                else (float("inf"), x[0]),
+                key=lambda x: (
+                    (float(x[1]), x[0])
+                    if x[1].replace(".", "", 1).isdigit()
+                    else (float("inf"), x[0])
+                ),
             )
             sorted_dict[conference] = sorted_teams
         return sorted_dict

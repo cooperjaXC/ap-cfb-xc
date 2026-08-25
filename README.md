@@ -1,8 +1,11 @@
 # AP College Football Cross-Country Scoring
 ***A Data-Driven Approach to Determining Conference Supremacy***
 
-![Generic badge](https://img.shields.io/badge/version-2.1.0-blue.svg)
-<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[//]: https://img.shields.io/badge/python-3.10%E2%80%933.13-E6BD29.svg
+
+![Generic badge](https://img.shields.io/badge/version-2.2.0-blue.svg)
+[![Python versions](https://img.shields.io/badge/python-3.12-E6BD29.svg)](https://www.python.org/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://black.readthedocs.io/)
 
 This repository implements a novel method for evaluating the best college football conferences
 using a cross-country scoring mechanism.

@@ -11,7 +11,8 @@ pent = "5_team"
 
 def prep_weekly_results(weekly_result_dict: dict) -> pd.DataFrame:
     """Rely on the 'espn_api.full_ap_xc_run()' function as input.
-    This will have 'conference_teams_df', 'conference_scores_dict' as keys to the dict. """
+    This will have 'conference_teams_df', 'conference_scores_dict' as keys to the dict.
+    """
     base_df = weekly_result_dict["conference_teams_df"]
     conf_scores_dict = weekly_result_dict["conference_scores_dict"]
 
@@ -22,7 +23,7 @@ def prep_weekly_results(weekly_result_dict: dict) -> pd.DataFrame:
 
 
 def what_week_is_current(week, year):
-    """ The week is 'current' for the present year. But what week is that exactly numerically (or Final)?"""
+    """The week is 'current' for the present year. But what week is that exactly numerically (or Final)?"""
     year, week = epi.date_processing(year, week)
     if week == epi.current:
         # Is the 'current' week actually the final rankings of the season?
@@ -42,14 +43,14 @@ def summarize_data(
     existing_summary_df: pd.DataFrame = None,
 ):
     """
-    Purpose: Summarizes data for a given week and conference score tuple. It standardizes the week formatting, handles potential errors, and writes the summary data to a file.
-Inputs:
-week: The week to summarize.
-conference_score_tuple: List of conference scores.
-n_teams_str: String indicating the number of teams (default is pent).
-existing_summary_df: Existing summary DataFrame (optional).
-Outputs:
-The summary data as a DataFrame.
+        Purpose: Summarizes data for a given week and conference score tuple. It standardizes the week formatting, handles potential errors, and writes the summary data to a file.
+    Inputs:
+    week: The week to summarize.
+    conference_score_tuple: List of conference scores.
+    n_teams_str: String indicating the number of teams (default is pent).
+    existing_summary_df: Existing summary DataFrame (optional).
+    Outputs:
+    The summary data as a DataFrame.
     """
     preseason_title = epi.preseason.title()
     final_title = epi.final.title()
@@ -156,7 +157,7 @@ def suppress_unused_week_16(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
-    """ This will print the summary statistics for the whole year (thus far) in an aesthetically pleasing manner for use in reports, social media posts, etc."""
+    """This will print the summary statistics for the whole year (thus far) in an aesthetically pleasing manner for use in reports, social media posts, etc."""
     # Set the week label as the index
     whole_year_df = whole_year_df.set_index(whole_year_df.columns[0])
     whole_year_df = suppress_unused_week_16(whole_year_df)
@@ -198,7 +199,7 @@ def write_weekly_results(
     four_team_race: bool = False,
     pretty_print: bool = True,
 ) -> pd.DataFrame:
-    """ Record the weekly results as individual CSVs & append that data to the summary statistics for the year and n(Team) race. """
+    """Record the weekly results as individual CSVs & append that data to the summary statistics for the year and n(Team) race."""
     # Manage input dates
     year, week = epi.date_processing(year, week)
     week = what_week_is_current(week=week, year=year)
@@ -254,7 +255,7 @@ def write_weekly_results(
 def store_weekly_results(
     year: int = None, week=None, four_team_score: bool = False, prettyprint: bool = True
 ) -> pd.DataFrame:
-    """ Full process to store weekly results and write them to the season's summary statistics. """
+    """Full process to store weekly results and write them to the season's summary statistics."""
     four_team_score = epi.string_to_bool(four_team_score)
     results_dict = epi.full_ap_xc_run(year, week, four_team_score=four_team_score)
     prettyprint = epi.string_to_bool(prettyprint)
