@@ -34,7 +34,7 @@ This approach was first introduced in 2015 and updated in 2019 and 2024. You can
 - [2019: AP XC - An Update](https://cooperconferencecolumn.wordpress.com/2019/08/19/ap-xc-an-update/)
 - [2024: Updating the race for conference realignments | Medium](https://medium.com/@jacooper1317/the-race-for-college-football-conference-supremacy-a-cross-country-scoring-method-af662221bb88)
 
-The results of this work from 2012-2023:
+The results of this work across every season on record, tracking each conference's Final AP ranking score by year:
 ![Results_Graph](images/final_rankings_by_year_5team.png)
 
 This code is built upon the ESPN College Football API, shown by [Akshay Easwaran](https://github.com/akeaswaran) to have
@@ -43,9 +43,19 @@ with reliable AP ranking information back to 2014. Thus, this code is dependent 
 
 ## Repository Structure
 
-- [`data`](data): Directory containing input data files.
+- [`data`](data): Input/output data, organized as `data/<year>/<4_team|5_team>/`. Each subdirectory holds
+  one CSV per week (`<year>_week_<N>.csv`) plus one running `<year>_<4_team|5_team>_summary_statistics.csv`
+  that accumulates every week's conference scores for that season.
+- [`images`](images): Auto-generated graph PNGs referenced by this README. These are overwritten in place
+  each time the graphing scripts run (see [Graphing](#graphing) below) - don't hand-edit them.
 - [`espn_api.py`](espn_api.py): Script for fetching data from the ESPN API.
 - [`store_data.py`](store_data.py): Script for storing data fetched from external sources.
+- [`graph_data.py`](graph_data.py): Generates the styled graphs shown in this README, both for a single
+  season and across every season on record (see "Graphing" under Specialized Uses below).
+- [`weekly_update.py`](weekly_update.py): One-shot entry point that pulls the latest rankings and
+  regenerates the current-week graphs in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
+- [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py): Standalone "what-if" script
+  remapping 2023 results onto the 2024 realigned conferences.
 
 ## Python Environments
 Make sure all [required packages](requirements.in) are installed. You can do this in a few ways:
@@ -59,6 +69,11 @@ pip install -r requirements.in
 This will install the package's dependencies to your base python interpreter. 
 This is not recommended as other python projects or repositories may require different versions of these packages.
 
+`requirements.in` lists the packages this project actually needs, with any version pins kept deliberate
+and minimal (e.g. a security-floor minimum version). [`requirements.txt`](requirements.txt), by contrast,
+is a full `pip freeze` snapshot of a known-working environment - useful as a reference if you hit a
+dependency conflict, but not what you should install from directly.
+
 ### 2) Virtual Environments
 Setting up a virtual python environment (venv) is recommended to ensure no dependency conflicts 
 across your personal projects or with other developers on this project.
@@ -68,6 +83,33 @@ See below for executing this on windows operating systems.
 
 To execute a full run that pulls the latest AP rankings from ESPN and scores them as a cross-country meet,
 execute and run the [`store_data.py`](store_data.py) file.
+
+## Automating Weekly Updates
+
+[`weekly_update.py`](weekly_update.py) is a single entry point that does the whole week's work in one
+call: it fetches and stores the latest AP rankings for both 4-team and 5-team scoring, then regenerates
+`images/current_week_4team.png` and `images/current_week_5team.png` - the same filenames this README
+links to above, so a new week's results show up here automatically with no README edits needed.
+
+Run it directly with your venv's interpreter:
+
+```bash
+python weekly_update.py
+```
+
+For unattended/scheduled runs, use the wrapper script for your OS instead of calling `weekly_update.py`
+directly. Both scripts locate the project's `venv` relative to their own location - no machine-specific
+paths to edit - and exit with a clear error if no venv is found rather than silently falling back to a
+different interpreter:
+
+- **Windows**: [`weekly_update.bat`](weekly_update.bat) - point a Task Scheduler (`schtasks`) job at this
+  file.
+- **Linux/macOS/WSL/Git Bash**: [`weekly_update.sh`](weekly_update.sh) - point a `cron` job at this file.
+  It also works against a Windows-created venv when run from WSL or Git Bash.
+
+Neither script pauses for input by default, so they're safe to run unattended; each has a commented-out
+`pause` (Windows) / `read` (Linux) line you can uncomment if you'd rather the window stay open when
+running it manually by double-click.
 
 ### Specialized Uses
 
@@ -142,6 +184,53 @@ execute and run the [`store_data.py`](store_data.py) file.
        **Outputs**:
        - A DataFrame with teams realigned to their new conferences and the recalculated conference standings.
 
+4. **Graphing**:
+   - Use [`graph_data.py`](graph_data.py) to turn a season's (or every season's) stored summary
+     statistics into the styled, halogen-glow graphs shown at the top of this README.
+
+   - **Critical Functions**:
+
+     - **`graph_year(year: int, num_scoring_teams: int = 5, show: bool = True)`**
+
+       **Purpose**: Plots one season's weekly conference scores, Preseason through Final.
+
+       **Inputs**:
+       - `year`: The season to graph.
+       - `num_scoring_teams`: `4` or `5`; which scoring mode's data to plot (default `5`).
+       - `show`: Whether to pop open a plot window (default `True`; set `False` for unattended runs).
+
+       **Outputs**:
+       - The `matplotlib.pyplot` module, with the generated figure as its current figure.
+
+     - **`graph_final_rankings_by_year(num_scoring_teams: int = 5, show: bool = True)`**
+
+       **Purpose**: Plots each conference's Final-week score across every season on record - one point
+       per year - so you can see a conference's ranking trend over time rather than within one season.
+
+       **Inputs**: Same as `graph_year`, minus `year` (it covers every season found under `data/`).
+
+       **Outputs**:
+       - The `matplotlib.pyplot` module, as above.
+
+     - **`save_graph(plot, file_name: str = None) -> str`**
+
+       **Purpose**: Saves a graph produced by the functions above to `images/`, creating that directory
+       if needed. If `file_name` is omitted, it's derived from the graph's own title.
+
+       **Inputs**:
+       - `plot`: The return value of `graph_year()` / `graph_final_rankings_by_year()`.
+       - `file_name`: Output filename (optional).
+
+       **Outputs**:
+       - The full path the image was saved to.
+
+   - Conference line colors follow a fixed, deliberate convention (defined in `CONFERENCE_COLORS` in
+     `graph_data.py`): SEC is blue, Big Ten is yellow, ACC is red, Big 12 is purple, the American (AAC)
+     is orange - reserved even though it rarely fields enough ranked teams to score - and the defunct
+     Pac-12 is light blue, since it still appears throughout the historical data. Any other conference
+     that shows up (Mountain West, Sun Belt, MAC, etc.) is colored from a rotating fallback palette,
+     since no fixed color has ever been established for them.
+
 
 ## Contributing
 
@@ -154,39 +243,3 @@ Thanks to [John-Lee-Cooper](https://github.com/John-Lee-Cooper), [seanreid5454](
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## Windows `py_venv` Tool
-To create or update your venv, this repository includes a tool to do this on Windows operating systems. 
-The [`py_venv`](py_venv) subdirectory includes setup files that can create your venv for you. 
-
-To do this, first open the [`.\py_venv\set_python_path.bat`](py_venv/set_python_path.bat) in a text editor.
-Set the `PYTHON_PATH` variable to the base interpreter off of which you want the venv to be built.
-
-* Recommended: use your interpreter that was included in your ArcGIS Pro installation. 
-This will ensure you will have all geoprocessing functions accessible in your venv.
-
-Then, execute the following in a **Windows command prompt** with the current directory set to the root of this repo:
-
-```shell
-.\py_venv\setup.bat
-```
-
-This batch file will install a virtual python environment for you in the [`py_venv` subdirectory](py_venv) 
-based on the specifications in the [`.\requirements.in` file](requirements.in). 
-
-The [`.\py_venv\requirements.txt` file](py_venv/requirements.txt) is generated at the time of the venv setup.
-It indicates the most recent development environment in which this repository was developed. 
-It is a full `pip freeze` of the development environment.
-If you have any package dependency issues, you can reference the [`.\py_venv\requirements.txt`](py_venv/requirements.txt)
- file to compare with your current environment. 
-
-Remember to reference the newly created venv as your new python interpreter. 
-This will be located at `.\py_venv\venv\Scripts\python.exe`.
-
-To activate the venv directly in the Windows command prompt, enter
-```shell
-.\py_venv\venv\Scripts\activate
-```
-
-Warning: housing venvs in locations with excessively long paths may cause errors in installing or importing packages.
-Make sure to `git clone` the repository into a folder without a long file path.
