@@ -57,6 +57,8 @@ def generate_graph(summary_stats_df, title: str = "Weekly Results", show: bool =
     """ """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
+    # Drop the unused "Week 16" placeholder for seasons that only ran 15 weeks (Issue #22)
+    summary_stats_df = sd.suppress_unused_week_16(summary_stats_df)
 
     # Drop rows and columns with all NaN values
     df_cleaned = summary_stats_df.dropna(axis=0, how="all").dropna(axis=1, how="all")
