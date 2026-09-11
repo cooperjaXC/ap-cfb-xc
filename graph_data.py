@@ -130,6 +130,7 @@ def generate_graph(
 
 def get_graph_from_file(csv_path: str, show: bool = True) -> plt.plot:
     """Shortcut wrapper to get the summary statistics graph from a file"""
+    print(f"Reading summary statistics from {csv_path}")
     df = pd.read_csv(csv_path)
     graph = generate_graph(df, show=show)
     return graph
@@ -158,6 +159,7 @@ def save_graph(plot: plt.plot, file_name: str = None) -> str:
 
     out_path = os.path.join(image_dir, file_name)
     fig.savefig(out_path, facecolor=fig.get_facecolor())
+    print("Graph has been successfully saved to", out_path, "\n")
     return out_path
 
 
@@ -178,6 +180,7 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     if num_scoring_teams not in (4, 5):
         raise ValueError("num_scoring_teams must be 4 or 5")
 
+    print(f"Graphing {year} season ({num_scoring_teams}-team scoring)...")
     team_dir = sd.quad if num_scoring_teams == 4 else sd.pent
     summary_file = os.path.join(
         os.path.abspath(os.curdir),
@@ -212,6 +215,9 @@ def graph_final_rankings_by_year(
     data_dir = os.path.join(os.path.abspath(os.curdir), "data")
 
     years = sorted(int(entry) for entry in os.listdir(data_dir) if entry.isdigit())
+    print(
+        f"Graphing Final rankings across {years[0]}-{years[-1]} ({num_scoring_teams}-team scoring)..."
+    )
     final_rows = {}
     for year in years:
         summary_file = os.path.join(
@@ -222,6 +228,11 @@ def graph_final_rankings_by_year(
         season_df = pd.read_csv(summary_file).set_index(idx_header)
         if "Final" in season_df.index:
             final_rows[str(year)] = season_df.loc["Final"]
+
+    print(
+        f"Collected Final-week rows for {len(final_rows)} of {len(years)} seasons "
+        "(a season still in progress may have a blank Final row)."
+    )
 
     final_by_year_df = pd.DataFrame.from_dict(final_rows, orient="index")
     final_by_year_df.index.name = "Week"
@@ -235,12 +246,16 @@ def run_final_rankings_graphs():
     """Regenerate the all-time Final-rankings-by-year graphs for both 4-team and 5-team scoring and
     save them to `images/` under fixed filenames. Runs headless (no plot windows) since this is meant
     for unattended/weekly execution."""
+    print("-----------------------")
+    print("Regenerating all-time Final-rankings-by-year graphs (4-team and 5-team)")
     for num_scoring_teams in (4, 5):
         plot = graph_final_rankings_by_year(
             num_scoring_teams=num_scoring_teams, show=False
         )
         save_graph(plot, f"final_rankings_by_year_{num_scoring_teams}team.png")
         plot.close("all")
+    print("Final-rankings-by-year graphs are up to date.")
+    print("-----------------------")
 
 
 def run_all_weekly_graphs():
@@ -249,10 +264,14 @@ def run_all_weekly_graphs():
     images referenced from the README stay current under fixed filenames; runs headless (no plot
     windows) since this is meant for unattended execution."""
     year = most_recent_year()
+    print("-----------------------")
+    print(f"Regenerating current-week graphs for {year} (4-team and 5-team)")
     for num_scoring_teams in (4, 5):
         plot = graph_year(year, num_scoring_teams=num_scoring_teams, show=False)
         save_graph(plot, f"current_week_{num_scoring_teams}team.png")
         plot.close("all")
+    print("Current-week graphs are up to date.")
+    print("-----------------------")
 
 
 def graph_all_data():
