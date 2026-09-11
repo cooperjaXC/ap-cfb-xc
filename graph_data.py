@@ -60,6 +60,7 @@ def generate_graph(
     title: str = "Weekly Results",
     show: bool = True,
     drop_empty_weeks: bool = True,
+    year: int = None,
 ) -> plt.plot:
     """
     :param drop_empty_weeks: if True (default), weeks/rows with no data at all across every
@@ -67,11 +68,14 @@ def generate_graph(
         chart, where an in-progress season shouldn't appear as an empty x-axis category. Pass False
         to keep every not-yet-reached week visible as a blank stretch of x-axis instead (used for the
         current season's weekly chart, so the plot visually shows how far into the season we are).
+    :param year: season year, used (if we've cached it - see store_data.record_regular_season_week_
+        count()) to definitively suppress an unused "Week 16" even mid-season, rather than waiting
+        until Week 15 and Final are both recorded to infer it from the data.
     """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
     # Drop the unused "Week 16" placeholder for seasons that only ran 15 weeks (Issue #22)
-    summary_stats_df = sd.suppress_unused_week_16(summary_stats_df)
+    summary_stats_df = sd.suppress_unused_week_16(summary_stats_df, year=year)
 
     # Drop columns (conferences) with no data all season; optionally also drop empty week rows
     df_cleaned = summary_stats_df
@@ -212,7 +216,7 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
 
     title = f"CFB AP {year} XC — {num_scoring_teams} Teams"
     # Keep every not-yet-reached week visible (blank) so the chart shows how far into the season we are
-    return generate_graph(df, title=title, show=show, drop_empty_weeks=False)
+    return generate_graph(df, title=title, show=show, drop_empty_weeks=False, year=year)
 
 
 def graph_final_rankings_by_year(

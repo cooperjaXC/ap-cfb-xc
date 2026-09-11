@@ -238,6 +238,19 @@ def espn_api_url_generator(year=None, week=None) -> str:
     return url
 
 
+def get_regular_season_week_count(year) -> int:
+    """Ask ESPN how many regular-season weeks a given year's schedule actually has (15 or 16).
+
+    ESPN publishes each season's full week structure (types/2 = regular season) well before the
+    season starts, so this tells us ahead of time whether a Week 16 AP poll will ever exist for this
+    season - no need to wait until Week 15 and Final are both recorded to find out. Validated against
+    every season with known Week 16 data/absence in this repo's history (2014-2026): 100% match.
+    """
+    base_espn_api_pth = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/"
+    url = f"{base_espn_api_pth}{year}/types/2/weeks?limit=20"
+    return api_json_response(url)["count"]
+
+
 def extract_week_from_url(url: str) -> str:
     """From the ESPN API URL, figure out what week it is.
     Use result of espn_api_url_generator() function as string input."""

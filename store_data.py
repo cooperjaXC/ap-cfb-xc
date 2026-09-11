@@ -1,3 +1,4 @@
+import json
 import os
 import warnings
 import numpy as np
@@ -131,19 +132,64 @@ def summarize_data(
     return summary_df
 
 
-def suppress_unused_week_16(df: pd.DataFrame) -> pd.DataFrame:
+def _season_meta_file(year: int) -> str:
+    return os.path.join(os.getcwd(), "data", str(year), "season_meta.json")
+
+
+def get_regular_season_week_count(year: int):
+    """Return the cached regular-season week count for `year` (15 or 16) if we've already recorded
+    it (see record_regular_season_week_count()), else None."""
+    meta_file = _season_meta_file(year)
+    if not os.path.exists(meta_file):
+        return None
+    with open(meta_file) as f:
+        return json.load(f).get("regular_season_weeks")
+
+
+def record_regular_season_week_count(year: int) -> int:
+    """Fetch (once) and cache how many regular-season weeks `year`'s schedule actually has, straight
+    from ESPN's published season structure. This lets us know ahead of time - even at Preseason -
+    whether a 'Week 16' AP poll will ever exist for this season, rather than waiting to see if it
+    ever gets populated."""
+    cached = get_regular_season_week_count(year)
+    if cached is not None:
+        return cached
+
+    week_count = epi.get_regular_season_week_count(year)
+    meta_file = _season_meta_file(year)
+    os.makedirs(os.path.dirname(meta_file), exist_ok=True)
+    with open(meta_file, "w") as f:
+        json.dump({"regular_season_weeks": week_count}, f)
+    print(f"Recorded {year} regular season week count: {week_count}")
+    return week_count
+
+
+def suppress_unused_week_16(df: pd.DataFrame, year: int = None) -> pd.DataFrame:
     """Drop a leftover, unused 'Week 16' row from a week-indexed summary DataFrame (Issue #22).
 
     The weekly summary shell always reserves a 'Week 16' slot, because in years with a "weird Labor
     Day falling" every team gets an extra bye and the season really does run a 16th polling week. In a
     normal season, though, the schedule only ever reaches 'Week 15' before 'Final', leaving 'Week 16'
-    as a permanent empty placeholder. We only drop it once we can confirm the season actually
-    finished with no real Week 16 data (Week 15 and Final both scored, but Week 16 didn't) - a season
-    that genuinely used all 16 weeks keeps its Week 16 row untouched.
+    as a permanent empty placeholder.
+
+    If `year` is given and we have its regular-season week count cached (record_regular_season_week_
+    count() is called during every weekly store), we use that directly - definitive, and available
+    even mid-season. Otherwise (older seasons stored before this metadata existed) we fall back to
+    inferring it from the data: only drop 'Week 16' once we can confirm the season actually finished
+    with no real Week 16 data (Week 15 and Final both scored, but Week 16 didn't).
 
     :param df: DataFrame indexed by week label (e.g. after set_index("Week")/set_index(idx_header))
+    :param year: season year, used to look up the cached, definitive week count if available
     """
-    if not {"Week 15", "Week 16", "Final"}.issubset(df.index):
+    if "Week 16" not in df.index:
+        return df
+
+    if year is not None:
+        known_week_count = get_regular_season_week_count(year)
+        if known_week_count is not None:
+            return df.drop(index="Week 16") if known_week_count < 16 else df
+
+    if not {"Week 15", "Final"}.issubset(df.index):
         return df
 
     week_15_has_data = df.loc["Week 15"].notna().any()
@@ -174,11 +220,13 @@ def is_final_week_recorded(summary_df: pd.DataFrame) -> bool:
     return bool(final_rows[conference_cols].notna().any().any())
 
 
-def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
+def pretty_print_year_data(
+    whole_year_df: pd.DataFrame, year: int = None
+) -> pd.DataFrame:
     """This will print the summary statistics for the whole year (thus far) in an aesthetically pleasing manner for use in reports, social media posts, etc."""
     # Set the week label as the index
     whole_year_df = whole_year_df.set_index(whole_year_df.columns[0])
-    whole_year_df = suppress_unused_week_16(whole_year_df)
+    whole_year_df = suppress_unused_week_16(whole_year_df, year=year)
     # Step 1: Remove rows and columns that have all null values
     df_cleaned = whole_year_df.dropna(axis=1, how="all")
     df_cleaned = df_cleaned.dropna(axis=0, how="all")
@@ -222,6 +270,11 @@ def write_weekly_results(
     year, week = epi.date_processing(year, week)
     week = what_week_is_current(week=week, year=year)
 
+    # Cache this season's actual regular-season week count (15 or 16), straight from ESPN's published
+    # schedule, so we can definitively suppress an unused Week 16 mid-season rather than waiting to
+    # see if it's ever populated (Issue #22).
+    record_regular_season_week_count(year)
+
     # Define base directory and subdirectories
     base_dir = os.path.join(os.getcwd(), "data", str(year))
     team_dir = quad if four_team_race else pent
@@ -256,7 +309,7 @@ def write_weekly_results(
 
     if epi.string_to_bool(pretty_print):
         # Generate a nice-looking output of the summary data.
-        pretty_print_year_data(the_summary_data)
+        pretty_print_year_data(the_summary_data, year=year)
 
     # Write updated summary statistics to CSV
     try:
