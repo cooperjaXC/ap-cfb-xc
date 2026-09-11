@@ -56,16 +56,28 @@ def _color_for_conference(name, fallback_cycle):
 
 
 def generate_graph(
-    summary_stats_df, title: str = "Weekly Results", show: bool = True
+    summary_stats_df,
+    title: str = "Weekly Results",
+    show: bool = True,
+    drop_empty_weeks: bool = True,
 ) -> plt.plot:
-    """ """
+    """
+    :param drop_empty_weeks: if True (default), weeks/rows with no data at all across every
+        conference are dropped before plotting - appropriate for the cross-season Final-rankings
+        chart, where an in-progress season shouldn't appear as an empty x-axis category. Pass False
+        to keep every not-yet-reached week visible as a blank stretch of x-axis instead (used for the
+        current season's weekly chart, so the plot visually shows how far into the season we are).
+    """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
     # Drop the unused "Week 16" placeholder for seasons that only ran 15 weeks (Issue #22)
     summary_stats_df = sd.suppress_unused_week_16(summary_stats_df)
 
-    # Drop rows and columns with all NaN values
-    df_cleaned = summary_stats_df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    # Drop columns (conferences) with no data all season; optionally also drop empty week rows
+    df_cleaned = summary_stats_df
+    if drop_empty_weeks:
+        df_cleaned = df_cleaned.dropna(axis=0, how="all")
+    df_cleaned = df_cleaned.dropna(axis=1, how="all")
 
     fig, ax = plt.subplots(figsize=(12, 8))
     fig.patch.set_facecolor(BACKGROUND_COLOR)
@@ -76,6 +88,10 @@ def generate_graph(
     for column in df_cleaned.columns:
         color = _color_for_conference(column, fallback_cycle)
         _glow_plot(ax, df_cleaned.index, df_cleaned[column], color, column)
+
+    # Force the full category range into view - matplotlib's autoscale only considers the finite
+    # (non-NaN) data range, which would otherwise crop out any not-yet-reached, still-blank weeks
+    ax.set_xlim(-0.5, len(df_cleaned.index) - 0.5)
 
     # Customize the plot
     ax.set_title(title, color=TEXT_COLOR, fontsize=16, fontweight="bold", pad=20)
@@ -195,7 +211,8 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     df.rename(columns={idx_header: "Week"}, inplace=True)
 
     title = f"CFB AP {year} XC — {num_scoring_teams} Teams"
-    return generate_graph(df, title=title, show=show)
+    # Keep every not-yet-reached week visible (blank) so the chart shows how far into the season we are
+    return generate_graph(df, title=title, show=show, drop_empty_weeks=False)
 
 
 def graph_final_rankings_by_year(
