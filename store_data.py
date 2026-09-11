@@ -156,6 +156,24 @@ def suppress_unused_week_16(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def is_final_week_recorded(summary_df: pd.DataFrame) -> bool:
+    """True if `summary_df` (the return value of store_weekly_results()/write_weekly_results()) has
+    a populated 'Final' row - i.e. this season's last AP poll has actually been recorded, rather than
+    just reached mid-season with 'Final' still sitting as an empty placeholder in the summary shell.
+    """
+    if summary_df is None or summary_df.empty:
+        return False
+
+    idx_header = summary_df.columns[0]
+    final_label = epi.final.title()
+    final_rows = summary_df.loc[summary_df[idx_header] == final_label]
+    if final_rows.empty:
+        return False
+
+    conference_cols = summary_df.columns.drop(idx_header)
+    return bool(final_rows[conference_cols].notna().any().any())
+
+
 def pretty_print_year_data(whole_year_df: pd.DataFrame) -> pd.DataFrame:
     """This will print the summary statistics for the whole year (thus far) in an aesthetically pleasing manner for use in reports, social media posts, etc."""
     # Set the week label as the index

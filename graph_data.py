@@ -242,6 +242,15 @@ def graph_final_rankings_by_year(
     return generate_graph(final_by_year_df, title=title, show=show)
 
 
+def update_final_rankings_graph(num_scoring_teams: int = 5) -> str:
+    """Regenerate and save the all-time Final-rankings-by-year graph for one scoring mode, headless,
+    to its fixed filename under `images/`."""
+    plot = graph_final_rankings_by_year(num_scoring_teams=num_scoring_teams, show=False)
+    out_path = save_graph(plot, f"final_rankings_by_year_{num_scoring_teams}team.png")
+    plot.close("all")
+    return out_path
+
+
 def run_final_rankings_graphs():
     """Regenerate the all-time Final-rankings-by-year graphs for both 4-team and 5-team scoring and
     save them to `images/` under fixed filenames. Runs headless (no plot windows) since this is meant
@@ -249,11 +258,7 @@ def run_final_rankings_graphs():
     print("-----------------------")
     print("Regenerating all-time Final-rankings-by-year graphs (4-team and 5-team)")
     for num_scoring_teams in (4, 5):
-        plot = graph_final_rankings_by_year(
-            num_scoring_teams=num_scoring_teams, show=False
-        )
-        save_graph(plot, f"final_rankings_by_year_{num_scoring_teams}team.png")
-        plot.close("all")
+        update_final_rankings_graph(num_scoring_teams)
     print("Final-rankings-by-year graphs are up to date.")
     print("-----------------------")
 
