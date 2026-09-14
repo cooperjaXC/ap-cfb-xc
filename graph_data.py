@@ -14,9 +14,9 @@ https://github.com/cooperjaXC/ap-cfb-xc/issues/19
 
 # Conference shortName -> line color, matching the "halogen glow on charcoal"
 # look used in past @SECGeographer / @ap_cfb_xc posts. Conferences not listed
-# here (Mountain West, CUSA, Sun Belt, MAC, Pac-12, Patriot, FBS Indep., etc.)
-# fall back to FALLBACK_COLORS below — they rarely field enough ranked teams
-# to score, so no fixed color was ever established for them.
+# here (CUSA, Sun Belt, MAC, Patriot, FBS Indep., etc.) fall back to
+# FALLBACK_COLORS below — they rarely field enough ranked teams to score, so
+# no fixed color was ever established for them.
 CONFERENCE_COLORS = {
     "SEC": "#1E90FF",  # blue
     "Big Ten": "#FFD500",  # yellow
@@ -24,8 +24,13 @@ CONFERENCE_COLORS = {
     "Big 12": "#B266FF",  # purple
     "American": "#FF9500",  # orange (AAC) - reserved, rarely scores
     "Pac-12": "#87CEFA",  # light blue - defunct as of 2024, but present in historical seasons
+    "Mountain West": "#D9D9D9",  # light silver, brightened for dark-theme contrast - free to
+    # claim now that Pac-10 (which used to land here via fallback) is merged into Pac-12 for
+    # cross-season graphs, see _merge_pac10_into_pac12() below
+    "Big East": "#3DDC84",  # green - previously landed here via fallback cycling (Pac-10 always
+    # grabbed the grey slot ahead of it), fixed explicitly so it no longer depends on cycle order
 }
-FALLBACK_COLORS = ["#B0B0B0", "#3DDC84", "#FF6EC7", "#00E5FF", "#C0FF00"]
+FALLBACK_COLORS = ["#FF6EC7", "#00E5FF", "#C0FF00"]
 
 BACKGROUND_COLOR = "#2B2B2B"
 GRID_COLOR = "#555555"
@@ -219,6 +224,17 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     return generate_graph(df, title=title, show=show, drop_empty_weeks=False, year=year)
 
 
+def _merge_pac10_into_pac12(final_row: pd.Series) -> pd.Series:
+    """Relabel a season's 'Pac-10' score as 'Pac-12' so cross-season graphs draw one continuous
+    line for the conference across its 2011 realignment (Colorado & Utah joining), rather than
+    splitting it into two disconnected series. Single-season graphs (graph_year()) call
+    generate_graph() directly and never go through here, so they keep showing 'Pac-10' for
+    seasons before the renaming - only the multi-year view treats them as the same entity."""
+    if "Pac-10" in final_row.index:
+        final_row = final_row.rename({"Pac-10": "Pac-12"})
+    return final_row
+
+
 def graph_final_rankings_by_year(
     num_scoring_teams: int = 5, show: bool = True
 ) -> plt.plot:
@@ -248,7 +264,7 @@ def graph_final_rankings_by_year(
             continue
         season_df = pd.read_csv(summary_file).set_index(idx_header)
         if "Final" in season_df.index:
-            final_rows[str(year)] = season_df.loc["Final"]
+            final_rows[str(year)] = _merge_pac10_into_pac12(season_df.loc["Final"])
 
     print(
         f"Collected Final-week rows for {len(final_rows)} of {len(years)} seasons "
