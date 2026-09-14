@@ -1,0 +1,7 @@
+"('Big Ten', 'DNS')","('Big 12', np.int64(64))","('Pac-10', np.int64(66))","('SEC', np.int64(53))","('ACC', 'DNS')","('Big East', 'DNS')","('FBS Indep.', 'DNS')","('WAC', 'DNS')"
+"('Ohio State', 1)","('Nebraska', 2)","('UCLA', 3)","('Tennessee', 4)","('Florida State', 10)","('Syracuse', 12)","('Notre Dame', 23.5)","('Air Force', 23.5)"
+"('Penn State', 7)","('Kansas State', 5)","('Washington', 9)","('LSU', 6)","('Virginia', 11)","('West Virginia', 19)",,
+"('Wisconsin', 14)","('Colorado', 15)","('Arizona', 16)","('Florida', 8)","('NC State', 26.5)","('Virginia Tech', 21)",,
+,"('Texas A&M', 17)","('USC', 18)","('Georgia', 13)",,,,
+,"('Missouri', 25)","('Oregon', 20)","('Alabama', 22)",,,,
+,,,"('Mississippi State', 26.5)",,,,
