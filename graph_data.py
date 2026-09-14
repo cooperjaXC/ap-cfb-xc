@@ -255,11 +255,20 @@ def graph_final_rankings_by_year(
         "(a season still in progress may have a blank Final row)."
     )
 
+    # Only count years with an actual (non-blank) Final score toward the title's displayed range -
+    # an in-progress season with no Final data yet shouldn't stretch the range shown to the reader
+    years_with_data = [int(y) for y, row in final_rows.items() if row.notna().any()]
+    title_start, title_end = (
+        (min(years_with_data), max(years_with_data))
+        if years_with_data
+        else (years[0], years[-1])
+    )
+
     final_by_year_df = pd.DataFrame.from_dict(final_rows, orient="index")
     final_by_year_df.index.name = "Week"
     final_by_year_df.reset_index(inplace=True)
 
-    title = f"CFB AP Final XC — {num_scoring_teams} Teams ({years[0]}-{years[-1]})"
+    title = f"CFB AP Final XC — {num_scoring_teams} Teams ({title_start}-{title_end})"
     return generate_graph(final_by_year_df, title=title, show=show)
 
 
