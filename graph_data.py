@@ -21,15 +21,15 @@ CONFERENCE_COLORS = {
     "SEC": "#1E90FF",  # blue
     "Big Ten": "#FFD500",  # yellow
     "ACC": "#FF3B3B",  # red
-    "Big 12": "#B266FF",  # purple
-    "American": "#FF9500",  # orange (AAC) - reserved, rarely scores
+    "Big 12": "#3DDC84",  # green - swapped with Big East/American's old purple; Big 12 shows up
+    # far more often than Big East/American, and green reads better than purple against SEC's blue
+    "American": "#B266FF",  # purple (AAC) - swapped from Big 12, see above; reserved, rarely scores
     "Pac-12": "#87CEFA",  # light blue - defunct as of 2024, but present in historical seasons
     "Mountain West": "#D9D9D9",  # light silver, brightened for dark-theme contrast - free to
     # claim now that Pac-10 (which used to land here via fallback) is merged into Pac-12 for
     # cross-season graphs, see _merge_pac10_into_pac12() below
-    "Big East": "#3DDC84",  # green - previously landed here via fallback cycling (Pac-10 always
-    # grabbed the grey slot ahead of it), fixed explicitly so it no longer depends on cycle order
-    "Big East/American": "#3DDC84",  # same green - the merged cross-season identity used by
+    "Big East": "#B266FF",  # purple - swapped from Big 12, see above
+    "Big East/American": "#B266FF",  # same purple - the merged cross-season identity used by
     # _merge_realigned_conferences() below (Big East football became the American in 2013)
 }
 FALLBACK_COLORS = ["#FF6EC7", "#00E5FF", "#C0FF00"]
