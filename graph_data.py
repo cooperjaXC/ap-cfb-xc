@@ -29,6 +29,8 @@ CONFERENCE_COLORS = {
     # cross-season graphs, see _merge_pac10_into_pac12() below
     "Big East": "#3DDC84",  # green - previously landed here via fallback cycling (Pac-10 always
     # grabbed the grey slot ahead of it), fixed explicitly so it no longer depends on cycle order
+    "Big East/American": "#3DDC84",  # same green - the merged cross-season identity used by
+    # _merge_realigned_conferences() below (Big East football became the American in 2013)
 }
 FALLBACK_COLORS = ["#FF6EC7", "#00E5FF", "#C0FF00"]
 
@@ -224,15 +226,25 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     return generate_graph(df, title=title, show=show, drop_empty_weeks=False, year=year)
 
 
-def _merge_pac10_into_pac12(final_row: pd.Series) -> pd.Series:
-    """Relabel a season's 'Pac-10' score as 'Pac-12' so cross-season graphs draw one continuous
-    line for the conference across its 2011 realignment (Colorado & Utah joining), rather than
-    splitting it into two disconnected series. Single-season graphs (graph_year()) call
-    generate_graph() directly and never go through here, so they keep showing 'Pac-10' for
-    seasons before the renaming - only the multi-year view treats them as the same entity."""
-    if "Pac-10" in final_row.index:
-        final_row = final_row.rename({"Pac-10": "Pac-12"})
-    return final_row
+# Conferences that are the same underlying entity across a rename/membership change, folded into
+# one continuous line in the cross-season "Final rankings by year" view (see
+# graph_final_rankings_by_year() / _merge_realigned_conferences() below) instead of splitting into
+# two disconnected series. Single-season graphs (graph_year()) call generate_graph() directly and
+# never go through this merge, so they still show whichever name was actually in effect that year.
+CROSS_SEASON_CONFERENCE_MERGES = {
+    "Pac-10": "Pac-12",  # Colorado & Utah joined, 2011 - keeps the "12" label per Pac-12 convention
+    "Big East": "Big East/American",  # Big East football became the American Athletic Conference
+    "American": "Big East/American",  # in 2013 - https://en.wikipedia.org/wiki/American_Conference_(NCAA)
+}
+
+
+def _merge_realigned_conferences(final_row: pd.Series) -> pd.Series:
+    """Relabel a season's Final row per CROSS_SEASON_CONFERENCE_MERGES so cross-season graphs
+    treat each renamed/realigned conference as one continuous entity."""
+    rename_map = {
+        old: new for old, new in CROSS_SEASON_CONFERENCE_MERGES.items() if old in final_row.index
+    }
+    return final_row.rename(rename_map) if rename_map else final_row
 
 
 def graph_final_rankings_by_year(
@@ -264,7 +276,7 @@ def graph_final_rankings_by_year(
             continue
         season_df = pd.read_csv(summary_file).set_index(idx_header)
         if "Final" in season_df.index:
-            final_rows[str(year)] = _merge_pac10_into_pac12(season_df.loc["Final"])
+            final_rows[str(year)] = _merge_realigned_conferences(season_df.loc["Final"])
 
     print(
         f"Collected Final-week rows for {len(final_rows)} of {len(years)} seasons "
