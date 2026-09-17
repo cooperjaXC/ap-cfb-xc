@@ -35,6 +35,12 @@ CONFERENCE_COLORS = {
 }
 FALLBACK_COLORS = ["#FF6EC7", "#00E5FF", "#C0FF00"]
 
+# Used to color a champion's x-axis tick label when its conference didn't score that period (see
+# the "off-chart champion" handling in generate_graph()) and, as a last resort, isn't in
+# CONFERENCE_COLORS either - practically shouldn't happen since every conference that has ever
+# produced an AP #1 team already has a fixed color above.
+OFF_CHART_CHAMPION_FALLBACK_COLOR = "#FFC72C"
+
 BACKGROUND_COLOR = "#2B2B2B"
 GRID_COLOR = "#555555"
 TEXT_COLOR = "#E8E8E8"
@@ -70,7 +76,8 @@ _RANK_NUMBER_RE = re.compile(r"-?\d+\.?\d*")
 def _cell_conference_name(cell) -> str:
     """Pull the conference/team name out of a "('Name', value)" cell from a week CSV - value may
     be a bare number, 'DNS', or wrapped like 'np.int64(9)'/'np.float64(9.0)', but the name is
-    always the first quoted string, so this doesn't need to understand the value at all."""
+    always the first quoted string, so this doesn't need to understand the value at all.
+    """
     if pd.isna(cell):
         return None
     match = _CONFERENCE_NAME_RE.match(str(cell).strip())
@@ -98,7 +105,11 @@ def _champion_conference(year: int, team_dir: str) -> str:
     ranked #1 nationally.
     """
     week_file = os.path.join(
-        os.path.abspath(os.curdir), "data", str(year), team_dir, f"{year}_week_final.csv"
+        os.path.abspath(os.curdir),
+        "data",
+        str(year),
+        team_dir,
+        f"{year}_week_final.csv",
     )
     if not os.path.exists(week_file):
         return None
@@ -132,9 +143,13 @@ def generate_graph(
         until Week 15 and Final are both recorded to infer it from the data.
     :param champion_highlight: optional {x_label: conference_name} map built by the caller (see
         graph_year() / graph_final_rankings_by_year(), which know how to look up each season's AP
-        #1 team via _champion_conference()). For each entry whose x_label/conference is actually
-        present in the cleaned data, that point is redrawn larger with a white outline - the same
-        fill color, just marking it as that season's national champion's conference.
+        #1 team via _champion_conference()). Where that conference actually has a plotted point at
+        x_label, it's redrawn larger with a white outline - the same fill color, just marking it as
+        that period's national champion's conference. Where the conference has no point there (it
+        didn't score enough teams that period - DNS), the point can't be ringed, so instead that
+        x-axis tick label itself is colored to match the conference and gets a trailing "†", with a
+        footnote explaining the symbol - this is the only indication in that case, so it still
+        surfaces the champion without fabricating a data point that would compromise the scoring.
     """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
@@ -159,27 +174,33 @@ def generate_graph(
         column_colors[column] = color
         _glow_plot(ax, df_cleaned.index, df_cleaned[column], color, column)
 
-    # Mark each season's national-champion conference at its Final-week/Final-year point: same
-    # dot and fill color, just larger with a bright white outline (keeps working regardless of
-    # which conference color it lands on, including yellow)
+    # Mark each period's national-champion conference at its point: same dot and fill color, just
+    # larger with a bright white outline (keeps working regardless of which conference color it
+    # lands on, including yellow). If that conference has no point there at all - it didn't score
+    # enough teams that period (DNS) - there's nothing to ring, so its x-axis tick label is colored
+    # and marked instead (see the tick-styling section below); off_chart_champions collects those.
+    off_chart_champions = {}
     if champion_highlight:
         for x_label, champ_conf in champion_highlight.items():
-            if champ_conf not in df_cleaned.columns or x_label not in df_cleaned.index:
-                continue
-            y_val = df_cleaned.loc[x_label, champ_conf]
-            if pd.isna(y_val):
-                continue
-            ax.plot(
-                [x_label],
-                [y_val],
-                marker="o",
-                markersize=11,
-                markerfacecolor=column_colors[champ_conf],
-                markeredgecolor="#FFFFFF",
-                markeredgewidth=2.2,
-                linestyle="none",
-                zorder=6,
+            has_point = (
+                champ_conf in df_cleaned.columns
+                and x_label in df_cleaned.index
+                and pd.notna(df_cleaned.loc[x_label, champ_conf])
             )
+            if has_point:
+                ax.plot(
+                    [x_label],
+                    [df_cleaned.loc[x_label, champ_conf]],
+                    marker="o",
+                    markersize=11,
+                    markerfacecolor=column_colors[champ_conf],
+                    markeredgecolor="#FFFFFF",
+                    markeredgewidth=2.2,
+                    linestyle="none",
+                    zorder=6,
+                )
+            elif x_label in df_cleaned.index:
+                off_chart_champions[x_label] = champ_conf
 
     # Force the full category range into view - matplotlib's autoscale only considers the finite
     # (non-NaN) data range, which would otherwise crop out any not-yet-reached, still-blank weeks
@@ -194,8 +215,45 @@ def generate_graph(
     ax.xaxis.set_label_position("top")
     ax.tick_params(axis="x", colors=TEXT_COLOR, rotation=45)
     ax.tick_params(axis="y", colors=TEXT_COLOR)
-    for tick_label in ax.get_xticklabels():
+
+    # Pin the current (categorical) tick positions down with a FixedLocator/FixedFormatter before
+    # appending "†" to any label - matplotlib's categorical unit converter otherwise regenerates
+    # each tick's text from its own position->category mapping at draw time, silently reverting a
+    # plain Text.set_text() call (color/bold stick fine since those are separate properties, which
+    # is why this bug is easy to miss - only the appended character disappears)
+    original_labels = [tick_label.get_text() for tick_label in ax.get_xticklabels()]
+    ax.set_xticks(ax.get_xticks())
+    ax.set_xticklabels(
+        [
+            f"{label}†" if label in off_chart_champions else label
+            for label in original_labels
+        ]
+    )
+
+    for tick_label, original in zip(ax.get_xticklabels(), original_labels):
         tick_label.set_ha("left")
+        champ_conf = off_chart_champions.get(original)
+        if champ_conf is not None:
+            color = (
+                column_colors.get(champ_conf)
+                or CONFERENCE_COLORS.get(champ_conf)
+                or OFF_CHART_CHAMPION_FALLBACK_COLOR
+            )
+            tick_label.set_color(color)
+            tick_label.set_fontweight("bold")
+
+    if off_chart_champions:
+        fig.text(
+            0.01,
+            0.005,
+            "† national champion's conference didn't score enough teams to appear that season",
+            color=TEXT_COLOR,
+            alpha=0.8,
+            fontsize=8,
+            style="italic",
+            ha="left",
+            va="bottom",
+        )
 
     # Y-axis: best (lowest) score at the top, gridlines every 5 points
     ax.yaxis.set_major_locator(MultipleLocator(5))
@@ -336,7 +394,9 @@ def _merge_realigned_conferences(final_row: pd.Series) -> pd.Series:
     """Relabel a season's Final row per CROSS_SEASON_CONFERENCE_MERGES so cross-season graphs
     treat each renamed/realigned conference as one continuous entity."""
     rename_map = {
-        old: new for old, new in CROSS_SEASON_CONFERENCE_MERGES.items() if old in final_row.index
+        old: new
+        for old, new in CROSS_SEASON_CONFERENCE_MERGES.items()
+        if old in final_row.index
     }
     return final_row.rename(rename_map) if rename_map else final_row
 
