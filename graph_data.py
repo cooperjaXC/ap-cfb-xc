@@ -1,5 +1,6 @@
 import itertools
 import os
+import re
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -62,12 +63,63 @@ def _color_for_conference(name, fallback_cycle):
     return CONFERENCE_COLORS.get(name) or next(fallback_cycle)
 
 
+_CONFERENCE_NAME_RE = re.compile(r"^\('(?P<name>.*?)',")
+_RANK_NUMBER_RE = re.compile(r"-?\d+\.?\d*")
+
+
+def _cell_conference_name(cell) -> str:
+    """Pull the conference/team name out of a "('Name', value)" cell from a week CSV - value may
+    be a bare number, 'DNS', or wrapped like 'np.int64(9)'/'np.float64(9.0)', but the name is
+    always the first quoted string, so this doesn't need to understand the value at all."""
+    if pd.isna(cell):
+        return None
+    match = _CONFERENCE_NAME_RE.match(str(cell).strip())
+    return match.group("name") if match else None
+
+
+def _cell_rank(cell) -> float:
+    """Pull the numeric rank out of a "('Team', rank)" cell from a week CSV, or None if the cell
+    is blank."""
+    if pd.isna(cell):
+        return None
+    number_match = _RANK_NUMBER_RE.search(str(cell))
+    return float(number_match.group()) if number_match else None
+
+
+def _champion_conference(year: int, team_dir: str) -> str:
+    """Return the conference shortName of the AP poll's #1 team in `year`'s Final week, read
+    straight from that week's own stored per-week CSV - or None if that file doesn't exist yet
+    (i.e. the season hasn't reached its Final poll).
+
+    Reads the raw per-week file (not the summary_statistics rollup) because it lists each
+    conference's scoring teams ranked best-to-worst, so the #1 overall team is always the top
+    entry under whichever conference column it belongs to - independent of 4-team/5-team scoring
+    mode, since that only changes how many teams count toward the conference's score, not who
+    ranked #1 nationally.
+    """
+    week_file = os.path.join(
+        os.path.abspath(os.curdir), "data", str(year), team_dir, f"{year}_week_final.csv"
+    )
+    if not os.path.exists(week_file):
+        return None
+    raw = pd.read_csv(week_file, header=None)
+    if raw.empty:
+        return None
+    conference_names = [_cell_conference_name(cell) for cell in raw.iloc[0]]
+    for col_idx, top_team_cell in enumerate(raw.iloc[1]):
+        rank = _cell_rank(top_team_cell)
+        if rank == 1:
+            return conference_names[col_idx]
+    return None
+
+
 def generate_graph(
     summary_stats_df,
     title: str = "Weekly Results",
     show: bool = True,
     drop_empty_weeks: bool = True,
     year: int = None,
+    champion_highlight: dict = None,
 ) -> plt.plot:
     """
     :param drop_empty_weeks: if True (default), weeks/rows with no data at all across every
@@ -78,6 +130,11 @@ def generate_graph(
     :param year: season year, used (if we've cached it - see store_data.record_regular_season_week_
         count()) to definitively suppress an unused "Week 16" even mid-season, rather than waiting
         until Week 15 and Final are both recorded to infer it from the data.
+    :param champion_highlight: optional {x_label: conference_name} map built by the caller (see
+        graph_year() / graph_final_rankings_by_year(), which know how to look up each season's AP
+        #1 team via _champion_conference()). For each entry whose x_label/conference is actually
+        present in the cleaned data, that point is redrawn larger with a white outline - the same
+        fill color, just marking it as that season's national champion's conference.
     """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
@@ -96,9 +153,33 @@ def generate_graph(
 
     # Plot the data, one glowing line per conference
     fallback_cycle = itertools.cycle(FALLBACK_COLORS)
+    column_colors = {}
     for column in df_cleaned.columns:
         color = _color_for_conference(column, fallback_cycle)
+        column_colors[column] = color
         _glow_plot(ax, df_cleaned.index, df_cleaned[column], color, column)
+
+    # Mark each season's national-champion conference at its Final-week/Final-year point: same
+    # dot and fill color, just larger with a bright white outline (keeps working regardless of
+    # which conference color it lands on, including yellow)
+    if champion_highlight:
+        for x_label, champ_conf in champion_highlight.items():
+            if champ_conf not in df_cleaned.columns or x_label not in df_cleaned.index:
+                continue
+            y_val = df_cleaned.loc[x_label, champ_conf]
+            if pd.isna(y_val):
+                continue
+            ax.plot(
+                [x_label],
+                [y_val],
+                marker="o",
+                markersize=11,
+                markerfacecolor=column_colors[champ_conf],
+                markeredgecolor="#FFFFFF",
+                markeredgewidth=2.2,
+                linestyle="none",
+                zorder=6,
+            )
 
     # Force the full category range into view - matplotlib's autoscale only considers the finite
     # (non-NaN) data range, which would otherwise crop out any not-yet-reached, still-blank weeks
@@ -221,9 +302,22 @@ def graph_year(year: int, num_scoring_teams: int = 5, show: bool = True) -> plt.
     idx_header = f"AP_XC_{team_dir.title()}_Race"
     df.rename(columns={idx_header: "Week"}, inplace=True)
 
+    # Only set if the Final poll has actually been recorded for this season - _champion_conference()
+    # returns None while the season is still in progress, mid-season, since week_final.csv won't
+    # exist yet
+    champ_conf = _champion_conference(year, team_dir)
+    champion_highlight = {"Final": champ_conf} if champ_conf else None
+
     title = f"CFB AP {year} XC — {num_scoring_teams} Teams"
     # Keep every not-yet-reached week visible (blank) so the chart shows how far into the season we are
-    return generate_graph(df, title=title, show=show, drop_empty_weeks=False, year=year)
+    return generate_graph(
+        df,
+        title=title,
+        show=show,
+        drop_empty_weeks=False,
+        year=year,
+        champion_highlight=champion_highlight,
+    )
 
 
 # Conferences that are the same underlying entity across a rename/membership change, folded into
@@ -296,8 +390,21 @@ def graph_final_rankings_by_year(
     final_by_year_df.index.name = "Week"
     final_by_year_df.reset_index(inplace=True)
 
+    # For each year with a recorded Final poll, look up its AP #1 team's conference and relabel it
+    # through the same realignment merges as the data itself, so the highlighted point lands on
+    # whichever merged column (e.g. "Pac-12", "Big East/American") that year's line actually uses
+    champion_highlight = {}
+    for year in years_with_data:
+        champ_conf = _champion_conference(year, team_dir)
+        if champ_conf:
+            champion_highlight[str(year)] = CROSS_SEASON_CONFERENCE_MERGES.get(
+                champ_conf, champ_conf
+            )
+
     title = f"CFB AP Final XC — {num_scoring_teams} Teams ({title_start}-{title_end})"
-    return generate_graph(final_by_year_df, title=title, show=show)
+    return generate_graph(
+        final_by_year_df, title=title, show=show, champion_highlight=champion_highlight
+    )
 
 
 def update_final_rankings_graph(num_scoring_teams: int = 5) -> str:
