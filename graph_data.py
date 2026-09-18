@@ -184,9 +184,10 @@ def generate_graph(
         x_label, it's redrawn larger with a white outline - the same fill color, just marking it as
         that period's national champion's conference. Where the conference has no point there (it
         didn't score enough teams that period - DNS), the point can't be ringed, so instead that
-        x-axis tick label itself is colored to match the conference and gets a trailing "†", with a
-        footnote explaining the symbol - this is the only indication in that case, so it still
-        surfaces the champion without fabricating a data point that would compromise the scoring.
+        x-axis tick label itself is colored (and bolded) to match the conference instead, with a
+        footnote explaining what a colored year means - this is the only indication in that case,
+        so it still surfaces the champion without fabricating a data point that would compromise
+        the scoring.
     """
     # Set Week column as index
     summary_stats_df.set_index("Week", inplace=True)
@@ -259,23 +260,9 @@ def generate_graph(
     ax.tick_params(axis="x", colors=TEXT_COLOR, rotation=45)
     ax.tick_params(axis="y", colors=TEXT_COLOR)
 
-    # Pin the current (categorical) tick positions down with a FixedLocator/FixedFormatter before
-    # appending "†" to any label - matplotlib's categorical unit converter otherwise regenerates
-    # each tick's text from its own position->category mapping at draw time, silently reverting a
-    # plain Text.set_text() call (color/bold stick fine since those are separate properties, which
-    # is why this bug is easy to miss - only the appended character disappears)
-    original_labels = [tick_label.get_text() for tick_label in ax.get_xticklabels()]
-    ax.set_xticks(ax.get_xticks())
-    ax.set_xticklabels(
-        [
-            f"{label}†" if label in off_chart_champions else label
-            for label in original_labels
-        ]
-    )
-
-    for tick_label, original in zip(ax.get_xticklabels(), original_labels):
+    for tick_label in ax.get_xticklabels():
         tick_label.set_ha("left")
-        champ_conf = off_chart_champions.get(original)
+        champ_conf = off_chart_champions.get(tick_label.get_text())
         if champ_conf is not None:
             color = (
                 column_colors.get(champ_conf)
@@ -289,7 +276,8 @@ def generate_graph(
         fig.text(
             0.01,
             0.005,
-            "† national champion's conference didn't score enough teams to appear that season",
+            "Colored year = that season's national champion's conference didn't score enough "
+            "teams to appear on the chart",
             color=TEXT_COLOR,
             alpha=0.8,
             fontsize=8,
