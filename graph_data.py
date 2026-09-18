@@ -69,6 +69,37 @@ def _color_for_conference(name, fallback_cycle):
     return CONFERENCE_COLORS.get(name) or next(fallback_cycle)
 
 
+def _draw_dns_gap_bridges(ax, df_cleaned, column_colors):
+    """For each conference, draw a thin dotted line straight across any DNS gap - connecting its
+    two closest surrounding scored points - instead of just leaving a blank stretch. Experimental
+    (per user request): meant to help the eye track a conference's trend through a season or two
+    where it briefly didn't score, without implying it actually had a score in between.
+
+    Only bridges a genuine DNS gap (at least one *other* conference has data somewhere in that
+    stretch, proving those weeks/years actually happened); never bridges into the trailing
+    not-yet-reached weeks of an in-progress season, where nothing has data yet and there's nothing
+    real to connect.
+    """
+    any_data_mask = df_cleaned.notna().any(axis=1)
+    for column in df_cleaned.columns:
+        series = df_cleaned[column]
+        valid_positions = [i for i, v in enumerate(series.values) if pd.notna(v)]
+        for start, end in zip(valid_positions, valid_positions[1:]):
+            if end - start <= 1:
+                continue  # adjacent already - the normal solid line connects these
+            if not any_data_mask.iloc[start + 1 : end].any():
+                continue  # nothing scored anywhere in the gap - not-yet-reached weeks, not a DNS
+            ax.plot(
+                [df_cleaned.index[start], df_cleaned.index[end]],
+                [series.iloc[start], series.iloc[end]],
+                color=column_colors[column],
+                linestyle=(0, (2, 2)),
+                linewidth=1.6,
+                alpha=0.55,
+                zorder=2,
+            )
+
+
 _CONFERENCE_NAME_RE = re.compile(r"^\('(?P<name>.*?)',")
 _RANK_NUMBER_RE = re.compile(r"-?\d+\.?\d*")
 
@@ -173,6 +204,10 @@ def generate_graph(
         color = _color_for_conference(column, fallback_cycle)
         column_colors[column] = color
         _glow_plot(ax, df_cleaned.index, df_cleaned[column], color, column)
+
+    # Bridge DNS gaps with a thin dotted line so a conference's trend still reads across a
+    # stretch where it briefly didn't score (see _draw_dns_gap_bridges() docstring for scope)
+    _draw_dns_gap_bridges(ax, df_cleaned, column_colors)
 
     # Mark each period's national-champion conference at its point: same dot and fill color, just
     # larger with a bright white outline (keeps working regardless of which conference color it
