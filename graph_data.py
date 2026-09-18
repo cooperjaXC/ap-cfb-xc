@@ -4,6 +4,7 @@ import re
 
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MultipleLocator
 
 import store_data as sd
@@ -40,6 +41,11 @@ FALLBACK_COLORS = ["#FF6EC7", "#00E5FF", "#C0FF00"]
 # CONFERENCE_COLORS either - practically shouldn't happen since every conference that has ever
 # produced an AP #1 team already has a fixed color above.
 OFF_CHART_CHAMPION_FALLBACK_COLOR = "#FFC72C"
+
+# Neutral fill for the "National Champion" legend swatch - the real on-chart marker keeps the
+# champion's own conference color, but the legend entry just needs to show the white-ring style
+# generically, so a conference-agnostic grey reads better than picking any one conference's color.
+CHAMPION_LEGEND_MARKER_COLOR = "#999999"
 
 BACKGROUND_COLOR = "#2B2B2B"
 GRID_COLOR = "#555555"
@@ -215,6 +221,7 @@ def generate_graph(
     # enough teams that period (DNS) - there's nothing to ring, so its x-axis tick label is colored
     # and marked instead (see the tick-styling section below); off_chart_champions collects those.
     off_chart_champions = {}
+    champion_ring_drawn = False
     if champion_highlight:
         for x_label, champ_conf in champion_highlight.items():
             has_point = (
@@ -234,6 +241,7 @@ def generate_graph(
                     linestyle="none",
                     zorder=6,
                 )
+                champion_ring_drawn = True
             elif x_label in df_cleaned.index:
                 off_chart_champions[x_label] = champ_conf
 
@@ -297,11 +305,29 @@ def generate_graph(
     for spine in ax.spines.values():
         spine.set_color(GRID_COLOR)
 
-    # Legend along the bottom, one column per conference, no border
+    # Legend along the bottom, one column per conference (plus the champion-marker swatch, if
+    # used), no border
+    handles, labels = ax.get_legend_handles_labels()
+    if champion_ring_drawn:
+        handles.append(
+            Line2D(
+                [],
+                [],
+                marker="o",
+                markersize=11,
+                markerfacecolor=CHAMPION_LEGEND_MARKER_COLOR,
+                markeredgecolor="#FFFFFF",
+                markeredgewidth=2.2,
+                linestyle="none",
+            )
+        )
+        labels.append("National Champion")
     legend = ax.legend(
+        handles,
+        labels,
         loc="upper center",
         bbox_to_anchor=(0.5, -0.05),
-        ncol=len(df_cleaned.columns),
+        ncol=len(handles),
         frameon=False,
     )
     for text in legend.get_texts():
