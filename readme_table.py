@@ -23,8 +23,8 @@ REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(REPO_DIR, "data")
 README_PATH = os.path.join(REPO_DIR, "README.md")
 
-# Shown in the table every week, even on a week they don't score (matches the console printout);
-# any other conference only appears when it actually scores
+# When these don't score they're listed ahead of the other non-scoring conferences (as in the
+# console printout)
 CORE_CONFERENCES = ["SEC", "Big Ten", "ACC", "Big 12"]
 
 _WEEK_FILE_RE = re.compile(r"^\d{4}_week_(?P<week>\d+|final)\.csv$")
@@ -96,10 +96,11 @@ def _escape(text: str) -> str:
 
 
 def build_latest_week_table(num_scoring_teams: int = 5, data_dir: str = DATA_DIR) -> str:
-    """Markdown for the newest stored week's XC standings: conferences as columns in finishing
-    order, each conference's teams (with AP ranking) as rows, and the teams that don't count toward
-    the score - starting with the tiebreaking runner, or every team of a conference that didn't
-    score - italicized, with a dashed divider after the scoring rows."""
+    """Markdown for the newest stored week's XC standings: every conference with a ranked team as a
+    column (scorers in finishing order, then those marked DNS), each conference's teams (with AP
+    ranking) as rows, and the teams that don't count toward the score - starting with the tiebreaking
+    runner, or every team of a conference that didn't score - italicized, with a dashed divider
+    after the scoring rows."""
     year, week_token, csv_path = latest_recorded_week(num_scoring_teams, data_dir)
     scores, teams_df = _load_week(csv_path)
 
@@ -109,10 +110,18 @@ def build_latest_week_table(num_scoring_teams: int = 5, data_dir: str = DATA_DIR
             scores, teams_df, scoring_teams=num_scoring_teams
         )
     places = dict(zip(order_df["conference"], order_df["place"]))
-    columns = list(order_df["conference"]) + [
-        c for c in CORE_CONFERENCES if c in teams_df.columns and c not in places
-    ]
-    teams = {c: [t for t in teams_df[c] if isinstance(t, tuple)] for c in columns}
+    teams = {c: [t for t in teams_df[c] if isinstance(t, tuple)] for c in teams_df.columns}
+    # Every conference with a ranked team gets a column: the scorers in finishing order, then those
+    # that didn't score - the core four first, then the rest by their best-ranked team
+    unscored = sorted(
+        (c for c in teams if c not in places),
+        key=lambda c: (
+            (0, CORE_CONFERENCES.index(c))
+            if c in CORE_CONFERENCES
+            else (1, teams[c][0][1])
+        ),
+    )
+    columns = list(order_df["conference"]) + unscored
 
     header = ["Pos"] + [
         f"{_place_label(places[c])} · {c}" if c in places else c for c in columns
@@ -150,7 +159,8 @@ def build_latest_week_table(num_scoring_teams: int = 5, data_dir: str = DATA_DIR
             f"<sub>Each team is shown with its AP ranking. A conference's score is the sum of its "
             f"top {n_word} teams' rankings - lowest score wins, and ties are broken by each "
             f"conference's {runner} runner. Italicized teams don't count toward the score; DNS "
-            f"means the conference didn't have enough ranked teams to score.</sub>",
+            f"means the conference didn't have enough ranked teams to score (listed after the "
+            f"scoring conferences).</sub>",
         ]
     )
 

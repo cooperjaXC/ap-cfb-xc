@@ -20,24 +20,24 @@ This provides an objective, measurable comparison of conference strength for eve
 <!-- XC-TABLE-5-TEAM:START -->
 **2026 Week 4** — 5-team XC standings
 
-| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC |
-|:---:|:---|:---|:---|:---|
-| **Score** | **25** | **54** | **88** | **110** |
-| 1 | Texas (1) | Indiana (5) | BYU (9) | Miami (6) |
-| 2 | Georgia (2) | Ohio State (7) | Texas Tech (11) | Louisville (16) |
-| 3 | Ole Miss (4) | USC (12) | Utah (15) | SMU (22) |
-| 4 | Alabama (8) | Penn State (13) | Houston (25) | Virginia Tech (32) |
-| 5 | LSU (10) | Iowa (17) | West Virginia (28) | Duke (34) |
-|  | ——— | ——— | ——— | ——— |
-| 6 | *Tennessee (14)* | *Michigan (18)* | *Oklahoma St (30)* | *Pitt (37.5)* |
-| 7 | *Missouri (19)* | *Oregon (20)* | *Arizona (36)* |  |
-| 8 | *Florida (21)* | *Washington (26)* | *Kansas St (41)* |  |
-| 9 | *Texas A&M (23)* | *UCLA (37.5)* |  |  |
-| 10 | *Mississippi St (24)* | *Nebraska (42)* |  |  |
-| 11 | *Kentucky (27)* |  |  |  |
-| 12 | *Oklahoma (29)* |  |  |  |
+| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | MAC | American | Sun Belt | Mountain West |
+|:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Score** | **25** | **54** | **88** | **110** | DNS | DNS | DNS | DNS | DNS | DNS |
+| 1 | Texas (1) | Indiana (5) | BYU (9) | Miami (6) | *Notre Dame (3)* | *Boise St (31)* | *W Michigan (33)* | *Tulsa (35)* | *James Madison (39)* | *N Dakota St (40)* |
+| 2 | Georgia (2) | Ohio State (7) | Texas Tech (11) | Louisville (16) |  |  |  |  |  |  |
+| 3 | Ole Miss (4) | USC (12) | Utah (15) | SMU (22) |  |  |  |  |  |  |
+| 4 | Alabama (8) | Penn State (13) | Houston (25) | Virginia Tech (32) |  |  |  |  |  |  |
+| 5 | LSU (10) | Iowa (17) | West Virginia (28) | Duke (34) |  |  |  |  |  |  |
+|  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
+| 6 | *Tennessee (14)* | *Michigan (18)* | *Oklahoma St (30)* | *Pitt (37.5)* |  |  |  |  |  |  |
+| 7 | *Missouri (19)* | *Oregon (20)* | *Arizona (36)* |  |  |  |  |  |  |  |
+| 8 | *Florida (21)* | *Washington (26)* | *Kansas St (41)* |  |  |  |  |  |  |  |
+| 9 | *Texas A&M (23)* | *UCLA (37.5)* |  |  |  |  |  |  |  |  |
+| 10 | *Mississippi St (24)* | *Nebraska (42)* |  |  |  |  |  |  |  |  |
+| 11 | *Kentucky (27)* |  |  |  |  |  |  |  |  |  |
+| 12 | *Oklahoma (29)* |  |  |  |  |  |  |  |  |  |
 
-<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score.</sub>
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences).</sub>
 <!-- XC-TABLE-5-TEAM:END -->
 
 ### 4-Team
