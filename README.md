@@ -16,6 +16,30 @@ This provides an objective, measurable comparison of conference strength for eve
 ## Current Results
 ### 5-Team
 ![five team](images/current_week_5team.png)
+
+<!-- XC-TABLE-5-TEAM:START -->
+**2026 Week 3** — 5-team XC standings
+
+| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC |
+|:---:|:---|:---|:---|:---|
+| **Score** | **27** | **54** | **92** | **103** |
+| 1 | Texas (1) | Indiana (4) | BYU (11) | Miami (5) |
+| 2 | Georgia (2) | Ohio State (6) | Texas Tech (13) | SMU (16) |
+| 3 | LSU (7) | USC (12) | Utah (17) | Louisville (23) |
+| 4 | Ole Miss (8) | Penn State (14) | Houston (22) | Virginia (25) |
+| 5 | Texas A&M (9) | Iowa (18) | Oklahoma St (29) | Virginia Tech (34) |
+|  | ——— | ——— | ——— | ——— |
+| 6 | *Alabama (10)* | *Michigan (19)* | *Arizona (37)* | *Pitt (39.5)* |
+| 7 | *Tennessee (15)* | *Oregon (21)* | *Kansas St (39.5)* |  |
+| 8 | *Missouri (20)* | *Washington (26)* |  |  |
+| 9 | *Oklahoma (24)* | *UCLA (35)* |  |  |
+| 10 | *Florida (27)* |  |  |  |
+| 11 | *Mississippi St (32)* |  |  |  |
+| 12 | *South Carolina (33)* |  |  |  |
+
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score.</sub>
+<!-- XC-TABLE-5-TEAM:END -->
+
 ### 4-Team
 ![four team](images/current_week_4team.png)
 
@@ -52,8 +76,11 @@ with reliable AP ranking information back to 2014. Thus, this code is dependent 
 - [`store_data.py`](store_data.py): Script for storing data fetched from external sources.
 - [`graph_data.py`](graph_data.py): Generates the styled graphs shown in this README, both for a single
   season and across every season on record (see "Graphing" under Specialized Uses below).
+- [`readme_table.py`](readme_table.py): Rebuilds the 5-team standings table under the current-week graph
+  above from the newest week stored in `data/` (the Markdown version of the console printout each weekly
+  run produces). It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
 - [`weekly_update.py`](weekly_update.py): One-shot entry point that pulls the latest rankings and
-  regenerates the current-week graphs in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
+  regenerates the current-week graphs and standings table in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
 - [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py): Standalone "what-if" script
   remapping 2023 results onto the 2024 realigned conferences.
 
@@ -89,7 +116,8 @@ execute and run the [`store_data.py`](store_data.py) file.
 [`weekly_update.py`](weekly_update.py) is a single entry point that does the whole week's work in one
 call: it fetches and stores the latest AP rankings for both 4-team and 5-team scoring, then regenerates
 `images/current_week_4team.png` and `images/current_week_5team.png` - the same filenames this README
-links to above, so a new week's results show up here automatically with no README edits needed.
+links to above - and refreshes the 5-team standings table beneath the 5-team graph, so a new week's
+results show up here automatically with no README edits needed.
 
 Run it directly with your venv's interpreter:
 
