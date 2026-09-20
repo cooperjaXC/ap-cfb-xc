@@ -16,6 +16,30 @@ This provides an objective, measurable comparison of conference strength for eve
 ## Current Results
 ### 5-Team
 ![five team](images/current_week_5team.png)
+
+<!-- XC-TABLE-5-TEAM:START -->
+**2026 Week 4** — 5-team XC standings
+
+| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | MAC | American | Sun Belt | Mountain West |
+|:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Score** | **25** | **54** | **88** | **110** | DNS | DNS | DNS | DNS | DNS | DNS |
+| 1 | Texas (1) | Indiana (5) | BYU (9) | Miami (6) | *Notre Dame (3)* | *Boise St (31)* | *W Michigan (33)* | *Tulsa (35)* | *James Madison (39)* | *N Dakota St (40)* |
+| 2 | Georgia (2) | Ohio State (7) | Texas Tech (11) | Louisville (16) |  |  |  |  |  |  |
+| 3 | Ole Miss (4) | USC (12) | Utah (15) | SMU (22) |  |  |  |  |  |  |
+| 4 | Alabama (8) | Penn State (13) | Houston (25) | Virginia Tech (32) |  |  |  |  |  |  |
+| 5 | LSU (10) | Iowa (17) | West Virginia (28) | Duke (34) |  |  |  |  |  |  |
+|  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
+| 6 | *Tennessee (14)* | *Michigan (18)* | *Oklahoma St (30)* | *Pitt (37.5)* |  |  |  |  |  |  |
+| 7 | *Missouri (19)* | *Oregon (20)* | *Arizona (36)* |  |  |  |  |  |  |  |
+| 8 | *Florida (21)* | *Washington (26)* | *Kansas St (41)* |  |  |  |  |  |  |  |
+| 9 | *Texas A&M (23)* | *UCLA (37.5)* |  |  |  |  |  |  |  |  |
+| 10 | *Mississippi St (24)* | *Nebraska (42)* |  |  |  |  |  |  |  |  |
+| 11 | *Kentucky (27)* |  |  |  |  |  |  |  |  |  |
+| 12 | *Oklahoma (29)* |  |  |  |  |  |  |  |  |  |
+
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences).</sub>
+<!-- XC-TABLE-5-TEAM:END -->
+
 ### 4-Team
 ![four team](images/current_week_4team.png)
 
@@ -41,6 +65,10 @@ This code is built upon the ESPN College Football API, shown by [Akshay Easwaran
 [hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
 with reliable AP ranking information back to 2014. Thus, this code is dependent upon the quality and stability of ESPN's API data structure.
 
+The repo's weekly data reaches back further than that endpoint's dependable coverage: it now spans 1998 to the present,
+with 1998-2011 imported from [collegepollarchive.com](https://collegepollarchive.com), 2012-2013 from
+[Sports Reference](https://www.sports-reference.com/cfb/), and 2014 onward pulled from ESPN.
+
 ## Repository Structure
 
 - [`data`](data): Input/output data, organized as `data/<year>/<4_team|5_team>/`. Each subdirectory holds
@@ -52,8 +80,11 @@ with reliable AP ranking information back to 2014. Thus, this code is dependent 
 - [`store_data.py`](store_data.py): Script for storing data fetched from external sources.
 - [`graph_data.py`](graph_data.py): Generates the styled graphs shown in this README, both for a single
   season and across every season on record (see "Graphing" under Specialized Uses below).
+- [`readme_table.py`](readme_table.py): Rebuilds the 5-team standings table under the current-week graph
+  above from the newest week stored in `data/` (the Markdown version of the console printout each weekly
+  run produces). It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
 - [`weekly_update.py`](weekly_update.py): One-shot entry point that pulls the latest rankings and
-  regenerates the current-week graphs in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
+  regenerates the current-week graphs and standings table in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
 - [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py): Standalone "what-if" script
   remapping 2023 results onto the 2024 realigned conferences.
 
@@ -89,7 +120,8 @@ execute and run the [`store_data.py`](store_data.py) file.
 [`weekly_update.py`](weekly_update.py) is a single entry point that does the whole week's work in one
 call: it fetches and stores the latest AP rankings for both 4-team and 5-team scoring, then regenerates
 `images/current_week_4team.png` and `images/current_week_5team.png` - the same filenames this README
-links to above, so a new week's results show up here automatically with no README edits needed.
+links to above - and refreshes the 5-team standings table beneath the 5-team graph, so a new week's
+results show up here automatically with no README edits needed.
 
 Run it directly with your venv's interpreter:
 
@@ -225,11 +257,31 @@ running it manually by double-click.
        - The full path the image was saved to.
 
    - Conference line colors follow a fixed, deliberate convention (defined in `CONFERENCE_COLORS` in
-     `graph_data.py`): SEC is blue, Big Ten is yellow, ACC is red, Big 12 is purple, the American (AAC)
-     is orange - reserved even though it rarely fields enough ranked teams to score - and the defunct
-     Pac-12 is light blue, since it still appears throughout the historical data. Any other conference
-     that shows up (Mountain West, Sun Belt, MAC, etc.) is colored from a rotating fallback palette,
-     since no fixed color has ever been established for them.
+     `graph_data.py`): SEC is blue, Big Ten is yellow, ACC is red, Big 12 is green, the Pac-12 is light
+     blue (defunct as of 2024, but it still appears throughout the historical data), and the Mountain
+     West is light silver. The Big East, the American (AAC), and the merged "Big East/American" line
+     (see below) all share purple - reserved even though they rarely field enough ranked teams to
+     score. Any other conference that shows up (CUSA, Sun Belt, MAC, etc.) is colored from
+     `FALLBACK_COLORS` (pink, cyan, lime), since no fixed color has ever been established for them.
+
+   - **Cross-season conference merges**: the all-time Final-rankings graph
+     (`graph_final_rankings_by_year()`) treats renamed or realigned conferences as one continuous line
+     (`CROSS_SEASON_CONFERENCE_MERGES` in `graph_data.py`). The Pac-10 is folded into the Pac-12, and
+     the Big East and the American - Big East football became the American in 2013 - are folded together
+     and labeled "Big East/American". Single-season graphs (`graph_year()`) aren't merged; they keep the
+     conference names actually in use that year.
+
+   - **National champions**: each season's national champion is the AP #1 team in that year's
+     `*_week_final.csv`, looked up via its conference. That conference's point for the season is drawn
+     larger with a white outline, with a "National Champion" legend entry (a single-season graph marks its
+     Final week the same way once the Final poll is stored). If the champion's conference didn't score
+     that season (DNS), there's no point to ring, so the year label on the x-axis is colored and bolded
+     in that conference's color instead, with a footnote explaining the colored year.
+
+   - **DNS gaps**: where a conference didn't score in some weeks or seasons, a thin dotted line in its
+     color bridges the gap between its nearest scored points so the trend still reads. Bridges are only
+     drawn across weeks or seasons that actually happened, never across not-yet-reached future weeks
+     of an in-progress season.
 
 
 ## Contributing

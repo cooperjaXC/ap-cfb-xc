@@ -1,0 +1,11 @@
+"('SEC', np.int64(43))","('Big East', np.int64(92))","('Big 12', np.int64(25))","('ACC', np.int64(83))","('Pac-10', np.int64(50))","('Big Ten', np.int64(73))","('FBS Indep.', 'DNS')","('Mountain West', 'DNS')","('CUSA', np.int64(146))","('MAC', 'DNS')","('WAC', 'DNS')"
+"('Florida', 1)","('Miami (FL)', 2)","('Oklahoma', 3)","('Florida State', 6)","('Oregon', 7)","('Michigan', 12)","('Notre Dame', 18)","('Colorado State', 24)","('East Carolina', 30)","('Marshall', 37)","('Fresno State', 45)"
+"('Tennessee', 8)","('Virginia Tech', 9)","('Nebraska', 4)","('Georgia Tech', 10)","('Oregon State', 11)","('Northwestern', 16)",,"('UNLV', 39)","('Louisville', 32)","('Western Michigan', 49)",
+"('LSU', 14)","('Pittsburgh', 31)","('Texas', 5)","('Clemson', 19)","('Washington', 15)","('Wisconsin', 22)",,,"('Southern Miss', 40)","('Toledo', 54)",
+"('Mississippi State', 20)","('West Virginia', 50)","('Kansas State', 13)","('NC State', 48)","('UCLA', 17)","('Ohio State', 23)",,,"('TCU', 44)",,
+"('South Carolina', 21)","('Syracuse', 53)","('Colorado', 27)",,"('USC', 29)","('Purdue', 26)",,,,,
+"('Alabama', 25)",,"('Texas A&M', 34)",,"('Stanford', 43)","('Michigan State', 33)",,,,,
+"('Georgia', 28)",,"('Iowa State', 46)",,"('Arizona State', 51)","('Illinois', 36)",,,,,
+"('Arkansas', 35)",,"('Kansas', 47)",,,"('Penn State', 41)",,,,,
+"('Mississippi', 38)",,,,,"('Indiana', 52)",,,,,
+"('Auburn', 42)",,,,,,,,,,
