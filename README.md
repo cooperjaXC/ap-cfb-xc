@@ -65,6 +65,10 @@ This code is built upon the ESPN College Football API, shown by [Akshay Easwaran
 [hidden endpoints](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b?permalink_comment_id=4376177)
 with reliable AP ranking information back to 2014. Thus, this code is dependent upon the quality and stability of ESPN's API data structure.
 
+The repo's weekly data reaches back further than that endpoint's dependable coverage: it now spans 1998 to the present,
+with 1998-2011 imported from [collegepollarchive.com](https://collegepollarchive.com), 2012-2013 from
+[Sports Reference](https://www.sports-reference.com/cfb/), and 2014 onward pulled from ESPN.
+
 ## Repository Structure
 
 - [`data`](data): Input/output data, organized as `data/<year>/<4_team|5_team>/`. Each subdirectory holds
@@ -253,11 +257,31 @@ running it manually by double-click.
        - The full path the image was saved to.
 
    - Conference line colors follow a fixed, deliberate convention (defined in `CONFERENCE_COLORS` in
-     `graph_data.py`): SEC is blue, Big Ten is yellow, ACC is red, Big 12 is purple, the American (AAC)
-     is orange - reserved even though it rarely fields enough ranked teams to score - and the defunct
-     Pac-12 is light blue, since it still appears throughout the historical data. Any other conference
-     that shows up (Mountain West, Sun Belt, MAC, etc.) is colored from a rotating fallback palette,
-     since no fixed color has ever been established for them.
+     `graph_data.py`): SEC is blue, Big Ten is yellow, ACC is red, Big 12 is green, the Pac-12 is light
+     blue (defunct as of 2024, but it still appears throughout the historical data), and the Mountain
+     West is light silver. The Big East, the American (AAC), and the merged "Big East/American" line
+     (see below) all share purple - reserved even though they rarely field enough ranked teams to
+     score. Any other conference that shows up (CUSA, Sun Belt, MAC, etc.) is colored from
+     `FALLBACK_COLORS` (pink, cyan, lime), since no fixed color has ever been established for them.
+
+   - **Cross-season conference merges**: the all-time Final-rankings graph
+     (`graph_final_rankings_by_year()`) treats renamed or realigned conferences as one continuous line
+     (`CROSS_SEASON_CONFERENCE_MERGES` in `graph_data.py`). The Pac-10 is folded into the Pac-12, and
+     the Big East and the American - Big East football became the American in 2013 - are folded together
+     and labeled "Big East/American". Single-season graphs (`graph_year()`) aren't merged; they keep the
+     conference names actually in use that year.
+
+   - **National champions**: each season's national champion is the AP #1 team in that year's
+     `*_week_final.csv`, looked up via its conference. That conference's point for the season is drawn
+     larger with a white outline, with a "National Champion" legend entry (a single-season graph marks its
+     Final week the same way once the Final poll is stored). If the champion's conference didn't score
+     that season (DNS), there's no point to ring, so the year label on the x-axis is colored and bolded
+     in that conference's color instead, with a footnote explaining the colored year.
+
+   - **DNS gaps**: where a conference didn't score in some weeks or seasons, a thin dotted line in its
+     color bridges the gap between its nearest scored points so the trend still reads. Bridges are only
+     drawn across weeks or seasons that actually happened, never across not-yet-reached future weeks
+     of an in-progress season.
 
 
 ## Contributing
