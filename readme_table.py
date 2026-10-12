@@ -46,7 +46,7 @@ PRESEASON_WEEK_TOKEN = "1"
 # Movement Indicators (GitHub issue #30)
 UP = "▲"
 DOWN = "▼"
-UNCHANGED = "—"
+UNCHANGED = "–"  # en dash (U+2013), not a hyphen
 NOT_RANKED = "NR"
 # Keeps an indicator on the same line as the rank it belongs to instead of wrapping alone
 NBSP = "&nbsp;"
@@ -222,7 +222,7 @@ def format_movement(prior, current) -> str:
     >>> format_movement(39.5, 37)
     '▲2.5'
     >>> format_movement(12, 12)
-    '—'
+    '–'
     >>> format_movement(None, 12)
     'NR'
     >>> format_movement("DNS", 40)
@@ -236,9 +236,23 @@ def format_movement(prior, current) -> str:
     return f"{UP if delta > 0 else DOWN}{_fmt_num(abs(delta))}"
 
 
-def _with_movement(text: str, indicator: Optional[str]) -> str:
-    """`text` followed by its Movement Indicator on a non-breaking space; unchanged if None."""
-    return text if indicator is None else f"{text}{NBSP}{indicator}"
+def _with_movement(
+    text: str, indicator: Optional[str], parenthesize: bool = False
+) -> str:
+    """`text` followed by its Movement Indicator on a non-breaking space; unchanged if None.
+    `parenthesize` sets the indicator off in parentheses, so it reads apart from a number it
+    would otherwise run into (a conference's summed score).
+
+    >>> _with_movement("Georgia (1)", "▲1")
+    'Georgia (1)&nbsp;▲1'
+    >>> _with_movement("**36**", "▼8", parenthesize=True)
+    '**36**&nbsp;(▼8)'
+    >>> _with_movement("DNS", None)
+    'DNS'
+    """
+    if indicator is None:
+        return text
+    return f"{text}{NBSP}({indicator})" if parenthesize else f"{text}{NBSP}{indicator}"
 
 
 def _conference_columns(
@@ -270,10 +284,10 @@ def _footnote(num_scoring_teams: int, with_movement: bool) -> str:
     )
     if with_movement:
         note += (
-            f" {UP}/{DOWN} is how many spots a team moved since last week's poll (for a "
-            f"conference's score, a lower score is better, so a falling score is {UP}); "
-            f"{UNCHANGED} is unchanged and {NOT_RANKED} means it wasn't ranked or receiving "
-            f"votes last week."
+            f" {UP}/{DOWN} is how many spots a team moved since last week's poll (a "
+            f"conference's score change is shown in parentheses; a lower score is better, so a "
+            f"falling score is {UP}). {UNCHANGED} means unchanged and {NOT_RANKED} means it "
+            f"wasn't ranked or receiving votes last week."
         )
     return f"<sub>{note}</sub>"
 
@@ -322,7 +336,9 @@ def build_week_table(
         f"{_place_label(places[c])} · {c}" if c in places else c for c in columns
     ]
     score_row = ["**Score**"] + [
-        _with_movement(f"**{_fmt_num(week.scores[c])}**", score_movement(c))
+        _with_movement(
+            f"**{_fmt_num(week.scores[c])}**", score_movement(c), parenthesize=True
+        )
         if c in places
         else "DNS"
         for c in columns

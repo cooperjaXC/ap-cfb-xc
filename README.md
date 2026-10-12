@@ -22,12 +22,12 @@ This provides an objective, measurable comparison of conference strength for eve
 
 | Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | ACC | FBS Indep. | Pac-12 | Sun Belt | Mountain West |
 |:---:|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **36**&nbsp;▼8 | **57**&nbsp;▲7 | **67**&nbsp;▲4 | DNS | DNS | DNS | DNS | DNS |
-| 1 | Georgia (1)&nbsp;▲1 | Ohio State (4)&nbsp;▲1 | BYU (8)&nbsp;— | *Miami (3)&nbsp;▲1* | *Notre Dame (2)&nbsp;▲1* | *Boise St (23)&nbsp;—* | *James Madison (31)&nbsp;▲3* | *New Mexico (34)&nbsp;NR* |
-| 2 | Alabama (6)&nbsp;— | Indiana (5)&nbsp;▲2 | Texas Tech (10)&nbsp;▲1 | *Wake Forest (21)&nbsp;▲6* |  | *Oregon St (35)&nbsp;NR* |  |  |
-| 3 | Texas (7)&nbsp;▼6 | UCLA (12)&nbsp;▲9 | Utah (11)&nbsp;▲1 | *SMU (24)&nbsp;—* |  |  |  |  |
-| 4 | Ole Miss (9)&nbsp;— | Iowa (17)&nbsp;▲3 | Oklahoma St (18)&nbsp;— | *Duke (33)&nbsp;▼4* |  |  |  |  |
-| 5 | Missouri (13)&nbsp;▲1 | USC (19)&nbsp;— | Houston (20)&nbsp;▲2 |  |  |  |  |  |
+| **Score** | **36**&nbsp;(▼8) | **57**&nbsp;(▲7) | **67**&nbsp;(▲4) | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (1)&nbsp;▲1 | Ohio State (4)&nbsp;▲1 | BYU (8)&nbsp;– | *Miami (3)&nbsp;▲1* | *Notre Dame (2)&nbsp;▲1* | *Boise St (23)&nbsp;–* | *James Madison (31)&nbsp;▲3* | *New Mexico (34)&nbsp;NR* |
+| 2 | Alabama (6)&nbsp;– | Indiana (5)&nbsp;▲2 | Texas Tech (10)&nbsp;▲1 | *Wake Forest (21)&nbsp;▲6* |  | *Oregon St (35)&nbsp;NR* |  |  |
+| 3 | Texas (7)&nbsp;▼6 | UCLA (12)&nbsp;▲9 | Utah (11)&nbsp;▲1 | *SMU (24)&nbsp;–* |  |  |  |  |
+| 4 | Ole Miss (9)&nbsp;– | Iowa (17)&nbsp;▲3 | Oklahoma St (18)&nbsp;– | *Duke (33)&nbsp;▼4* |  |  |  |  |
+| 5 | Missouri (13)&nbsp;▲1 | USC (19)&nbsp;– | Houston (20)&nbsp;▲2 |  |  |  |  |  |
 |  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
 | 6 | *Tennessee (14)&nbsp;▲1* | *Northwestern (25)&nbsp;▲5* | *Arizona (28)&nbsp;▲4.5* |  |  |  |  |  |
 | 7 | *Kentucky (15)&nbsp;▲11* | *Wisconsin (26)&nbsp;▲2* |  |  |  |  |  |  |
@@ -36,7 +36,7 @@ This provides an objective, measurable comparison of conference strength for eve
 | 10 | *Oklahoma (30)&nbsp;NR* |  |  |  |  |  |  |  |
 | 11 | *Florida (32)&nbsp;▼16* |  |  |  |  |  |  |  |
 
-<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (for a conference's score, a lower score is better, so a falling score is ▲); — is unchanged and NR means it wasn't ranked or receiving votes last week.</sub>
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week.</sub>
 <!-- XC-TABLE-5-TEAM:END -->
 
 ### 4-Team
