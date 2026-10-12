@@ -18,22 +18,23 @@ This provides an objective, measurable comparison of conference strength for eve
 ![five team](images/current_week_5team.png)
 
 <!-- XC-TABLE-5-TEAM:START -->
-**2026 Week 6** — 5-team XC standings
+**2026 Week 7** — 5-team XC standings
 
-| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | Sun Belt | Mountain West |
+| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | ACC | FBS Indep. | Pac-12 | Sun Belt | Mountain West |
 |:---:|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **28** | **64** | **71** | **109** | DNS | DNS | DNS | DNS |
-| 1 | Texas (1) | Ohio State (5) | BYU (8) | Miami (4) | *Notre Dame (3)* | *Boise St (23)* | *James Madison (34)* | *N Dakota St (35)* |
-| 2 | Georgia (2) | Indiana (7) | Texas Tech (11) | SMU (24) |  |  |  |  |
-| 3 | Alabama (6) | Oregon (13) | Utah (12) | Pitt (25) |  |  |  |  |
-| 4 | Ole Miss (9) | USC (19) | Oklahoma St (18) | Wake Forest (27) |  |  |  |  |
-| 5 | LSU (10) | Iowa (20) | Houston (22) | Duke (29) |  |  |  |  |
+| **Score** | **36** | **57** | **67** | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (1) | Ohio State (4) | BYU (8) | *Miami (3)* | *Notre Dame (2)* | *Boise St (23)* | *James Madison (31)* | *New Mexico (34)* |
+| 2 | Alabama (6) | Indiana (5) | Texas Tech (10) | *Wake Forest (21)* |  | *Oregon St (35)* |  |  |
+| 3 | Texas (7) | UCLA (12) | Utah (11) | *SMU (24)* |  |  |  |  |
+| 4 | Ole Miss (9) | Iowa (17) | Oklahoma St (18) | *Duke (33)* |  |  |  |  |
+| 5 | Missouri (13) | USC (19) | Houston (20) |  |  |  |  |  |
 |  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
-| 6 | *Missouri (14)* | *UCLA (21)* | *Arizona (32.5)* |  |  |  |  |  |
-| 7 | *Tennessee (15)* | *Wisconsin (28)* |  |  |  |  |  |  |
-| 8 | *Florida (16)* | *Northwestern (30)* |  |  |  |  |  |  |
-| 9 | *Mississippi St (17)* | *Nebraska (31)* |  |  |  |  |  |  |
-| 10 | *Kentucky (26)* | *Minnesota (32.5)* |  |  |  |  |  |  |
+| 6 | *Tennessee (14)* | *Northwestern (25)* | *Arizona (28)* |  |  |  |  |  |
+| 7 | *Kentucky (15)* | *Wisconsin (26)* |  |  |  |  |  |  |
+| 8 | *Mississippi St (16)* | *Oregon (27)* |  |  |  |  |  |  |
+| 9 | *LSU (22)* | *Nebraska (29)* |  |  |  |  |  |  |
+| 10 | *Oklahoma (30)* |  |  |  |  |  |  |  |
+| 11 | *Florida (32)* |  |  |  |  |  |  |  |
 
 <sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences).</sub>
 <!-- XC-TABLE-5-TEAM:END -->
