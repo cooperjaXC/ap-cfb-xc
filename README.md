@@ -22,21 +22,21 @@ This provides an objective, measurable comparison of conference strength for eve
 
 | Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | ACC | FBS Indep. | Pac-12 | Sun Belt | Mountain West |
 |:---:|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **36** | **57** | **67** | DNS | DNS | DNS | DNS | DNS |
-| 1 | Georgia (1) | Ohio State (4) | BYU (8) | *Miami (3)* | *Notre Dame (2)* | *Boise St (23)* | *James Madison (31)* | *New Mexico (34)* |
-| 2 | Alabama (6) | Indiana (5) | Texas Tech (10) | *Wake Forest (21)* |  | *Oregon St (35)* |  |  |
-| 3 | Texas (7) | UCLA (12) | Utah (11) | *SMU (24)* |  |  |  |  |
-| 4 | Ole Miss (9) | Iowa (17) | Oklahoma St (18) | *Duke (33)* |  |  |  |  |
-| 5 | Missouri (13) | USC (19) | Houston (20) |  |  |  |  |  |
+| **Score** | **36**&nbsp;▼8 | **57**&nbsp;▲7 | **67**&nbsp;▲4 | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (1)&nbsp;▲1 | Ohio State (4)&nbsp;▲1 | BYU (8)&nbsp;— | *Miami (3)&nbsp;▲1* | *Notre Dame (2)&nbsp;▲1* | *Boise St (23)&nbsp;—* | *James Madison (31)&nbsp;▲3* | *New Mexico (34)&nbsp;NR* |
+| 2 | Alabama (6)&nbsp;— | Indiana (5)&nbsp;▲2 | Texas Tech (10)&nbsp;▲1 | *Wake Forest (21)&nbsp;▲6* |  | *Oregon St (35)&nbsp;NR* |  |  |
+| 3 | Texas (7)&nbsp;▼6 | UCLA (12)&nbsp;▲9 | Utah (11)&nbsp;▲1 | *SMU (24)&nbsp;—* |  |  |  |  |
+| 4 | Ole Miss (9)&nbsp;— | Iowa (17)&nbsp;▲3 | Oklahoma St (18)&nbsp;— | *Duke (33)&nbsp;▼4* |  |  |  |  |
+| 5 | Missouri (13)&nbsp;▲1 | USC (19)&nbsp;— | Houston (20)&nbsp;▲2 |  |  |  |  |  |
 |  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
-| 6 | *Tennessee (14)* | *Northwestern (25)* | *Arizona (28)* |  |  |  |  |  |
-| 7 | *Kentucky (15)* | *Wisconsin (26)* |  |  |  |  |  |  |
-| 8 | *Mississippi St (16)* | *Oregon (27)* |  |  |  |  |  |  |
-| 9 | *LSU (22)* | *Nebraska (29)* |  |  |  |  |  |  |
-| 10 | *Oklahoma (30)* |  |  |  |  |  |  |  |
-| 11 | *Florida (32)* |  |  |  |  |  |  |  |
+| 6 | *Tennessee (14)&nbsp;▲1* | *Northwestern (25)&nbsp;▲5* | *Arizona (28)&nbsp;▲4.5* |  |  |  |  |  |
+| 7 | *Kentucky (15)&nbsp;▲11* | *Wisconsin (26)&nbsp;▲2* |  |  |  |  |  |  |
+| 8 | *Mississippi St (16)&nbsp;▲1* | *Oregon (27)&nbsp;▼14* |  |  |  |  |  |  |
+| 9 | *LSU (22)&nbsp;▼12* | *Nebraska (29)&nbsp;▲2* |  |  |  |  |  |  |
+| 10 | *Oklahoma (30)&nbsp;NR* |  |  |  |  |  |  |  |
+| 11 | *Florida (32)&nbsp;▼16* |  |  |  |  |  |  |  |
 
-<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences).</sub>
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (for a conference's score, a lower score is better, so a falling score is ▲); — is unchanged and NR means it wasn't ranked or receiving votes last week.</sub>
 <!-- XC-TABLE-5-TEAM:END -->
 
 ### 4-Team
@@ -81,7 +81,8 @@ with 1998-2011 imported from [collegepollarchive.com](https://collegepollarchive
   season and across every season on record (see "Graphing" under Specialized Uses below).
 - [`readme_table.py`](readme_table.py): Rebuilds the 5-team standings table under the current-week graph
   above from the newest week stored in `data/` (the Markdown version of the console printout each weekly
-  run produces). It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
+  run produces), with Movement Indicators (▲/▼ spots moved, `NR` if not ranked) against the prior week.
+  It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
 - [`weekly_update.py`](weekly_update.py): One-shot entry point that pulls the latest rankings and
   regenerates the current-week graphs and standings table in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
 - [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py): Standalone "what-if" script
