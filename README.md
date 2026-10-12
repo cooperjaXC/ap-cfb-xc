@@ -35,8 +35,9 @@ This provides an objective, measurable comparison of conference strength for eve
 | 9 | *LSU (22)&nbsp;▼12* | *Nebraska (29)&nbsp;▲2* |  |  |  |  |  |  |
 | 10 | *Oklahoma (30)&nbsp;NR* |  |  |  |  |  |  |  |
 | 11 | *Florida (32)&nbsp;▼16* |  |  |  |  |  |  |  |
+| Dropped |  | Minnesota |  | Pitt |  |  |  | N Dakota St |
 
-<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week.</sub>
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week. Dropped lists teams that were ranked or receiving votes last week but are out of the poll entirely this week, in last week's order.</sub>
 <!-- XC-TABLE-5-TEAM:END -->
 
 ### 4-Team

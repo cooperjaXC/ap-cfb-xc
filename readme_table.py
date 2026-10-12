@@ -50,6 +50,8 @@ UNCHANGED = "–"  # en dash (U+2013), not a hyphen
 NOT_RANKED = "NR"
 # Keeps an indicator on the same line as the rank it belongs to instead of wrapping alone
 NBSP = "&nbsp;"
+# Label (first column) of the closing row listing teams that left the poll data entirely
+DROPPED_LABEL = "Dropped"
 
 _WEEK_FILE_RE = re.compile(r"^\d{4}_week_(?P<week>\d+|final)\.csv$")
 _NUMPY_WRAPPER_RE = re.compile(r"np\.\w+\((.*?)\)")
@@ -134,15 +136,26 @@ def latest_recorded_week(num_scoring_teams: int = 5, data_dir: str = DATA_DIR):
 
 
 def previous_comparable_week_token(
-    year: int, week_token: str, num_scoring_teams: int = 5, data_dir: str = DATA_DIR
+    year: int,
+    week_token: str,
+    num_scoring_teams: int = 5,
+    data_dir: str = DATA_DIR,
+    include_preseason: bool = False,
 ) -> Optional[str]:
     """The stored week to compare `week_token` against: the most recent earlier week of the same
-    year, excluding the Preseason poll. None when there isn't one (Preseason, Week 2, or nothing
-    earlier is stored), in which case no Movement Indicators are shown."""
+    year. By default the Preseason poll is excluded, because Movement Indicators never compare
+    against it; pass `include_preseason=True` for the true prior poll (Week 2's prior poll is the
+    Preseason). None when there isn't one, in which case nothing is compared.
+
+    Week 2 has no indicator baseline but does have a prior poll:
+
+    >>> previous_comparable_week_token(2026, "1") is None
+    True
+    """
     numbered = sorted(
         int(t)
         for t in stored_week_tokens(year, num_scoring_teams, data_dir)
-        if t.isdigit() and t != PRESEASON_WEEK_TOKEN
+        if t.isdigit() and (include_preseason or t != PRESEASON_WEEK_TOKEN)
     )
     if week_token == "final":
         earlier = numbered
@@ -236,6 +249,32 @@ def format_movement(prior, current) -> str:
     return f"{UP if delta > 0 else DOWN}{_fmt_num(abs(delta))}"
 
 
+def dropped_teams(previous_week: StoredWeek, week: StoredWeek) -> Dict[str, List[str]]:
+    """Teams in `previous_week`'s poll data (ranked or receiving votes) that are absent from `week`
+    entirely, as {conference: [team names]} using the conference they were last in, best last-week
+    rank first. Conferences with no such team are omitted.
+
+    >>> import pandas as pd
+    >>> prev = StoredWeek(2026, "6", {}, pd.DataFrame({"ACC": [("Miami", 4), ("SMU", 24), ("Pitt", 25)]}))
+    >>> cur = StoredWeek(2026, "7", {}, pd.DataFrame({"ACC": [("Miami", 3)]}))
+    >>> dropped_teams(prev, cur)
+    {'ACC': ['SMU', 'Pitt']}
+    >>> dropped_teams(cur, cur)
+    {}
+    """
+    current_names = set(week.team_ranks())
+    dropped: Dict[str, List[str]] = {}
+    for conference, teams in previous_week.teams_by_conference().items():
+        names = [
+            name
+            for name, _ in sorted(teams, key=lambda t: t[1])
+            if name not in current_names
+        ]
+        if names:
+            dropped[conference] = names
+    return dropped
+
+
 def _with_movement(
     text: str, indicator: Optional[str], parenthesize: bool = False
 ) -> str:
@@ -272,7 +311,9 @@ def _conference_columns(
     return list(order_df["conference"]) + unscored
 
 
-def _footnote(num_scoring_teams: int, with_movement: bool) -> str:
+def _footnote(
+    num_scoring_teams: int, with_movement: bool, with_dropped: bool = False
+) -> str:
     n_word = _NUMBER_WORDS.get(num_scoring_teams, str(num_scoring_teams))
     runner = _ordinal(num_scoring_teams + 1)
     note = (
@@ -289,6 +330,11 @@ def _footnote(num_scoring_teams: int, with_movement: bool) -> str:
             f"falling score is {UP}). {UNCHANGED} means unchanged and {NOT_RANKED} means it "
             f"wasn't ranked or receiving votes last week."
         )
+    if with_dropped:
+        note += (
+            f" {DROPPED_LABEL} lists teams that were ranked or receiving votes last week but "
+            f"are out of the poll entirely this week, in last week's order."
+        )
     return f"<sub>{note}</sub>"
 
 
@@ -301,6 +347,7 @@ def build_week_table(
     week: StoredWeek,
     num_scoring_teams: int = 5,
     previous_week: Optional[StoredWeek] = None,
+    prior_poll: Optional[StoredWeek] = None,
 ) -> str:
     """Markdown for one week's XC standings: every conference with a ranked team as a column
     (scorers in finishing order, then those marked DNS), each conference's teams (with AP ranking)
@@ -309,7 +356,12 @@ def build_week_table(
     after the scoring rows.
 
     When `previous_week` is given, each team and each conference score is followed by a Movement
-    Indicator comparing it with that week. Pure: does no file I/O."""
+    Indicator comparing it with that week. When `prior_poll` is given, a closing row lists the
+    teams that were in it but are out of this week's poll data. These are separate because the
+    Preseason poll is the prior poll for Week 2 but is never an indicator baseline; `prior_poll`
+    defaults to `previous_week`. Pure: does no file I/O."""
+    if prior_poll is None:
+        prior_poll = previous_week
     # Reuse the pipeline's own scoring/tiebreak logic so the order matches the stored graphs exactly
     with contextlib.redirect_stdout(io.StringIO()):
         order_df = epi.conference_scoring_order(
@@ -318,6 +370,14 @@ def build_week_table(
     places = dict(zip(order_df["conference"], order_df["place"]))
     teams = week.teams_by_conference()
     columns = _conference_columns(teams, order_df)
+
+    dropped = dropped_teams(prior_poll, week) if prior_poll else {}
+    # A conference whose every team left the poll has no column of its own this week; add one so its
+    # dropped teams still show up
+    for conference in dropped:
+        if conference not in columns:
+            columns.append(conference)
+            teams.setdefault(conference, [])
 
     prior_ranks = previous_week.team_ranks() if previous_week else None
     prior_scores = previous_week.scores if previous_week else None
@@ -360,6 +420,11 @@ def build_week_table(
             else:
                 cells.append("")
         rows.append(cells)
+    if dropped:
+        rows.append(
+            [DROPPED_LABEL]
+            + [", ".join(_escape(n) for n in dropped.get(c, [])) for c in columns]
+        )
 
     table = [f"| {' | '.join(row)} |" for row in rows]
     table.insert(1, "|" + ":---:|" + ":---|" * len(columns))
@@ -371,7 +436,11 @@ def build_week_table(
             "",
             *table,
             "",
-            _footnote(num_scoring_teams, with_movement=previous_week is not None),
+            _footnote(
+                num_scoring_teams,
+                with_movement=previous_week is not None,
+                with_dropped=bool(dropped),
+            ),
         ]
     )
 
@@ -386,16 +455,22 @@ def build_latest_week_table(
     year, week_token, _ = latest_recorded_week(num_scoring_teams, data_dir)
     week = load_stored_week(year, week_token, num_scoring_teams, data_dir)
 
-    previous_week = None
-    if show_movement:
-        previous_token = previous_comparable_week_token(
-            year, week_token, num_scoring_teams, data_dir
+    def load_prior(include_preseason: bool) -> Optional[StoredWeek]:
+        token = previous_comparable_week_token(
+            year, week_token, num_scoring_teams, data_dir, include_preseason
         )
-        if previous_token is not None:
-            previous_week = load_stored_week(
-                year, previous_token, num_scoring_teams, data_dir
-            )
-    return build_week_table(week, num_scoring_teams, previous_week)
+        if token is None:
+            return None
+        return load_stored_week(year, token, num_scoring_teams, data_dir)
+
+    if not show_movement:
+        return build_week_table(week, num_scoring_teams)
+    return build_week_table(
+        week,
+        num_scoring_teams,
+        previous_week=load_prior(include_preseason=False),
+        prior_poll=load_prior(include_preseason=True),
+    )
 
 
 def update_readme_table(
