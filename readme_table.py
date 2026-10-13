@@ -4,8 +4,9 @@ under the matching current-week graph - the README-friendly version of the conso
 espn_api.pretty_print_week_data(), built purely from what's already stored in `data/`.
 
 Each team and each conference score is annotated with a Movement Indicator (GitHub issue #30): how far
-it moved since the prior week's poll. Preseason is never compared against, so Week 2 (and the
-Preseason table itself) shows no indicators.
+it moved since the prior poll of the same season, so Week 2 is compared against the Preseason poll.
+The Preseason table itself has no indicators: seasons are distinct, so it is never compared with the
+previous season.
 
 The README opts in with a pair of marker comments (see update_readme_table()); everything between
 them is regenerated on each run, so a new week's table shows up with no hand-editing.
@@ -39,8 +40,8 @@ README_PATH = os.path.join(REPO_DIR, "README.md")
 # console printout)
 CORE_CONFERENCES = ["SEC", "Big Ten", "ACC", "Big 12"]
 
-# The Preseason poll is stored as week 1. It is never used as the "prior week" for a comparison:
-# every season is distinct and new.
+# The Preseason poll is stored as week 1. It is the baseline for Week 2, but has no baseline of its
+# own: comparisons never cross seasons.
 PRESEASON_WEEK_TOKEN = "1"
 
 # Movement Indicators (GitHub issue #30)
@@ -136,26 +137,22 @@ def latest_recorded_week(num_scoring_teams: int = 5, data_dir: str = DATA_DIR):
 
 
 def previous_comparable_week_token(
-    year: int,
-    week_token: str,
-    num_scoring_teams: int = 5,
-    data_dir: str = DATA_DIR,
-    include_preseason: bool = False,
+    year: int, week_token: str, num_scoring_teams: int = 5, data_dir: str = DATA_DIR
 ) -> Optional[str]:
-    """The stored week to compare `week_token` against: the most recent earlier week of the same
-    year. By default the Preseason poll is excluded, because Movement Indicators never compare
-    against it; pass `include_preseason=True` for the true prior poll (Week 2's prior poll is the
-    Preseason). None when there isn't one, in which case nothing is compared.
-
-    Week 2 has no indicator baseline but does have a prior poll:
+    """The stored poll to compare `week_token` against: the most recent earlier poll of the same
+    year, Preseason included (Week 2's prior poll is the Preseason). Never reaches into a previous
+    season. None when there isn't one (the Preseason poll itself, or nothing earlier is stored), in
+    which case nothing is compared.
 
     >>> previous_comparable_week_token(2026, "1") is None
     True
+    >>> previous_comparable_week_token(2026, "2")
+    '1'
+    >>> previous_comparable_week_token(2026, "3")
+    '2'
     """
     numbered = sorted(
-        int(t)
-        for t in stored_week_tokens(year, num_scoring_teams, data_dir)
-        if t.isdigit() and (include_preseason or t != PRESEASON_WEEK_TOKEN)
+        int(t) for t in stored_week_tokens(year, num_scoring_teams, data_dir) if t.isdigit()
     )
     if week_token == "final":
         earlier = numbered
@@ -347,7 +344,6 @@ def build_week_table(
     week: StoredWeek,
     num_scoring_teams: int = 5,
     previous_week: Optional[StoredWeek] = None,
-    prior_poll: Optional[StoredWeek] = None,
 ) -> str:
     """Markdown for one week's XC standings: every conference with a ranked team as a column
     (scorers in finishing order, then those marked DNS), each conference's teams (with AP ranking)
@@ -355,13 +351,10 @@ def build_week_table(
     runner, or every team of a conference that didn't score - italicized, with a dashed divider
     after the scoring rows.
 
-    When `previous_week` is given, each team and each conference score is followed by a Movement
-    Indicator comparing it with that week. When `prior_poll` is given, a closing row lists the
-    teams that were in it but are out of this week's poll data. These are separate because the
-    Preseason poll is the prior poll for Week 2 but is never an indicator baseline; `prior_poll`
-    defaults to `previous_week`. Pure: does no file I/O."""
-    if prior_poll is None:
-        prior_poll = previous_week
+    When `previous_week` (the prior poll of the same season; Preseason for Week 2) is given, each
+    team and each conference score is followed by a Movement Indicator comparing it with that week,
+    and a closing row lists the teams that were in it but are out of this week's poll data.
+    Pure: does no file I/O."""
     # Reuse the pipeline's own scoring/tiebreak logic so the order matches the stored graphs exactly
     with contextlib.redirect_stdout(io.StringIO()):
         order_df = epi.conference_scoring_order(
@@ -371,7 +364,7 @@ def build_week_table(
     teams = week.teams_by_conference()
     columns = _conference_columns(teams, order_df)
 
-    dropped = dropped_teams(prior_poll, week) if prior_poll else {}
+    dropped = dropped_teams(previous_week, week) if previous_week else {}
     # A conference whose every team left the poll has no column of its own this week; add one so its
     # dropped teams still show up
     for conference in dropped:
@@ -455,22 +448,16 @@ def build_latest_week_table(
     year, week_token, _ = latest_recorded_week(num_scoring_teams, data_dir)
     week = load_stored_week(year, week_token, num_scoring_teams, data_dir)
 
-    def load_prior(include_preseason: bool) -> Optional[StoredWeek]:
-        token = previous_comparable_week_token(
-            year, week_token, num_scoring_teams, data_dir, include_preseason
+    previous_week = None
+    if show_movement:
+        previous_token = previous_comparable_week_token(
+            year, week_token, num_scoring_teams, data_dir
         )
-        if token is None:
-            return None
-        return load_stored_week(year, token, num_scoring_teams, data_dir)
-
-    if not show_movement:
-        return build_week_table(week, num_scoring_teams)
-    return build_week_table(
-        week,
-        num_scoring_teams,
-        previous_week=load_prior(include_preseason=False),
-        prior_poll=load_prior(include_preseason=True),
-    )
+        if previous_token is not None:
+            previous_week = load_stored_week(
+                year, previous_token, num_scoring_teams, data_dir
+            )
+    return build_week_table(week, num_scoring_teams, previous_week)
 
 
 def update_readme_table(
