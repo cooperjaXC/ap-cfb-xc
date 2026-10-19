@@ -18,25 +18,26 @@ This provides an objective, measurable comparison of conference strength for eve
 ![five team](images/current_week_5team.png)
 
 <!-- XC-TABLE-5-TEAM:START -->
-**2026 Week 7** — 5-team XC standings
+**2026 Week 8** — 5-team XC standings
 
 | Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | ACC | FBS Indep. | Pac-12 | Sun Belt | Mountain West |
 |:---:|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **36** | **57** | **67** | DNS | DNS | DNS | DNS | DNS |
-| 1 | Georgia (1) | Ohio State (4) | BYU (8) | *Miami (3)* | *Notre Dame (2)* | *Boise St (23)* | *James Madison (31)* | *New Mexico (34)* |
-| 2 | Alabama (6) | Indiana (5) | Texas Tech (10) | *Wake Forest (21)* |  | *Oregon St (35)* |  |  |
-| 3 | Texas (7) | UCLA (12) | Utah (11) | *SMU (24)* |  |  |  |  |
-| 4 | Ole Miss (9) | Iowa (17) | Oklahoma St (18) | *Duke (33)* |  |  |  |  |
-| 5 | Missouri (13) | USC (19) | Houston (20) |  |  |  |  |  |
+| **Score** | **48**&nbsp;(▼12) | **49**&nbsp;(▲8) | **59**&nbsp;(▲8) | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (5)&nbsp;▼4 | Ohio State (3)&nbsp;▲1 | BYU (2)&nbsp;▲6 | *Miami (1)&nbsp;▲2* | *Notre Dame (4)&nbsp;▼2* | *Boise St (21)&nbsp;▲2* | *James Madison (29)&nbsp;▲2* | *New Mexico (31)&nbsp;▲3* |
+| 2 | Ole Miss (7)&nbsp;▲2 | Indiana (6)&nbsp;▼1 | Texas Tech (8)&nbsp;▲2 | *Wake Forest (17)&nbsp;▲4* |  | *Oregon St (32)&nbsp;▲3* |  |  |
+| 3 | Tennessee (11)&nbsp;▲3 | UCLA (9)&nbsp;▲3 | Utah (10)&nbsp;▲1 | *SMU (23)&nbsp;▲1* |  |  |  |  |
+| 4 | Kentucky (12)&nbsp;▲3 | Iowa (15)&nbsp;▲2 | Houston (14)&nbsp;▲6 |  |  |  |  |  |
+| 5 | Alabama (13)&nbsp;▼7 | USC (16)&nbsp;▲3 | Arizona (25)&nbsp;▲3 |  |  |  |  |  |
 |  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
-| 6 | *Tennessee (14)* | *Northwestern (25)* | *Arizona (28)* |  |  |  |  |  |
-| 7 | *Kentucky (15)* | *Wisconsin (26)* |  |  |  |  |  |  |
-| 8 | *Mississippi St (16)* | *Oregon (27)* |  |  |  |  |  |  |
-| 9 | *LSU (22)* | *Nebraska (29)* |  |  |  |  |  |  |
-| 10 | *Oklahoma (30)* |  |  |  |  |  |  |  |
-| 11 | *Florida (32)* |  |  |  |  |  |  |  |
+| 6 | *LSU (18)&nbsp;▲4* | *Northwestern (24)&nbsp;▲1* | *Oklahoma St (26)&nbsp;▼8* |  |  |  |  |  |
+| 7 | *Texas (19)&nbsp;▼12* | *Oregon (27)&nbsp;–* |  |  |  |  |  |  |
+| 8 | *Florida (20)&nbsp;▲12* |  |  |  |  |  |  |  |
+| 9 | *Missouri (22)&nbsp;▼9* |  |  |  |  |  |  |  |
+| 10 | *Auburn (28)&nbsp;NR* |  |  |  |  |  |  |  |
+| 11 | *Mississippi St (30)&nbsp;▼14* |  |  |  |  |  |  |  |
+| Dropped | Oklahoma | Wisconsin, Nebraska |  | Duke |  |  |  |  |
 
-<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences).</sub>
+<sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week. Dropped lists teams that were ranked or receiving votes last week but are out of the poll entirely this week, in last week's order.</sub>
 <!-- XC-TABLE-5-TEAM:END -->
 
 ### 4-Team
@@ -81,7 +82,8 @@ with 1998-2011 imported from [collegepollarchive.com](https://collegepollarchive
   season and across every season on record (see "Graphing" under Specialized Uses below).
 - [`readme_table.py`](readme_table.py): Rebuilds the 5-team standings table under the current-week graph
   above from the newest week stored in `data/` (the Markdown version of the console printout each weekly
-  run produces). It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
+  run produces), with Movement Indicators (▲/▼ spots moved, `NR` if not ranked) against the prior week.
+  It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
 - [`weekly_update.py`](weekly_update.py): One-shot entry point that pulls the latest rankings and
   regenerates the current-week graphs and standings table in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
 - [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py): Standalone "what-if" script
