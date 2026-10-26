@@ -70,7 +70,9 @@ class StoredWeek:
     year: int
     token: str  # filename suffix: a week number, or "final"
     scores: Dict[str, Score]  # {conference: XC score or "DNS"}
-    teams_df: pd.DataFrame  # one column per conference of (team, AP rank) tuples, best first
+    teams_df: (
+        pd.DataFrame
+    )  # one column per conference of (team, AP rank) tuples, best first
 
     def teams_by_conference(self) -> Dict[str, List[Team]]:
         return {
@@ -152,7 +154,9 @@ def previous_comparable_week_token(
     '2'
     """
     numbered = sorted(
-        int(t) for t in stored_week_tokens(year, num_scoring_teams, data_dir) if t.isdigit()
+        int(t)
+        for t in stored_week_tokens(year, num_scoring_teams, data_dir)
+        if t.isdigit()
     )
     if week_token == "final":
         earlier = numbered
@@ -389,11 +393,13 @@ def build_week_table(
         f"{_place_label(places[c])} · {c}" if c in places else c for c in columns
     ]
     score_row = ["**Score**"] + [
-        _with_movement(
-            f"**{_fmt_num(week.scores[c])}**", score_movement(c), parenthesize=True
+        (
+            _with_movement(
+                f"**{_fmt_num(week.scores[c])}**", score_movement(c), parenthesize=True
+            )
+            if c in places
+            else "DNS"
         )
-        if c in places
-        else "DNS"
         for c in columns
     ]
     rows = [header, score_row]
@@ -444,7 +450,8 @@ def build_latest_week_table(
     show_movement: bool = True,
 ) -> str:
     """Markdown for the newest stored week's XC standings (see build_week_table()), with Movement
-    Indicators against the prior comparable week unless `show_movement` is False or there is none."""
+    Indicators against the prior comparable week unless `show_movement` is False or there is none.
+    """
     year, week_token, _ = latest_recorded_week(num_scoring_teams, data_dir)
     week = load_stored_week(year, week_token, num_scoring_teams, data_dir)
 

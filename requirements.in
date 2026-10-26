@@ -1,6 +1,8 @@
-urllib3>=2.7.0
-requests>=2.33.0
+black
+matplotlib
 numpy
 pandas<3.0.0
-matplotlib
+pillow>=13.0.0
+requests>=2.33.0
 setuptools
+urllib3>=2.8.0
