@@ -18,23 +18,22 @@ This provides an objective, measurable comparison of conference strength for eve
 ![five team](images/current_week_5team.png)
 
 <!-- XC-TABLE-5-TEAM:START -->
-**2026 Week 10** — 5-team XC standings
+**2026 Week 11** — 5-team XC standings
 
-| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | Mountain West | American | CUSA |
+| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | Mountain West | CUSA | American |
 |:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **41**&nbsp;(▲4) | **61**&nbsp;(▼2.5) | **64**&nbsp;(▲3) | **105**&nbsp;(NR) | DNS | DNS | DNS | DNS | DNS |
-| 1 | Georgia (2)&nbsp;▲1 | UCLA (5)&nbsp;▲2 | Utah (3)&nbsp;▲3 | Miami (1)&nbsp;– | *Notre Dame (4)&nbsp;▲1* | *Boise St (20)&nbsp;▲0.5* | *New Mexico (22)&nbsp;▲5* | *UTSA (28)&nbsp;▲5.5* | *Liberty (33)&nbsp;NR* |
-| 2 | Kentucky (8)&nbsp;▲1 | Indiana (6)&nbsp;▼2 | BYU (7)&nbsp;▲1 | Wake Forest (14)&nbsp;– |  |  |  |  |  |
-| 3 | Alabama (9)&nbsp;▲1 | Ohio State (11)&nbsp;▼9 | Texas Tech (13)&nbsp;– | SMU (29)&nbsp;▼10 |  |  |  |  |  |
-| 4 | Texas (10)&nbsp;▲1 | USC (18)&nbsp;▲13.5 | Houston (17)&nbsp;▲1 | Virginia Tech (30)&nbsp;▲3.5 |  |  |  |  |  |
-| 5 | Ole Miss (12)&nbsp;– | Iowa (21)&nbsp;▲5 | Arizona (24)&nbsp;▼2 | Duke (31)&nbsp;NR |  |  |  |  |  |
+| **Score** | **38**&nbsp;(▲3) | **59**&nbsp;(▲2) | **60**&nbsp;(▲4) | **98**&nbsp;(▲7) | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (1)&nbsp;▲1 | UCLA (4)&nbsp;▲1 | Utah (2)&nbsp;▲1 | Miami (5)&nbsp;▼4 | *Notre Dame (3)&nbsp;▲1* | *Boise St (17)&nbsp;▲3* | *New Mexico (23)&nbsp;▼1* | *Liberty (29)&nbsp;▲4* | *North Texas (31)&nbsp;NR* |
+| 2 | Alabama (7)&nbsp;▲2 | Indiana (6)&nbsp;– | Texas Tech (10)&nbsp;▲3 | Wake Forest (11)&nbsp;▲3 |  |  |  |  |  |
+| 3 | Texas (8)&nbsp;▲2 | USC (15)&nbsp;▲3 | BYU (12)&nbsp;▼5 | SMU (25)&nbsp;▲4 |  |  |  |  |  |
+| 4 | Tennessee (9)&nbsp;▲7 | Iowa (16)&nbsp;▲5 | Houston (14)&nbsp;▲3 | Duke (27)&nbsp;▲4 |  |  |  |  |  |
+| 5 | Kentucky (13)&nbsp;▼5 | Oregon (18)&nbsp;▲9 | Arizona (22)&nbsp;▲2 | Louisville (30)&nbsp;▲5 |  |  |  |  |  |
 |  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
-| 6 | *LSU (15)&nbsp;–* | *Northwestern (26)&nbsp;▼5.5* | *Oklahoma St (34)&nbsp;▼10* | *Louisville (35)&nbsp;NR* |  |  |  |  |  |
-| 7 | *Tennessee (16)&nbsp;–* | *Oregon (27)&nbsp;NR* |  |  |  |  |  |  |  |
-| 8 | *Missouri (19)&nbsp;▲4* | *Minnesota (32)&nbsp;▼0.5* |  |  |  |  |  |  |  |
-| 9 | *South Carolina (23)&nbsp;▲7* |  |  |  |  |  |  |  |  |
-| 10 | *Florida (25)&nbsp;▼8* |  |  |  |  |  |  |  |  |
-| Dropped |  | Wisconsin | Cincinnati |  |  | Oregon St |  |  |  |
+| 6 | *Ole Miss (19)&nbsp;▼7* | *Ohio State (21)&nbsp;▼10* | *Oklahoma St (28)&nbsp;▲6* |  |  |  |  |  |  |
+| 7 | *South Carolina (20)&nbsp;▲3* |  |  |  |  |  |  |  |  |
+| 8 | *LSU (24)&nbsp;▼9* |  |  |  |  |  |  |  |  |
+| 9 | *Missouri (26)&nbsp;▼7* |  |  |  |  |  |  |  |  |
+| Dropped | Florida | Northwestern, Minnesota |  | Virginia Tech |  |  |  |  | UTSA |
 
 <sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week. Dropped lists teams that were ranked or receiving votes last week but are out of the poll entirely this week, in last week's order.</sub>
 <!-- XC-TABLE-5-TEAM:END -->

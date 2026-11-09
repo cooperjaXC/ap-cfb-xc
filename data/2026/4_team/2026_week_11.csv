@@ -1,0 +1,10 @@
+"('SEC', np.int64(25))","('Big 12', np.int64(38))","('FBS Indep.', 'DNS')","('Big Ten', np.int64(41))","('ACC', np.int64(68))","('Pac-12', 'DNS')","('Mountain West', 'DNS')","('CUSA', 'DNS')","('American', 'DNS')"
+"('Georgia', 1)","('Utah', 2)","('Notre Dame', 3)","('UCLA', 4)","('Miami', 5)","('Boise St', 17)","('New Mexico', 23)","('Liberty', 29)","('North Texas', 31)"
+"('Alabama', 7)","('Texas Tech', 10)",,"('Indiana', 6)","('Wake Forest', 11)",,,,
+"('Texas', 8)","('BYU', 12)",,"('USC', 15)","('SMU', 25)",,,,
+"('Tennessee', 9)","('Houston', 14)",,"('Iowa', 16)","('Duke', 27)",,,,
+"('Kentucky', 13)","('Arizona', 22)",,"('Oregon', 18)","('Louisville', 30)",,,,
+"('Ole Miss', 19)","('Oklahoma St', 28)",,"('Ohio State', 21)",,,,,
+"('South Carolina', 20)",,,,,,,,
+"('LSU', 24)",,,,,,,,
+"('Missouri', 26)",,,,,,,,
