@@ -18,22 +18,25 @@ This provides an objective, measurable comparison of conference strength for eve
 ![five team](images/current_week_5team.png)
 
 <!-- XC-TABLE-5-TEAM:START -->
-**2026 Week 11** — 5-team XC standings
+**2026 Week 12** — 5-team XC standings
 
-| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | Mountain West | CUSA | American |
-|:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **38**&nbsp;(▲3) | **59**&nbsp;(▲2) | **60**&nbsp;(▲4) | **98**&nbsp;(▲7) | DNS | DNS | DNS | DNS | DNS |
-| 1 | Georgia (1)&nbsp;▲1 | UCLA (4)&nbsp;▲1 | Utah (2)&nbsp;▲1 | Miami (5)&nbsp;▼4 | *Notre Dame (3)&nbsp;▲1* | *Boise St (17)&nbsp;▲3* | *New Mexico (23)&nbsp;▼1* | *Liberty (29)&nbsp;▲4* | *North Texas (31)&nbsp;NR* |
-| 2 | Alabama (7)&nbsp;▲2 | Indiana (6)&nbsp;– | Texas Tech (10)&nbsp;▲3 | Wake Forest (11)&nbsp;▲3 |  |  |  |  |  |
-| 3 | Texas (8)&nbsp;▲2 | USC (15)&nbsp;▲3 | BYU (12)&nbsp;▼5 | SMU (25)&nbsp;▲4 |  |  |  |  |  |
-| 4 | Tennessee (9)&nbsp;▲7 | Iowa (16)&nbsp;▲5 | Houston (14)&nbsp;▲3 | Duke (27)&nbsp;▲4 |  |  |  |  |  |
-| 5 | Kentucky (13)&nbsp;▼5 | Oregon (18)&nbsp;▲9 | Arizona (22)&nbsp;▲2 | Louisville (30)&nbsp;▲5 |  |  |  |  |  |
-|  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
-| 6 | *Ole Miss (19)&nbsp;▼7* | *Ohio State (21)&nbsp;▼10* | *Oklahoma St (28)&nbsp;▲6* |  |  |  |  |  |  |
-| 7 | *South Carolina (20)&nbsp;▲3* |  |  |  |  |  |  |  |  |
-| 8 | *LSU (24)&nbsp;▼9* |  |  |  |  |  |  |  |  |
-| 9 | *Missouri (26)&nbsp;▼7* |  |  |  |  |  |  |  |  |
-| Dropped | Florida | Northwestern, Minnesota |  | Virginia Tech |  |  |  |  | UTSA |
+| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | CUSA | American | Mountain West | Sun Belt | MAC |
+|:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Score** | **42**&nbsp;(▼4) | **53**&nbsp;(▲6) | **64**&nbsp;(▼4) | **99.5**&nbsp;(▼1.5) | DNS | DNS | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (1)&nbsp;– | UCLA (4)&nbsp;– | Utah (2)&nbsp;– | Miami (5)&nbsp;– | *Notre Dame (3)&nbsp;–* | *Boise St (15)&nbsp;▲2* | *Liberty (22)&nbsp;▲7* | *Memphis (24)&nbsp;NR* | *New Mexico (30)&nbsp;▼7* | *Louisiana Tech (32)&nbsp;NR* | *Toledo (35.5)&nbsp;NR* |
+| 2 | Alabama (7)&nbsp;– | Indiana (6)&nbsp;– | Texas Tech (11)&nbsp;▼1 | Wake Forest (10)&nbsp;▲1 |  |  |  | *UTSA (29)&nbsp;NR* | *N Dakota St (33)&nbsp;NR* |  |  |
+| 3 | Texas (8)&nbsp;– | Iowa (13)&nbsp;▲3 | BYU (12)&nbsp;– | Louisville (21)&nbsp;▲9 |  |  |  |  | *Wyoming (35.5)&nbsp;NR* |  |  |
+| 4 | Tennessee (9)&nbsp;– | Oregon (14)&nbsp;▲4 | Arizona (19)&nbsp;▲3 | Duke (28)&nbsp;▼1 |  |  |  |  | *Air Force (35.5)&nbsp;NR* |  |  |
+| 5 | Kentucky (17)&nbsp;▼4 | Ohio State (16)&nbsp;▲5 | Houston (20)&nbsp;▼6 | SMU (35.5)&nbsp;▼10.5 |  |  |  |  |  |  |  |
+|  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
+| 6 | *Florida (23)&nbsp;NR* | *USC (18)&nbsp;▼3* |  |  |  |  |  |  |  |  |  |
+| 7 | *Ole Miss (25)&nbsp;▼6* |  |  |  |  |  |  |  |  |  |  |
+| 8 | *Oklahoma (26)&nbsp;NR* |  |  |  |  |  |  |  |  |  |  |
+| 9 | *LSU (27)&nbsp;▼3* |  |  |  |  |  |  |  |  |  |  |
+| 10 | *South Carolina (31)&nbsp;▼11* |  |  |  |  |  |  |  |  |  |  |
+| 11 | *Auburn (38)&nbsp;NR* |  |  |  |  |  |  |  |  |  |  |
+| 12 | *Missouri (39)&nbsp;▼13* |  |  |  |  |  |  |  |  |  |  |
+| Dropped |  |  | Oklahoma St |  |  |  |  | North Texas |  |  |  |
 
 <sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week. Dropped lists teams that were ranked or receiving votes last week but are out of the poll entirely this week, in last week's order.</sub>
 <!-- XC-TABLE-5-TEAM:END -->

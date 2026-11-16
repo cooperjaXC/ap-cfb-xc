@@ -5,4 +5,5 @@ pandas<3.0.0
 pillow>=13.0.0
 requests>=2.33.0
 setuptools
+tweepy
 urllib3>=2.8.0
