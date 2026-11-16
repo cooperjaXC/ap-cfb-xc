@@ -27,6 +27,10 @@ current = "current"
 preseason = "preseason"
 
 
+class APPollNotPublishedError(LookupError):
+    """ESPN's current-rankings feed doesn't list the AP Top 25 yet (newest week not published)."""
+
+
 def string_to_bool(string_to_become_bool, suppress_prints=False):
     """Converts true/false strings into boolean items for downstream python use."""
     # https://stackoverflow.com/questions/715417/converting-from-a-string-to-boolean-in-python
@@ -211,9 +215,18 @@ def espn_api_url_generator(year=None, week=None) -> str:
             resp_json = api_json_response(default_url)
             # 2) grab the correct URL
             all_rankings_resp = resp_json["rankings"]
-            ap_top_tf_resp = [
+            ap_matches = [
                 rnk for rnk in all_rankings_resp if str(ap_poll_path_code) == rnk["id"]
-            ][0]
+            ]
+            if not ap_matches:
+                # ESPN's default endpoint only lists polls it has published for the newest week;
+                # the Coaches poll often appears a day or more before the AP poll does.
+                raise APPollNotPublishedError(
+                    "ESPN's current rankings don't include the AP Top 25 yet "
+                    f"(listed: {[rnk.get('name') for rnk in all_rankings_resp]}).\n"
+                    "Try again once the new AP poll is out."
+                )
+            ap_top_tf_resp = ap_matches[0]
             target_url = ap_top_tf_resp[reference_key]
             # 3) transform the URL
             # # Remove all the crud after the "?"

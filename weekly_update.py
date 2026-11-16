@@ -13,6 +13,7 @@ intervention.
 import store_data as sd
 import graph_data as gd
 import readme_table as rt
+from espn_api import APPollNotPublishedError
 
 
 def weekly_update():
@@ -47,4 +48,8 @@ def weekly_update():
 
 
 if __name__ == "__main__":
-    weekly_update()
+    try:
+        weekly_update()
+    except APPollNotPublishedError as not_yet_published:
+        # Nothing was stored or regenerated; safe to simply re-run later.
+        raise SystemExit(f"No update made. {not_yet_published}")
