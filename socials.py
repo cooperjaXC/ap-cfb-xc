@@ -341,6 +341,9 @@ PHRASES = {
     "movers_short": ["{riser} {up}{rise}, {faller} {down}{fall}."],
     "riser_short": ["Biggest climb: {riser} {up}{rise} to {riser_rank}."],
     "faller_short": ["Biggest drop: {faller} {down}{fall}."],
+    # last resort when only a few characters are left: just the team and its move
+    "riser_tiny": ["{riser} {up}{rise}."],
+    "faller_tiny": ["{faller} {down}{fall}."],
     "last_year_same_short": ["{Point_short}: {name} also led ({score})."],
     "last_year_other_short": ["{Point_short}: {name} led at {score}."],
     "gap_widest": [
@@ -429,6 +432,9 @@ class Storyline:
     text: str
     topic: str
     short: str = ""  # a tighter wording, used when space is short; empty means use `text`
+    # Narrower versions of the same story, as (short, full) wordings, tried in order when even
+    # `short` won't fit: e.g. two movers -> just the bigger one
+    fallbacks: Tuple[Tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1024,7 +1030,21 @@ def storyline_team_movers(ctx: WeekContext) -> List[Storyline]:
         return out
     text = _phrase(ctx, key, **fields)
     short = _phrase(ctx, f"{key}_short", **fields)
-    return out + [Storyline("team_movers", 40 + min(size, 20), text, "teams", short)]
+    fallbacks = ()
+    if rise and fall:
+        # If naming both won't fit, name just one. The bigger move goes first (a tie goes to the
+        # riser), as a sentence and then as just "Team ▲n"; then the same for the smaller move.
+        singles = [("riser", rise[0]), ("faller", fall[0])]
+        singles.sort(key=lambda pair: -pair[1])
+        fallbacks = []
+        for k, _ in singles:
+            fallbacks.append((_phrase(ctx, f"{k}_short", **fields), _phrase(ctx, k, **fields)))
+            tiny = _phrase(ctx, f"{k}_tiny", **fields)
+            fallbacks.append((tiny, tiny))
+        fallbacks = tuple(fallbacks)
+    return out + [
+        Storyline("team_movers", 40 + min(size, 20), text, "teams", short, fallbacks)
+    ]
 
 
 def storyline_depth(ctx: WeekContext) -> List[Storyline]:
@@ -1247,16 +1267,25 @@ def choose_storylines(
             break
         if any(story.topic == c.topic for c in chosen):
             continue
-        trial = [c.short or c.text for c in chosen + [story]]
-        if _render_post(ctx, trial, length_fn, keep_all_tags=True) is not None:
-            chosen.append(story)
+        # the story as is, then each narrower version of it (e.g. one mover instead of two)
+        variants = [story] + [
+            dataclasses.replace(story, text=full, short=short, fallbacks=())
+            for short, full in story.fallbacks
+        ]
+        for variant in variants:
+            trial = [c.short or c.text for c in chosen + [variant]]
+            if _render_post(ctx, trial, length_fn, keep_all_tags=True) is not None:
+                chosen.append(variant)
+                break
     # 2. give the full sentence back to each, best first, while the whole post still fits
     texts = [c.short or c.text for c in chosen]
     for i, story in enumerate(chosen):
         trial = texts[:i] + [story.text] + texts[i + 1 :]
         if _render_post(ctx, trial, length_fn, keep_all_tags=True) is not None:
             texts = trial
-    return [dataclasses.replace(c, text=t) for c, t in zip(chosen, texts)]
+    final = [dataclasses.replace(c, text=t) for c, t in zip(chosen, texts)]
+    # Board changes close the post, just above the hashtags (a stable sort keeps the rest in order)
+    return sorted(final, key=lambda story: story.kind in ("off_board", "on_board"))
 
 
 def _render_post(
