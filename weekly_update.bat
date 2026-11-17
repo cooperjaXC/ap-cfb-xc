@@ -16,6 +16,10 @@ if not exist "%VPYTHON_PATH%" (
     exit /b 1
 )
 
+:: Run from the repo root so data/ and images/ resolve correctly no matter where this was
+:: launched from (Task Scheduler starts in System32).
+cd /d "%REPO_DIR%"
+
 echo Using Python: "%VPYTHON_PATH%"
 echo.
 

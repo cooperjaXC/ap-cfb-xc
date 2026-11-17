@@ -1,5 +1,6 @@
 #!/bin/bash
-# Weekly run: pull the latest AP rankings and refresh the current-week graphs.
+# Weekly run: pull the latest AP rankings, refresh the current-week graphs and README table,
+# and publish the week's post to X.
 
 convert_path() {
     local input_path="$1"
@@ -36,6 +37,10 @@ else
     echo "Create one with: python -m venv venv && venv/bin/pip install -r requirements.in"
     exit 1
 fi
+
+# Run from the repo root so data/ and images/ resolve correctly no matter where this was
+# launched from (cron and Task Scheduler start elsewhere).
+cd "$REPO_DIR" || exit 1
 
 echo "Using Python: $PYTHON_PATH"
 echo

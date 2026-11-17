@@ -37,6 +37,7 @@ import io
 import json
 import os
 import random
+import re
 import sys
 import tomllib
 from dataclasses import dataclass, field
@@ -252,6 +253,26 @@ POST_LOG_PATH = os.path.join(rt.DATA_DIR, "social_post_log.json")
 # (same idea as graph_data.CROSS_SEASON_CONFERENCE_MERGES; only used for comparisons, never display)
 HISTORY_ALIASES = {"Pac-10": "Pac-12", "Big East": "American"}
 
+# Hashtags. A conference or team named in a post can add its hashtag (see build_hashtags()).
+# Conferences use the tags fans actually follow; a conference missing here gets none.
+CONFERENCE_HASHTAGS = {
+    "SEC": "#SEC",
+    "Big Ten": "#B1G",
+    "Big 12": "#Big12",
+    "ACC": "#ACC",
+    "Pac-12": "#Pac12",
+    "Pac-10": "#Pac10",
+    "American": "#AmericanFB",
+    "Big East": "#BigEast",
+    "Mountain West": "#MountainWest",
+    "Sun Belt": "#SunBelt",
+    "MAC": "#MACtion",
+    "CUSA": "#CUSA",
+}
+# Teams default to their name as a tag ("South Carolina" -> #SouthCarolina, "Boise St" ->
+# #BoiseState). List a team here to use something else, e.g. {"Alabama": "#RollTide"}.
+TEAM_HASHTAGS = {"N Dakota St": "#NDSU", "Texas A&M": "#TexasAM"}
+
 # How a conference is written mid-sentence. Anything not listed becomes "the <shortName>".
 CONFERENCE_NAMES = {"FBS Indep.": "the FBS Independents"}
 
@@ -312,8 +333,8 @@ PHRASES = {
     "movers_short": ["{riser} {up}{rise}, {faller} {down}{fall}."],
     "riser_short": ["{riser} {up}{rise} to {riser_rank}."],
     "faller_short": ["{faller} {down}{fall}."],
-    "last_year_same_short": ["Last year: {name} also led ({score})."],
-    "last_year_other_short": ["Last year: {name} led at {score}."],
+    "last_year_same_short": ["{Point_short}: {name} also led ({score})."],
+    "last_year_other_short": ["{Point_short}: {name} led at {score}."],
     "gap_widest": ["A {gap}-point lead is the largest of the season."],
     "lead_change_first": ["It is the first lead change of the season."],
     "lead_change_nth": ["It is lead change No. {count} of the season."],
@@ -342,8 +363,9 @@ PHRASES = {
     "fell_out_top25": ["{faller} falls out of the Top 25 from {faller_rank}."],
     "top_five": ["{count} of the top five teams come from {conf}."],  # count: Three/Four/All five
     "depth": ["{count} of the Top 25 come from {conf}."],
-    "last_year_same": ["{Conf} also led at this point last season ({score})."],
-    "last_year_other": ["A year ago at this point, {conf} led at {score}."],
+    # {point}: "in this same week last season" / "in last season's final poll"
+    "last_year_same": ["{Conf} also led {point} ({score})."],
+    "last_year_other": ["{Conf} led {point} ({score})."],
     "preseason_same": ["{Conf} also finished last season on top."],
     "preseason_other": ["Last season ended with {conf} on top."],
     "titles": [
@@ -364,7 +386,10 @@ class PostConfig:
     max_length: int = 280  # platform limit (X: 280 weighted characters; Bluesky: 300)
     max_storylines: int = 4  # how many storylines follow the standings line, at most
     max_standings: int = 4  # how many conferences the standings line lists
-    hashtags: Tuple[str, ...] = ("#CFB",)
+    hashtags: Tuple[str, ...] = ("#CFB",)  # always included, first
+    # Add the hashtags of the conferences and teams the post talks about most
+    responsive_hashtags: bool = True
+    max_hashtags: int = 4  # total, counting the always-included ones
     explain_scoring: bool = True  # add "(low score wins)" when there is room
     # thresholds for what counts as worth mentioning
     close_race_gap: float = 3  # top two this close -> "close race"
@@ -1001,6 +1026,12 @@ def storyline_year_over_year(ctx: WeekContext) -> List[Storyline]:
         conf=_conf(then["leader"]),
         Conf=_conf(then["leader"], capital=True),
         score=_num(then["score"]),
+        point=(
+            "in last season's final poll"
+            if ctx.is_final
+            else "in this same week last season"
+        ),
+        Point_short="Last year's final" if ctx.is_final else "Same week last year",
     )
     if ctx.is_preseason:
         key = "preseason_same" if same else "preseason_other"
@@ -1070,6 +1101,43 @@ def find_storylines(ctx: WeekContext) -> List[Storyline]:
 # ----------------------------------------------------------------------------------------------
 
 
+def _team_hashtag(team: str) -> str:
+    """'#SouthCarolina' from 'South Carolina'; 'St' is spelled out ('Boise St' -> '#BoiseState')."""
+    if team in TEAM_HASHTAGS:
+        return TEAM_HASHTAGS[team]
+    words = ["State" if word == "St" else word for word in team.split()]
+    return "#" + "".join(ch for ch in "".join(words) if ch.isalnum())
+
+
+def build_hashtags(ctx: WeekContext, body: str) -> Tuple[str, ...]:
+    """The post's hashtags: cfg.hashtags first, then the conferences and teams that `body` (the
+    headline and storylines, not the standings line) mentions, most-mentioned first and earliest
+    first among equals, up to cfg.max_hashtags in total. So a post that is mostly about the SEC
+    carries #SEC, one about the Big Ten #B1G, and a big mover brings its own team tag."""
+    cfg = ctx.cfg
+    tags = list(cfg.hashtags)
+    if not cfg.responsive_hashtags:
+        return tuple(tags[: cfg.max_hashtags])
+
+    teams = set(ctx.week.team_ranks())
+    if ctx.previous is not None:
+        teams |= set(ctx.previous.team_ranks())
+    named = [(team, _team_hashtag(team)) for team in teams]
+    named += [(conf, tag) for conf, tag in CONFERENCE_HASHTAGS.items()]
+    # Longest names first, blanking each match, so "Texas" isn't counted inside "Texas Tech"
+    found = []
+    for name, tag in sorted(named, key=lambda pair: -len(pair[0])):
+        pattern = re.compile(rf"(?<![\w&]){re.escape(name)}(?![\w&])")
+        matches = list(pattern.finditer(body))
+        if matches:
+            found.append((-len(matches), matches[0].start(), tag))
+            body = pattern.sub(lambda m: " " * len(m.group()), body)
+    for _, _, tag in sorted(found):
+        if tag not in tags:
+            tags.append(tag)
+    return tuple(tags[: cfg.max_hashtags])
+
+
 def _assemble(
     headline: str, standings: str, lines: List[str], hashtags: Tuple[str, ...]
 ) -> str:
@@ -1126,8 +1194,9 @@ def choose_storylines(
         if length([c.short or c.text for c in chosen + [story]]) <= cfg.max_length:
             chosen.append(story)
     # 2. give the full sentence back to each, best first, while the hashtags still fit too
-    room = cfg.max_length - length_fn("\n\n" + " ".join(cfg.hashtags)) * bool(cfg.hashtags)
     texts = [c.short or c.text for c in chosen]
+    tags = build_hashtags(ctx, "\n".join([build_headline(ctx)] + texts))
+    room = cfg.max_length - length_fn("\n\n" + " ".join(tags)) * bool(tags)
     for i, story in enumerate(chosen):
         trial = texts[:i] + [story.text] + texts[i + 1 :]
         if length(trial) <= room:
@@ -1139,8 +1208,9 @@ def compose_text(
     ctx: WeekContext, length_fn: Callable[[str], int] = weighted_length
 ) -> str:
     """The post text for one week: headline, standings line, then as many of the top storylines as
-    fit in cfg.max_length (never two on the same topic). Optional extras (the scoring note, then
-    the hashtags) are dropped before any storyline is, if space runs short."""
+    fit in cfg.max_length (never two on the same topic), then the hashtags for what the post is
+    about (build_hashtags()). Optional extras (the scoring note, then hashtags from the least
+    relevant) are dropped before any storyline is, if space runs short."""
     cfg = ctx.cfg
     headline = build_headline(ctx)
     standings = build_standings_line(ctx)
@@ -1151,14 +1221,13 @@ def compose_text(
 
     lines = [story.text for story in choose_storylines(ctx, length_fn)]
 
-    for std, tags in (
-        (noted if cfg.explain_scoring else standings, cfg.hashtags),
-        (standings, cfg.hashtags),
-        (standings, ()),
-    ):
-        if fits(std, lines, tags):
-            return _assemble(headline, std, lines, tags)
-    return _assemble(headline, standings, lines, ())
+    tags = build_hashtags(ctx, "\n".join([headline] + lines))
+    if cfg.explain_scoring and fits(noted, lines, tags):
+        return _assemble(headline, noted, lines, tags)
+    # short of room: give up hashtags one at a time, from the least relevant
+    while tags and not fits(standings, lines, tags):
+        tags = tags[:-1]
+    return _assemble(headline, standings, lines, tags)
 
 
 def _alt_text_graph(ctx: WeekContext) -> str:
