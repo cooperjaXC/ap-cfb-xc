@@ -273,6 +273,10 @@ CONFERENCE_HASHTAGS = {
 # #BoiseState). List a team here to use something else, e.g. {"Alabama": "#RollTide"}.
 TEAM_HASHTAGS = {"N Dakota St": "#NDSU", "Texas A&M": "#TexasAM"}
 
+# Short forms for the sentences, used once the full name has appeared in the standings line
+# (the standings line itself always spells names out).
+ABBREVIATIONS = {"Big Ten": "B1G"}
+
 # How a conference is written mid-sentence. Anything not listed becomes "the <shortName>".
 CONFERENCE_NAMES = {"FBS Indep.": "the FBS Independents"}
 
@@ -320,40 +324,45 @@ PHRASES = {
         "{score} is the highest first-place score since {when}, a sign of parity."
     ],
     "close_race": [
-        "Just {gap} {points} separate the top two.",
-        "The top two are only {gap} {points} apart.",
+        "{Conf} leads {other} by just {gap} {points}.",
+        "Just {gap} {points} separate {conf} and {other}.",
     ],
-    "gap_shrinks": ["The lead shrinks from {prev_gap} to {gap} points."],
-    "gap_grows": ["The lead grows from {prev_gap} to {gap} points."],
+    # {Conf_poss}/{other}: "The SEC's" / "the Big Ten", so the lead is always attributed
+    "gap_shrinks": [
+        "{Conf_poss} lead over {other} shrinks from {prev_gap} to {gap} points."
+    ],
+    "gap_grows": ["{Conf_poss} lead over {other} grows from {prev_gap} to {gap} points."],
     # "_short" variants are used when the full sentences would not all fit in one post
-    "gap_shrinks_short": ["Lead down from {prev_gap} to {gap}."],
-    "gap_grows_short": ["Lead up from {prev_gap} to {gap}."],
-    "conf_up_short": ["{name}: {delta} better at {score}."],
-    "conf_down_short": ["{name}: {delta} worse at {score}."],
+    "gap_shrinks_short": ["{Conf_poss} lead over {other} shrinks from {prev_gap} to {gap}."],
+    "gap_grows_short": ["{Conf_poss} lead over {other} grows from {prev_gap} to {gap}."],
+    "gap_widest_short": ["{Conf_poss} {gap}-point lead is the season's largest."],
+    "conf_up_short": ["{Conf} improves {delta} {points} to {score}."],
+    "conf_down_short": ["{Conf} slips {delta} {points} to {score}."],
     "movers_short": ["{riser} {up}{rise}, {faller} {down}{fall}."],
-    "riser_short": ["{riser} {up}{rise} to {riser_rank}."],
-    "faller_short": ["{faller} {down}{fall}."],
+    "riser_short": ["Biggest climb: {riser} {up}{rise} to {riser_rank}."],
+    "faller_short": ["Biggest drop: {faller} {down}{fall}."],
     "last_year_same_short": ["{Point_short}: {name} also led ({score})."],
     "last_year_other_short": ["{Point_short}: {name} led at {score}."],
-    "gap_widest": ["A {gap}-point lead is the largest of the season."],
+    "gap_widest": [
+        "{Conf_poss} {gap}-point lead over {other} is the largest of the season."
+    ],
     "lead_change_first": ["It is the first lead change of the season."],
     "lead_change_nth": ["It is lead change No. {count} of the season."],
-    "conf_up": [
-        "{Conf} improves {delta} {points} to {score}, the week's biggest jump.",
-        "Biggest jump: {conf}, {delta} {points} better at {score}.",
-    ],
-    "conf_down": [
-        "{Conf} gives back {delta} {points}, to {score}.",
-        "Biggest slide: {conf}, {delta} {points} worse at {score}.",
-    ],
+    "conf_up": ["{Conf} improves {delta} {points} to {score}, the week's biggest jump."],
+    "conf_down": ["{Conf} slips {delta} {points} to {score}, the week's biggest slide."],
     "best_on_record": [
         "{score} is the best score for {conf} in our data (since {since})."
     ],
     "best_since": ["{score} is the best score for {conf} since {when}."],
     "season_best": ["{score} is a season best for {conf}."],
     "season_worst": ["{score} is a season worst for {conf}."],
-    "off_board": ["Off the board: {conf}, now short of {n_word} teams in the poll."],
-    "on_board": ["Back on the board: {conf}, with {n_word} teams in the poll again."],
+    # {both}: "" for one conference, "both " for two, "all " for three or more
+    "off_board": [
+        "Off the board: {conf}, {both}now short of {n_word} teams in the poll."
+    ],
+    "on_board": [
+        "Back on the board: {conf}, {both}with {n_word} teams in the poll again."
+    ],
     "movers": [
         "Movers: {riser} {up}{rise} to {riser_rank}, {faller} {down}{fall} {faller_dest}."
     ],
@@ -386,8 +395,9 @@ class PostConfig:
     max_length: int = 280  # platform limit (X: 280 weighted characters; Bluesky: 300)
     max_storylines: int = 4  # how many storylines follow the standings line, at most
     max_standings: int = 4  # how many conferences the standings line lists
-    hashtags: Tuple[str, ...] = ("#CFB",)  # always included, first
-    # Add the hashtags of the conferences and teams the post talks about most
+    hashtags: Tuple[str, ...] = ("#CFB",)  # always included, as the post's last line
+    # Turn the first mention of the conferences and teams the post talks about most into
+    # hashtags in the sentence itself ("the #SEC's lead over the #B1G ...")
     responsive_hashtags: bool = True
     max_hashtags: int = 4  # total, counting the always-included ones
     explain_scoring: bool = True  # add "(low score wins)" when there is room
@@ -495,6 +505,22 @@ def _conf(conference: str, capital: bool = False) -> str:
     """'the SEC' / 'The SEC'."""
     name = CONFERENCE_NAMES.get(conference, f"the {conference}")
     return name[0].upper() + name[1:] if capital else name
+
+
+def _join_names(names: List[str]) -> str:
+    """'A', 'A and B', 'A, B and C'.
+
+    >>> _join_names(["the SEC", "the Pac-10"])
+    'the SEC and the Pac-10'
+    >>> _join_names(["a", "b", "c"])
+    'a, b and c'
+    """
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def _poss(text: str) -> str:
+    """Possessive of a name phrase: 'The SEC' -> "The SEC's"; 'the FBS Independents' -> "...'"."""
+    return text + ("'" if text.endswith("s") else "'s")
 
 
 def _num(value) -> str:
@@ -817,8 +843,15 @@ def storyline_margin(ctx: WeekContext) -> List[Storyline]:
     gap = ctx.standings[1][1] - ctx.standings[0][1]
     if gap == 0:
         return []  # the headline already covers a tie
+    first, second = ctx.standings[0][0], ctx.standings[1][0]
+    names = dict(
+        conf=_conf(first),
+        Conf=_conf(first, capital=True),
+        Conf_poss=_poss(_conf(first, capital=True)),
+        other=_conf(second),
+    )
     if gap <= cfg.close_race_gap:
-        text = _phrase(ctx, "close_race", gap=_num(gap), points=_points(gap))
+        text = _phrase(ctx, "close_race", gap=_num(gap), points=_points(gap), **names)
         return [Storyline("close_race", 72, text, "lead")]
 
     out = []
@@ -831,7 +864,7 @@ def storyline_margin(ctx: WeekContext) -> List[Storyline]:
         if abs(swing) >= cfg.gap_swing and prev_gap > 0:
             key = "gap_grows" if swing > 0 else "gap_shrinks"
             base = 44 if swing > 0 else 48
-            fields = dict(prev_gap=_num(prev_gap), gap=_num(gap))
+            fields = dict(prev_gap=_num(prev_gap), gap=_num(gap), **names)
             text = _phrase(ctx, key, **fields)
             short = _phrase(ctx, f"{key}_short", **fields)
             out.append(
@@ -843,8 +876,10 @@ def storyline_margin(ctx: WeekContext) -> List[Storyline]:
         and len(season_gaps) >= cfg.min_polls_for_season_marks
         and gap > season_gaps.max()
     ):
-        text = _phrase(ctx, "gap_widest", gap=_num(gap))
-        out.append(Storyline("gap_widest", 58, text, "lead"))
+        fields = dict(gap=_num(gap), **names)
+        text = _phrase(ctx, "gap_widest", **fields)
+        short = _phrase(ctx, "gap_widest_short", **fields)
+        out.append(Storyline("gap_widest", 58, text, "lead", short))
     return out
 
 
@@ -935,14 +970,17 @@ def storyline_board_changes(ctx: WeekContext) -> List[Storyline]:
     now = {_alias(c): c for c, _ in ctx.standings}
     before = {_alias(c): c for c, _ in ctx.prev_standings}
     out = []
-    for alias, conf in before.items():
-        if alias not in now:
-            text = _phrase(ctx, "off_board", conf=_conf(conf))
-            out.append(Storyline("off_board", 56, text, f"conf:{alias}"))
-    for alias, conf in now.items():
-        if alias not in before:
-            text = _phrase(ctx, "on_board", conf=_conf(conf))
-            out.append(Storyline("on_board", 53, text, f"conf:{alias}"))
+    # Conferences that move together share one sentence ("the SEC and the Pac-10, both now ...")
+    for key, priority, moved in (
+        ("off_board", 56, [c for a, c in before.items() if a not in now]),
+        ("on_board", 53, [c for a, c in now.items() if a not in before]),
+    ):
+        if not moved:
+            continue
+        both = {1: "", 2: "both "}.get(len(moved), "all ")
+        text = _phrase(ctx, key, conf=_join_names([_conf(c) for c in moved]), both=both)
+        topic = "conf:" + "+".join(sorted(_alias(c) for c in moved))
+        out.append(Storyline(key, priority, text, topic))
     return out
 
 
@@ -1109,33 +1147,56 @@ def _team_hashtag(team: str) -> str:
     return "#" + "".join(ch for ch in "".join(words) if ch.isalnum())
 
 
-def build_hashtags(ctx: WeekContext, body: str) -> Tuple[str, ...]:
-    """The post's hashtags: cfg.hashtags first, then the conferences and teams that `body` (the
-    headline and storylines, not the standings line) mentions, most-mentioned first and earliest
-    first among equals, up to cfg.max_hashtags in total. So a post that is mostly about the SEC
-    carries #SEC, one about the Big Ten #B1G, and a big mover brings its own team tag."""
-    cfg = ctx.cfg
-    tags = list(cfg.hashtags)
-    if not cfg.responsive_hashtags:
-        return tuple(tags[: cfg.max_hashtags])
+def _name_pattern(name: str) -> "re.Pattern":
+    """Matches `name` as a whole word (never inside a longer name, a hashtag, or 'Texas A&M')."""
+    return re.compile(rf"(?<![\w&#]){re.escape(name)}(?![\w&])")
 
+
+def rank_hashtags(ctx: WeekContext, body: str) -> List[Tuple[str, str]]:
+    """The conferences and teams that `body` (the headline and storylines, not the standings line)
+    mentions, as (name, hashtag) pairs: most-mentioned first, earliest first among equals. So a
+    post that is mostly about the SEC leads with #SEC, one about the Big Ten with #B1G, and a big
+    mover brings its own team tag."""
     teams = set(ctx.week.team_ranks())
     if ctx.previous is not None:
         teams |= set(ctx.previous.team_ranks())
     named = [(team, _team_hashtag(team)) for team in teams]
-    named += [(conf, tag) for conf, tag in CONFERENCE_HASHTAGS.items()]
+    named += list(CONFERENCE_HASHTAGS.items())
     # Longest names first, blanking each match, so "Texas" isn't counted inside "Texas Tech"
     found = []
     for name, tag in sorted(named, key=lambda pair: -len(pair[0])):
-        pattern = re.compile(rf"(?<![\w&]){re.escape(name)}(?![\w&])")
+        pattern = _name_pattern(name)
         matches = list(pattern.finditer(body))
         if matches:
-            found.append((-len(matches), matches[0].start(), tag))
+            found.append((-len(matches), matches[0].start(), name, tag))
             body = pattern.sub(lambda m: " " * len(m.group()), body)
-    for _, _, tag in sorted(found):
-        if tag not in tags:
-            tags.append(tag)
-    return tuple(tags[: cfg.max_hashtags])
+    return [(name, tag) for _, _, name, tag in sorted(found)]
+
+
+def apply_inline_hashtags(parts: List[str], picks: List[Tuple[str, str]]) -> List[str]:
+    """Turn the first mention of each picked name into its hashtag, working through `parts` in
+    order: 'the Big Ten' -> 'the #B1G', "Louisville" -> "#Louisville". Saves the room a separate
+    hashtag line would take, and puts the tag where the reader meets the name."""
+    parts = list(parts)
+    for name, tag in sorted(picks, key=lambda pair: -len(pair[0])):
+        pattern = _name_pattern(name)
+        for i, part in enumerate(parts):
+            if pattern.search(part):
+                parts[i] = pattern.sub(lambda m: tag, part, count=1)
+                break
+    return parts
+
+
+def abbreviate_names(parts: List[str], standings: str) -> List[str]:
+    """Once a name has been spelled out in the standings line, the rest of the post can use its
+    short form (per ABBREVIATIONS): 'the Big Ten improves ...' -> 'the B1G improves ...'. A name
+    that isn't in the standings line is left as is. Only the sentences are changed, not the
+    standings line itself."""
+    for full, short in ABBREVIATIONS.items():
+        if _name_pattern(full).search(standings):
+            pattern = _name_pattern(full)
+            parts = [pattern.sub(short, part) for part in parts]
+    return parts
 
 
 def _assemble(
@@ -1179,11 +1240,6 @@ def choose_storylines(
 
         stories = sorted(stories, key=lambda story: -adjusted(story))
 
-    base = _assemble(build_headline(ctx), build_standings_line(ctx), [], ())
-
-    def length(lines: List[str]) -> int:
-        return length_fn(base + "\n\n" + "\n".join(lines))
-
     # 1. take as many storylines as allowed, counting each at its shortest wording
     chosen: List[Storyline] = []
     for story in stories:
@@ -1191,43 +1247,71 @@ def choose_storylines(
             break
         if any(story.topic == c.topic for c in chosen):
             continue
-        if length([c.short or c.text for c in chosen + [story]]) <= cfg.max_length:
+        trial = [c.short or c.text for c in chosen + [story]]
+        if _render_post(ctx, trial, length_fn, keep_all_tags=True) is not None:
             chosen.append(story)
-    # 2. give the full sentence back to each, best first, while the hashtags still fit too
+    # 2. give the full sentence back to each, best first, while the whole post still fits
     texts = [c.short or c.text for c in chosen]
-    tags = build_hashtags(ctx, "\n".join([build_headline(ctx)] + texts))
-    room = cfg.max_length - length_fn("\n\n" + " ".join(tags)) * bool(tags)
     for i, story in enumerate(chosen):
         trial = texts[:i] + [story.text] + texts[i + 1 :]
-        if length(trial) <= room:
+        if _render_post(ctx, trial, length_fn, keep_all_tags=True) is not None:
             texts = trial
     return [dataclasses.replace(c, text=t) for c, t in zip(chosen, texts)]
+
+
+def _render_post(
+    ctx: WeekContext,
+    lines: List[str],
+    length_fn: Callable[[str], int] = weighted_length,
+    keep_all_tags: bool = False,
+) -> Optional[str]:
+    """The finished text for these storyline sentences, or None if it can't be made to fit in
+    cfg.max_length. Best version first; each step down gives up something optional: the scoring
+    note, then inline hashtags from the least relevant, and last the closing hashtags. With
+    `keep_all_tags` (used while choosing storylines) only the scoring note may be given up: the
+    sentences are chosen to leave room for every hashtag, since hashtags are worth more than a
+    fuller sentence."""
+    cfg = ctx.cfg
+    headline = build_headline(ctx)
+    standings = build_standings_line(ctx)
+    noted = f"{standings} {_phrase(ctx, 'scoring_note')}" if standings else standings
+
+    picks: List[Tuple[str, str]] = []
+    if cfg.responsive_hashtags:
+        picks = rank_hashtags(ctx, "\n".join([headline] + lines))
+        picks = picks[: max(cfg.max_hashtags - len(cfg.hashtags), 0)]
+
+    def render(std: str, n_inline: int, closing: Tuple[str, ...]) -> str:
+        parts = apply_inline_hashtags([headline] + lines, picks[:n_inline])
+        head, *rest = abbreviate_names(parts, standings)
+        return _assemble(head, std, rest, closing)
+
+    options = [(noted, len(picks), cfg.hashtags)] if cfg.explain_scoring else []
+    lowest = len(picks) if keep_all_tags else 0
+    options += [(standings, n, cfg.hashtags) for n in range(len(picks), lowest - 1, -1)]
+    if not keep_all_tags:
+        options.append((standings, 0, ()))
+    for std, n_inline, closing in options:
+        text = render(std, n_inline, closing)
+        if length_fn(text) <= cfg.max_length:
+            return text
+    return None
 
 
 def compose_text(
     ctx: WeekContext, length_fn: Callable[[str], int] = weighted_length
 ) -> str:
     """The post text for one week: headline, standings line, then as many of the top storylines as
-    fit in cfg.max_length (never two on the same topic), then the hashtags for what the post is
-    about (build_hashtags()). Optional extras (the scoring note, then hashtags from the least
-    relevant) are dropped before any storyline is, if space runs short."""
-    cfg = ctx.cfg
-    headline = build_headline(ctx)
-    standings = build_standings_line(ctx)
-    noted = f"{standings} {_phrase(ctx, 'scoring_note')}" if standings else standings
-
-    def fits(std, lines, tags):
-        return length_fn(_assemble(headline, std, lines, tags)) <= cfg.max_length
-
+    fit in cfg.max_length (never two on the same topic), then the always-on hashtags. The
+    conferences and teams the post talks about most get their hashtag inline, where they are
+    named (see rank_hashtags()). If space runs short, extras go before any storyline does."""
     lines = [story.text for story in choose_storylines(ctx, length_fn)]
-
-    tags = build_hashtags(ctx, "\n".join([headline] + lines))
-    if cfg.explain_scoring and fits(noted, lines, tags):
-        return _assemble(headline, noted, lines, tags)
-    # short of room: give up hashtags one at a time, from the least relevant
-    while tags and not fits(standings, lines, tags):
-        tags = tags[:-1]
-    return _assemble(headline, standings, lines, tags)
+    while True:
+        text = _render_post(ctx, lines, length_fn)
+        if text is not None or not lines:
+            break
+        lines = lines[:-1]  # should not happen: choose_storylines only picks what fits
+    return text or build_headline(ctx)
 
 
 def _alt_text_graph(ctx: WeekContext) -> str:
