@@ -11,6 +11,7 @@ Three parts, top to bottom:
     python socials.py preview --season 2025    draft every week of a season
     python socials.py check                    test the X credentials (read-only requests)
     python socials.py post                     dry run of the real post; add --yes to publish
+    python socials.py delete <post id>         delete a post (e.g. a test post)
 
 Credentials live outside the repo, in `~/secrets.toml` (on Windows: C:\\Users\\<you>\\secrets.toml),
 copied from the app in the X Developer Console (the app must be attached to a pay-per-use Project):
@@ -44,6 +45,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import pandas as pd
 import requests
 import tweepy
+from requests_oauthlib import OAuth1
 
 import espn_api as epi
 import readme_table as rt
@@ -244,7 +246,7 @@ def check_twitter_connection(expected_username: str = EXPECTED_USERNAME) -> bool
 # ==============================================================================================
 
 IMAGES_DIR = os.path.join(rt.REPO_DIR, "images")
-POST_LOG_PATH = os.path.join(rt.REPO_DIR, "social_post_log.json")
+POST_LOG_PATH = os.path.join(rt.DATA_DIR, "social_post_log.json")
 
 # Renamed/realigned conferences that count as one conference when looking back through history
 # (same idea as graph_data.CROSS_SEASON_CONFERENCE_MERGES; only used for comparisons, never display)
@@ -302,6 +304,16 @@ PHRASES = {
     ],
     "gap_shrinks": ["The lead shrinks from {prev_gap} to {gap} points."],
     "gap_grows": ["The lead grows from {prev_gap} to {gap} points."],
+    # "_short" variants are used when the full sentences would not all fit in one post
+    "gap_shrinks_short": ["Lead down from {prev_gap} to {gap}."],
+    "gap_grows_short": ["Lead up from {prev_gap} to {gap}."],
+    "conf_up_short": ["{name}: {delta} better at {score}."],
+    "conf_down_short": ["{name}: {delta} worse at {score}."],
+    "movers_short": ["{riser} {up}{rise}, {faller} {down}{fall}."],
+    "riser_short": ["{riser} {up}{rise} to {riser_rank}."],
+    "faller_short": ["{faller} {down}{fall}."],
+    "last_year_same_short": ["Last year: {name} also led ({score})."],
+    "last_year_other_short": ["Last year: {name} led at {score}."],
     "gap_widest": ["A {gap}-point lead is the largest of the season."],
     "lead_change_first": ["It is the first lead change of the season."],
     "lead_change_nth": ["It is lead change No. {count} of the season."],
@@ -350,7 +362,7 @@ class PostConfig:
 
     num_scoring_teams: int = 5
     max_length: int = 280  # platform limit (X: 280 weighted characters; Bluesky: 300)
-    max_storylines: int = 2  # how many storylines follow the standings line, at most
+    max_storylines: int = 4  # how many storylines follow the standings line, at most
     max_standings: int = 4  # how many conferences the standings line lists
     hashtags: Tuple[str, ...] = ("#CFB",)
     explain_scoring: bool = True  # add "(low score wins)" when there is room
@@ -381,6 +393,7 @@ class Storyline:
     priority: float
     text: str
     topic: str
+    short: str = ""  # a tighter wording, used when space is short; empty means use `text`
 
 
 @dataclass(frozen=True)
@@ -793,8 +806,12 @@ def storyline_margin(ctx: WeekContext) -> List[Storyline]:
         if abs(swing) >= cfg.gap_swing and prev_gap > 0:
             key = "gap_grows" if swing > 0 else "gap_shrinks"
             base = 44 if swing > 0 else 48
-            text = _phrase(ctx, key, prev_gap=_num(prev_gap), gap=_num(gap))
-            out.append(Storyline(key, base + min(abs(swing), 20), text, "lead"))
+            fields = dict(prev_gap=_num(prev_gap), gap=_num(gap))
+            text = _phrase(ctx, key, **fields)
+            short = _phrase(ctx, f"{key}_short", **fields)
+            out.append(
+                Storyline(key, base + min(abs(swing), 20), text, "lead", short)
+            )
     season_gaps = _season_leaders(ctx)["gap"].dropna()
     if (
         gap >= cfg.wide_gap
@@ -837,16 +854,18 @@ def storyline_conference_mover(ctx: WeekContext) -> List[Storyline]:
     if abs(delta) < ctx.cfg.big_conference_move:
         return []
     key = "conf_up" if delta > 0 else "conf_down"
-    text = _phrase(
-        ctx,
-        key,
+    fields = dict(
+        name=conf,
         conf=_conf(conf),
         Conf=_conf(conf, capital=True),
         delta=_num(abs(delta)),
         points=_points(abs(delta)),
         score=_num(score),
     )
-    return [Storyline(key, 45 + min(abs(delta), 25), text, f"conf:{_alias(conf)}")]
+    text = _phrase(ctx, key, **fields)
+    short = _phrase(ctx, f"{key}_short", **fields)
+    priority = 45 + min(abs(delta), 25)
+    return [Storyline(key, priority, text, f"conf:{_alias(conf)}", short)]
 
 
 def storyline_conference_marks(ctx: WeekContext) -> List[Storyline]:
@@ -931,16 +950,18 @@ def storyline_team_movers(ctx: WeekContext) -> List[Storyline]:
         # a rank past 25 is only a vote count, so say where the team fell from the reader's view
         dest = f"to {_rank_text(fall[2])}" if fall[2] <= 25 else "and out of the Top 25"
         fields.update(faller=fall[1], fall=_num(fall[0]), faller_dest=dest)
+    fields.update(up=rt.UP, down=rt.DOWN)
     if rise and fall:
-        text = _phrase(ctx, "movers", up=rt.UP, down=rt.DOWN, **fields)
-        size = max(rise[0], fall[0])
+        key, size = "movers", max(rise[0], fall[0])
     elif rise:
-        text, size = _phrase(ctx, "riser", **fields), rise[0]
+        key, size = "riser", rise[0]
     elif fall:
-        text, size = _phrase(ctx, "faller", **fields), fall[0]
+        key, size = "faller", fall[0]
     else:
         return out
-    return out + [Storyline("team_movers", 40 + min(size, 20), text, "teams")]
+    text = _phrase(ctx, key, **fields)
+    short = _phrase(ctx, f"{key}_short", **fields)
+    return out + [Storyline("team_movers", 40 + min(size, 20), text, "teams", short)]
 
 
 def storyline_depth(ctx: WeekContext) -> List[Storyline]:
@@ -976,6 +997,7 @@ def storyline_year_over_year(ctx: WeekContext) -> List[Storyline]:
     then = leaders.iloc[0]
     same = then["leader"] == _alias(ctx.leader)
     fields = dict(
+        name=then["leader"],
         conf=_conf(then["leader"]),
         Conf=_conf(then["leader"], capital=True),
         score=_num(then["score"]),
@@ -986,7 +1008,9 @@ def storyline_year_over_year(ctx: WeekContext) -> List[Storyline]:
         return [Storyline("year_over_year", 60, text, "last_year")]
     key = "last_year_same" if same else "last_year_other"
     priority = 34 if same else 38
-    return [Storyline("year_over_year", priority, _phrase(ctx, key, **fields), "last_year")]
+    text = _phrase(ctx, key, **fields)
+    short = _phrase(ctx, f"{key}_short", **fields)
+    return [Storyline("year_over_year", priority, text, "last_year", short)]
 
 
 def storyline_final_titles(ctx: WeekContext) -> List[Storyline]:
@@ -1065,8 +1089,9 @@ def choose_storylines(
     avoid_repeats: bool = True,
 ) -> List[Storyline]:
     """The storylines that make the post: highest priority first, at most cfg.max_storylines,
-    never two on one topic, and only while the text still fits. With `avoid_repeats`, kinds used
-    in the previous poll's post are marked down by cfg.repeat_penalty first."""
+    never two on one topic, and only while the text still fits (tighter `short` wordings are used
+    where the full sentences would not all fit). With `avoid_repeats`, kinds used in the previous
+    poll's post are marked down by cfg.repeat_penalty first."""
     cfg = ctx.cfg
     stories = find_storylines(ctx)
     if avoid_repeats and ctx.previous is not None and cfg.repeat_penalty:
@@ -1078,7 +1103,7 @@ def choose_storylines(
         used_texts = {story.text for story in used}
 
         def adjusted(story: Storyline) -> float:
-            if story.text in used_texts:
+            if story.text in used_texts or story.short in used_texts:
                 return story.priority - 2 * cfg.repeat_penalty
             if story.kind in used_kinds:
                 return story.priority - cfg.repeat_penalty
@@ -1087,16 +1112,27 @@ def choose_storylines(
         stories = sorted(stories, key=lambda story: -adjusted(story))
 
     base = _assemble(build_headline(ctx), build_standings_line(ctx), [], ())
+
+    def length(lines: List[str]) -> int:
+        return length_fn(base + "\n\n" + "\n".join(lines))
+
+    # 1. take as many storylines as allowed, counting each at its shortest wording
     chosen: List[Storyline] = []
     for story in stories:
         if len(chosen) >= cfg.max_storylines:
             break
         if any(story.topic == c.topic for c in chosen):
             continue
-        lines = "\n".join(c.text for c in chosen + [story])
-        if length_fn(f"{base}\n\n{lines}") <= cfg.max_length:
+        if length([c.short or c.text for c in chosen + [story]]) <= cfg.max_length:
             chosen.append(story)
-    return chosen
+    # 2. give the full sentence back to each, best first, while the hashtags still fit too
+    room = cfg.max_length - length_fn("\n\n" + " ".join(cfg.hashtags)) * bool(cfg.hashtags)
+    texts = [c.short or c.text for c in chosen]
+    for i, story in enumerate(chosen):
+        trial = texts[:i] + [story.text] + texts[i + 1 :]
+        if length(trial) <= room:
+            texts = trial
+    return [dataclasses.replace(c, text=t) for c, t in zip(chosen, texts)]
 
 
 def compose_text(
@@ -1197,7 +1233,8 @@ def preview_post(post: SocialPost, show_candidates: bool = True) -> None:
     )
     if show_candidates:
         for story in post.storylines:
-            used = "*" if story.text in post.text else " "
+            in_post = story.text in post.text or (story.short and story.short in post.text)
+            used = "*" if in_post else " "
             print(f"  {used} {story.priority:5.1f}  {story.kind:<16} {story.text}")
 
 
@@ -1228,16 +1265,74 @@ def _record_post(post: SocialPost, platform: str, post_id: str) -> None:
         json.dump(log, file, indent=2, ensure_ascii=False)
 
 
+X_MEDIA_UPLOAD_URL = "https://api.x.com/2/media/upload"
+X_MEDIA_METADATA_URL = "https://api.x.com/2/media/metadata"
+
+
+def _upload_image_to_x(creds: Dict[str, str], path: str, alt_text: str) -> str:
+    """Upload one image and return its media id. Tries X's current (v2) upload endpoint first and
+    falls back to the older v1.1 one through tweepy. Alt text is best-effort: a failure to set it
+    is reported but does not stop the post. Raises if neither upload route works."""
+    auth = OAuth1(
+        creds["consumer_key"],
+        creds["secret_key"],
+        creds["access_token"],
+        creds["access_token_secret"],
+    )
+    with open(path, "rb") as image:
+        resp = requests.post(
+            X_MEDIA_UPLOAD_URL,
+            auth=auth,
+            files={"media": image},
+            data={"media_category": "tweet_image"},
+            timeout=60,
+        )
+    if resp.ok:
+        body = resp.json()
+        data = body.get("data", body)
+        media_id = str(data.get("id") or data.get("media_id_string"))
+    else:
+        print(
+            f"Image upload (v2) returned HTTP {resp.status_code}: {resp.text[:300]}\n"
+            "Trying the older upload endpoint."
+        )
+        handler = tweepy.OAuth1UserHandler(
+            creds["consumer_key"],
+            creds["secret_key"],
+            creds["access_token"],
+            creds["access_token_secret"],
+        )
+        media_id = str(tweepy.API(handler).media_upload(filename=path).media_id)
+    try:
+        meta = requests.post(
+            X_MEDIA_METADATA_URL,
+            auth=auth,
+            json={"id": media_id, "metadata": {"alt_text": {"text": alt_text}}},
+            timeout=30,
+        )
+        if not meta.ok:
+            print(f"Alt text not set for {os.path.basename(path)} (HTTP {meta.status_code}).")
+    except requests.RequestException as err:
+        print(f"Alt text not set for {os.path.basename(path)}: {err}")
+    return media_id
+
+
 def post_to_x(
-    post: SocialPost, dry_run: bool = True, force: bool = False
+    post: SocialPost,
+    dry_run: bool = True,
+    force: bool = False,
+    attach_images: bool = True,
 ) -> Optional[str]:
     """Publish `post` to X as the account on file, with its images attached. Returns the new post's
     id, or None if nothing was published.
 
     Safe by default: with dry_run=True (the default) it only prints what would be sent. A week that
-    was already posted (per social_post_log.json) is refused unless force=True. Every failure is
-    reported and swallowed, so a posting problem can never break the weekly data/graph run."""
+    was already posted (per social_post_log.json) is refused unless force=True. If an image cannot
+    be uploaded nothing is posted (pass attach_images=False for a text-only post). Every failure
+    is reported and swallowed, so a posting problem can never break the weekly data/graph run."""
     preview_post(post, show_candidates=False)
+    if not attach_images:
+        print("Text only: images will not be attached.")
     if weighted_length(post.text) > 280:
         print("Not posted: the text is over X's 280-character limit.")
         return None
@@ -1254,20 +1349,10 @@ def post_to_x(
                 raise MissingCredentialsError(
                     f"[{TWITTER_SECTION}] {key} is needed to post."
                 )
-        # Images go through the media-upload endpoint (OAuth 1.0a), the post itself through v2.
-        media_api = tweepy.API(
-            tweepy.OAuth1UserHandler(
-                creds["consumer_key"],
-                creds["secret_key"],
-                creds["access_token"],
-                creds["access_token_secret"],
-            )
-        )
         media_ids = []
-        for path, alt in zip(post.images, post.alt_texts):
-            media = media_api.media_upload(filename=path)
-            media_api.create_media_metadata(media.media_id, alt)
-            media_ids.append(media.media_id)
+        if attach_images:
+            for path, alt in zip(post.images, post.alt_texts):
+                media_ids.append(_upload_image_to_x(creds, path, alt))
         response = get_twitter_client(creds).create_tweet(
             text=post.text, media_ids=media_ids or None, user_auth=True
         )
@@ -1284,6 +1369,30 @@ def post_to_x(
     _record_post(post, "x", post_id)
     print(f"Posted: https://x.com/{EXPECTED_USERNAME}/status/{post_id}")
     return post_id
+
+
+def delete_from_x(post_id: str) -> bool:
+    """Delete one of the account's posts by id (e.g. a test post) and drop it from the post log."""
+    try:
+        get_twitter_client().delete_tweet(post_id, user_auth=True)
+    except MissingCredentialsError as err:
+        print(f"Credentials problem: {err}")
+        return False
+    except tweepy.errors.HTTPException as err:
+        _explain_http_error(err)
+        return False
+    except (tweepy.errors.TweepyException, requests.RequestException) as err:
+        print(f"Could not delete the post: {err}")
+        return False
+    log = _read_post_log()
+    for key, entry in list(log.get("x", {}).items()):
+        if entry.get("id") == str(post_id):
+            del log["x"][key]
+    if os.path.exists(POST_LOG_PATH):
+        with open(POST_LOG_PATH, "w", encoding="utf-8") as file:
+            json.dump(log, file, indent=2, ensure_ascii=False)
+    print(f"Deleted post {post_id}.")
+    return True
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -1307,6 +1416,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     publish.add_argument(
         "--force", action="store_true", help="post even if already logged"
     )
+    publish.add_argument(
+        "--text-only", action="store_true", help="do not attach the images"
+    )
+    remove = commands.add_parser("delete", help="delete one of the account's posts by id")
+    remove.add_argument("post_id")
     args = parser.parse_args(argv)
     # the movement triangles and the "·" separator need UTF-8 on a Windows console
     if hasattr(sys.stdout, "reconfigure"):
@@ -1315,8 +1429,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "check":
         return 0 if check_twitter_connection() else 1
     if args.command == "post":
-        sent = post_to_x(compose_post(), dry_run=not args.yes, force=args.force)
+        sent = post_to_x(
+            compose_post(),
+            dry_run=not args.yes,
+            force=args.force,
+            attach_images=not args.text_only,
+        )
         return 0 if sent or not args.yes else 1
+    if args.command == "delete":
+        return 0 if delete_from_x(args.post_id) else 1
     if getattr(args, "season", None):
         tokens = rt.stored_week_tokens(args.season)
         for token in sorted(tokens, key=_token_order):
