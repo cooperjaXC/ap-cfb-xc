@@ -1,12 +1,14 @@
 import itertools
 import os
 import re
+import textwrap
 
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MultipleLocator
 
+import readme_table as rt
 import store_data as sd
 
 """
@@ -551,6 +553,251 @@ def run_all_weekly_graphs():
         plot.close("all")
     print("Current-week graphs are up to date.")
     print("-----------------------")
+
+
+# ----------------------------------------------------------------------------------------------
+# Standings table as an image (for social posts): the README table, drawn in the graphs' style
+# ----------------------------------------------------------------------------------------------
+
+TABLE_UP_COLOR = "#3DDC84"
+TABLE_DOWN_COLOR = "#FF6B6B"
+TABLE_MUTED_COLOR = "#9A9A9A"
+TABLE_BAND_COLOR = "#333333"
+
+_TABLE_CELL_SPLIT_RE = re.compile(r"(?<!\\)\|")
+_TABLE_UNESCAPE_RE = re.compile(r"\\(.)")
+
+
+def _parse_table_cell(cell: str) -> dict:
+    """One Markdown cell from readme_table.build_week_table() -> its plain text, its Movement
+    Indicator (may be ''), and whether it was italic (a non-scoring team) or bold (a score)."""
+    cell = cell.strip()
+    italic = cell.startswith("*") and not cell.startswith("**") and cell.endswith("*")
+    if italic:
+        cell = cell[1:-1]
+    text, _, indicator = cell.partition(rt.NBSP)
+    bold = text.startswith("**") and text.endswith("**")
+    if bold:
+        text = text[2:-2]
+    return {
+        "text": _TABLE_UNESCAPE_RE.sub(r"\1", text),
+        "indicator": indicator,
+        "italic": italic,
+        "bold": bold,
+    }
+
+
+def _indicator_color(indicator: str) -> str:
+    if rt.UP in indicator:
+        return TABLE_UP_COLOR
+    if rt.DOWN in indicator:
+        return TABLE_DOWN_COLOR
+    return TABLE_MUTED_COLOR
+
+
+def generate_week_table_image(
+    num_scoring_teams: int = 5,
+    min_depth: int = 3,
+    file_name: str = None,
+    show: bool = False,
+) -> str:
+    """Draw the newest stored week's standings table (the same content as the README table,
+    Movement Indicators and Dropped row included) as a PNG in `images/`, styled like the graphs.
+    Returns the saved path.
+
+    Built from readme_table.build_latest_week_table()'s own output, so the image can never
+    disagree with the README. Columns: every conference that scored, plus any that didn't score
+    but has at least `min_depth` teams in the poll data; thinner conferences are left out.
+
+    :param num_scoring_teams: 4 or 5 (top-N teams summed per conference); defaults to 5
+    :param min_depth: fewest teams a non-scoring conference needs to get a column
+    :param file_name: output filename; defaults to current_week_<N>team_table.png
+    :param show: whether to call plt.show() (leave False for unattended runs)
+    """
+    year, week_token, _ = rt.latest_recorded_week(num_scoring_teams)
+    markdown = rt.build_latest_week_table(num_scoring_teams)
+    rows = [
+        [cell.strip() for cell in _TABLE_CELL_SPLIT_RE.split(line.strip().strip("|"))]
+        for line in markdown.splitlines()
+        if line.startswith("|")
+    ]
+    header, body = rows[0], rows[2:]  # rows[1] is the Markdown alignment row
+    score_row = next(r for r in body if r[0] == "**Score**")
+    team_rows = [r for r in body if r[0].isdigit()]
+    dropped_row = next((r for r in body if r[0] == rt.DROPPED_LABEL), None)
+
+    # Which columns to keep: scorers, plus non-scorers at least `min_depth` teams deep
+    columns = []
+    for j in range(1, len(header)):
+        depth = sum(1 for r in team_rows if r[j])
+        scored = " · " in header[j]
+        if scored or depth >= min_depth:
+            place, _, conference = header[j].rpartition(" · ")
+            columns.append({"j": j, "place": place, "conference": conference, "depth": depth})
+    team_rows = team_rows[: max((c["depth"] for c in columns), default=0)]
+    dropped = (
+        {c["j"]: _parse_table_cell(dropped_row[c["j"]])["text"] for c in columns}
+        if dropped_row
+        else {}
+    )
+    dropped_lines = {
+        j: textwrap.wrap(names, width=30) for j, names in dropped.items() if names
+    }
+
+    # Layout, in inches (the axes use inches as data units, y growing downward)
+    margin, pos_w, col_w = 0.3, 0.8, 2.75
+    title_h, header_h, score_h, row_h, footer_h = 0.75, 0.5, 0.55, 0.36, 0.75
+    dropped_h = (
+        0.18 + row_h * max(len(lines) for lines in dropped_lines.values())
+        if dropped_lines
+        else 0
+    )
+    width = 2 * margin + pos_w + col_w * len(columns)
+    height = (
+        margin + title_h + header_h + score_h + row_h * len(team_rows) + dropped_h + footer_h
+    )
+    fig, ax = plt.subplots(figsize=(width, height), dpi=150)
+    fig.patch.set_facecolor(BACKGROUND_COLOR)
+    ax.set_facecolor(BACKGROUND_COLOR)
+    ax.set_xlim(0, width)
+    ax.set_ylim(height, 0)
+    ax.axis("off")
+    fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+    def col_x(index: int) -> float:
+        return margin + pos_w + col_w * index
+
+    fallback_cycle = itertools.cycle(FALLBACK_COLORS)
+    colors = {
+        c["conference"]: _color_for_conference(c["conference"], fallback_cycle)
+        for c in columns
+    }
+    pad = 0.12
+    text_kw = dict(va="center", color=TEXT_COLOR, fontsize=11)
+
+    # Title
+    y = margin + title_h / 2
+    ax.text(
+        margin,
+        y,
+        f"{year} {rt._week_label(week_token)}  ·  AP Poll XC standings",
+        va="center",
+        color=TEXT_COLOR,
+        fontsize=18,
+        fontweight="bold",
+    )
+    ax.text(
+        width - margin,
+        y,
+        f"{num_scoring_teams}-team scoring",
+        va="center",
+        ha="right",
+        color=TABLE_MUTED_COLOR,
+        fontsize=12,
+    )
+
+    # Conference header + score row
+    y_header = margin + title_h + header_h / 2
+    y_score = margin + title_h + header_h + score_h / 2
+    ax.text(margin + pos_w / 2, y_score, "Score", ha="center", **{**text_kw, "color": TABLE_MUTED_COLOR})
+    for i, column in enumerate(columns):
+        x = col_x(i)
+        color = colors[column["conference"]]
+        label = " · ".join(p for p in (column["place"], column["conference"]) if p)
+        ax.text(x + pad, y_header, label, va="center", color=color, fontsize=14, fontweight="bold")
+        ax.plot([x + pad, x + col_w - pad], [y_header + header_h / 2] * 2, color=color, lw=2)
+        score = _parse_table_cell(score_row[column["j"]])
+        ax.text(
+            x + pad,
+            y_score,
+            score["text"],
+            va="center",
+            color=TEXT_COLOR if score["bold"] else TABLE_MUTED_COLOR,
+            fontsize=17 if score["bold"] else 12,
+            fontweight="bold" if score["bold"] else "normal",
+        )
+        if score["indicator"]:
+            ax.text(
+                x + col_w - pad,
+                y_score,
+                score["indicator"],
+                va="center",
+                ha="right",
+                color=_indicator_color(score["indicator"]),
+                fontsize=11,
+            )
+
+    # Team rows
+    y_rows = margin + title_h + header_h + score_h
+    for r, row in enumerate(team_rows):
+        y = y_rows + row_h * (r + 0.5)
+        if r % 2 == 0:
+            ax.axhspan(y - row_h / 2, y + row_h / 2, xmin=0, xmax=1, color=TABLE_BAND_COLOR, lw=0)
+        ax.text(margin + pos_w / 2, y, row[0], ha="center", **{**text_kw, "color": TABLE_MUTED_COLOR})
+        for i, column in enumerate(columns):
+            cell = _parse_table_cell(row[column["j"]])
+            if not cell["text"]:
+                continue
+            x = col_x(i)
+            ax.text(
+                x + pad,
+                y,
+                cell["text"],
+                va="center",
+                color=TABLE_MUTED_COLOR if cell["italic"] else TEXT_COLOR,
+                fontsize=11,
+                fontstyle="italic" if cell["italic"] else "normal",
+            )
+            if cell["indicator"]:
+                ax.text(
+                    x + col_w - pad,
+                    y,
+                    cell["indicator"],
+                    va="center",
+                    ha="right",
+                    color=_indicator_color(cell["indicator"]),
+                    fontsize=10,
+                )
+    # Divider under the scoring teams, as in the README table
+    if len(team_rows) > num_scoring_teams:
+        y = y_rows + row_h * num_scoring_teams
+        ax.plot([margin, width - margin], [y, y], color=GRID_COLOR, lw=1.2, ls="--")
+
+    # Dropped row
+    y_dropped = y_rows + row_h * len(team_rows)
+    if dropped_lines:
+        ax.plot([margin, width - margin], [y_dropped + 0.06] * 2, color=GRID_COLOR, lw=1)
+        first = y_dropped + 0.18 + row_h / 2
+        ax.text(margin + pos_w / 2, first, "Dropped", ha="center", va="center", color=TABLE_MUTED_COLOR, fontsize=9)
+        for i, column in enumerate(columns):
+            for k, line in enumerate(dropped_lines.get(column["j"], [])):
+                ax.text(col_x(i) + pad, first + row_h * k, line, va="center", color=TABLE_MUTED_COLOR, fontsize=10)
+
+    # Footer
+    words = rt._NUMBER_WORDS.get(num_scoring_teams, str(num_scoring_teams))
+    note = (
+        f"Score = sum of a conference's top {words} AP rankings; lowest score wins. "
+        "Italic teams don't count toward the score. "
+        f"{rt.UP}/{rt.DOWN} = spots moved since the last poll; NR = not in the last poll."
+    )
+    if dropped_lines:
+        note += " Dropped = in the last poll, out of this one."
+    wrapped = textwrap.fill(note, width=max(60, int((width - 2 * margin - 1.4) * 12.5)))
+    y_footer = y_dropped + dropped_h + footer_h / 2
+    ax.text(margin, y_footer, wrapped, va="center", color=TABLE_MUTED_COLOR, fontsize=9, linespacing=1.4)
+    ax.text(width - margin, y_footer, "@ap_cfb_xc", va="center", ha="right", color=TABLE_MUTED_COLOR, fontsize=11)
+
+    if file_name is None:
+        file_name = f"current_week_{num_scoring_teams}team_table.png"
+    image_dir = os.path.join(rt.REPO_DIR, "images")
+    os.makedirs(image_dir, exist_ok=True)
+    out_path = os.path.join(image_dir, file_name)
+    fig.savefig(out_path, facecolor=fig.get_facecolor())
+    print("Standings table image saved to", out_path, "\n")
+    if show:
+        plt.show()
+    plt.close(fig)
+    return out_path
 
 
 def graph_all_data():
