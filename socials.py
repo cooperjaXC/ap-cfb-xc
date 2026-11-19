@@ -1,17 +1,21 @@
 """
 Social media posts for the weekly AP XC results.
 
-Three parts, top to bottom:
+Parts, top to bottom:
   - X (Twitter) credentials and a read-only connection check
   - platform-independent post text: reads `data/`, finds what is interesting about a week against
     the polls and seasons before it, and writes a short post (`compose_post()`)
-  - posting to X (`post_to_x()`), a dry run unless told otherwise
+  - posting to X (`post_to_x()`) and to Bluesky (`post_to_bluesky()`), each a dry run unless told
+    otherwise, each with its own entry in the post log
 
     python socials.py                          print the drafted post for the newest week
-    python socials.py preview --season 2025    draft every week of a season
-    python socials.py check                    test the X credentials (read-only requests)
+    python socials.py preview --season 2025    draft every week of a season (offline)
+    python socials.py check                    test the credentials (read-only requests)
     python socials.py post                     dry run of the real post; add --yes to publish
     python socials.py delete <post id>         delete a post (e.g. a test post)
+
+`check`, `post` and `delete` take `--platform x|bluesky` (`all` for check and post); the default
+is x. Everything but `preview` and a dry-run `post` contacts the platform. X charges per call.
 
 Credentials live outside the repo, in `~/secrets.toml` (on Windows: C:\\Users\\<you>\\secrets.toml),
 copied from the app in the X Developer Console (the app must be attached to a pay-per-use Project):
@@ -22,6 +26,12 @@ copied from the app in the X Developer Console (the app must be attached to a pa
     bearer_token = "..."   # optional; lets the check make an app-level read without user tokens
     access_token = "..."         # Access Token; needed to act as the account (posting)
     access_token_secret = "..."  # Access Token Secret; generate both while logged in as @ap_cfb_xc
+
+Bluesky (free) uses an app password, never the account password:
+
+    [bluesky]
+    handle = "yourname.bsky.social"
+    app_password = "xxxx-xxxx-xxxx-xxxx"
 
 `consumer_key` and `secret_key` are required. Access Tokens are tied to the app that created them,
 so tokens from an older app will not work with a new app's consumer key. (Older `token` /
@@ -46,6 +56,10 @@ from typing import Callable, Dict, List, Optional, Tuple
 import pandas as pd
 import requests
 import tweepy
+from atproto import Client as BlueskyClient
+from atproto import models as bluesky_models
+from atproto_client import exceptions as bluesky_errors
+from PIL import Image
 from requests_oauthlib import OAuth1
 
 import espn_api as epi
@@ -1577,6 +1591,216 @@ def delete_from_x(post_id: str) -> bool:
     return True
 
 
+# ==============================================================================================
+# Posting to Bluesky
+# ==============================================================================================
+# Same post text and images as X. Differences handled here: Bluesky allows 300 characters (each
+# visible character counts once, so anything that fits X's 280 weighted characters fits here),
+# images must be under ~1 MB each, and hashtags are only clickable when the post carries an
+# explicit "facet" marking each one. The API is free.
+
+BLUESKY_SECTION = "bluesky"
+BLUESKY_MAX_LENGTH = 300
+BLUESKY_MAX_IMAGE_BYTES = 950_000  # the limit is 1,000,000; leave some headroom
+BLUESKY_MAX_IMAGES = 4
+_HASHTAG = re.compile(r"(?<![\w&#])#(\w*[A-Za-z_]\w*)")  # not all digits, never inside a word
+
+
+def load_bluesky_credentials(secrets_path: str = SECRETS_PATH) -> Dict[str, str]:
+    """Read `handle` and `app_password` from the `[bluesky]` section of the secrets TOML file. Use
+    an app password (Bluesky Settings > Privacy and Security > App Passwords), never the account
+    password. Raises MissingCredentialsError, never echoing a secret value."""
+    if not os.path.exists(secrets_path):
+        raise MissingCredentialsError(f"No secrets file found at {secrets_path}.")
+    with open(secrets_path, "rb") as file:
+        config = tomllib.load(file)
+    section = config.get(BLUESKY_SECTION)
+    if not isinstance(section, dict):
+        raise MissingCredentialsError(
+            f"No [{BLUESKY_SECTION}] section in {secrets_path}."
+        )
+    creds = {
+        k: section[k].strip()
+        for k in ("handle", "app_password")
+        if isinstance(section.get(k), str) and section[k].strip()
+    }
+    missing = [k for k in ("handle", "app_password") if k not in creds]
+    if missing:
+        raise MissingCredentialsError(
+            f"[{BLUESKY_SECTION}] in {secrets_path} is missing or has empty values for: "
+            f"{', '.join(missing)}. Values must be quoted strings."
+        )
+    creds["handle"] = creds["handle"].lstrip("@")
+    return creds
+
+
+def get_bluesky_client(creds: Optional[Dict[str, str]] = None) -> BlueskyClient:
+    """A Bluesky client logged in with the app password. Log in once per run: Bluesky limits
+    session creation (30 per 5 minutes, 300 per day)."""
+    creds = creds or load_bluesky_credentials()
+    client = BlueskyClient()
+    client.login(creds["handle"], creds["app_password"])
+    return client
+
+
+def _explain_bluesky_error(err: Exception) -> None:
+    """Print what a failed Bluesky request most likely means."""
+    if isinstance(err, bluesky_errors.UnauthorizedError):
+        print(
+            "Bluesky refused the login. Check `handle` and `app_password` in [bluesky] "
+            "(use an app password, not the account password)."
+        )
+    elif isinstance(err, bluesky_errors.RateLimitExceededError):
+        print("Bluesky rate limit reached; try again later.")
+    elif isinstance(err, bluesky_errors.NetworkError):
+        print(f"Could not reach Bluesky: {err}")
+    else:
+        print(f"Bluesky request failed: {err}")
+
+
+def bluesky_hashtag_facets(text: str) -> list:
+    """Facets that make each #hashtag in `text` a clickable tag. Bluesky positions are UTF-8 byte
+    offsets, not character offsets, which matters here because of the ▲/▼/· characters."""
+    facets = []
+    for match in _HASHTAG.finditer(text):
+        start = len(text[: match.start()].encode("utf-8"))
+        end = start + len(match.group().encode("utf-8"))
+        facets.append(
+            bluesky_models.AppBskyRichtextFacet.Main(
+                index=bluesky_models.AppBskyRichtextFacet.ByteSlice(
+                    byte_start=start, byte_end=end
+                ),
+                features=[bluesky_models.AppBskyRichtextFacet.Tag(tag=match.group(1))],
+            )
+        )
+    return facets
+
+
+def _prepare_image_for_bluesky(path: str) -> Tuple[bytes, Tuple[int, int]]:
+    """The image's bytes (shrunk to fit Bluesky's size limit if needed) and its (width, height).
+    Images already under the limit are sent untouched."""
+    with open(path, "rb") as file:
+        data = file.read()
+    with Image.open(io.BytesIO(data)) as image:
+        size = image.size
+        scale = 1.0
+        while len(data) > BLUESKY_MAX_IMAGE_BYTES and scale > 0.2:
+            scale *= 0.85
+            resized = image.convert("RGB").resize(
+                (int(size[0] * scale), int(size[1] * scale)), Image.LANCZOS
+            )
+            buffer = io.BytesIO()
+            resized.save(buffer, format="PNG", optimize=True)
+            data = buffer.getvalue()
+            size = resized.size
+    if len(data) > BLUESKY_MAX_IMAGE_BYTES:
+        raise ValueError(f"{os.path.basename(path)} is too large for Bluesky even resized.")
+    return data, size
+
+
+def check_bluesky_connection() -> bool:
+    """Log in and read the account's own profile: confirms the credentials and prints which account
+    they belong to. Posts nothing."""
+    try:
+        creds = load_bluesky_credentials()
+        client = get_bluesky_client(creds)
+        profile = client.get_profile(creds["handle"])
+    except MissingCredentialsError as err:
+        print(f"Credentials problem: {err}")
+        return False
+    except (bluesky_errors.AtProtocolError, requests.RequestException) as err:
+        _explain_bluesky_error(err)
+        return False
+    print(f"Bluesky OK: logged in as @{profile.handle} ({profile.did}).")
+    return True
+
+
+def post_to_bluesky(
+    post: SocialPost,
+    dry_run: bool = True,
+    force: bool = False,
+    attach_images: bool = True,
+) -> Optional[str]:
+    """Publish `post` to Bluesky as the account on file, with the same text and images as on X and
+    its hashtags as clickable tags. Returns the new post's at:// URI, or None if nothing was
+    published.
+
+    Works like post_to_x(): a dry run unless dry_run=False; a week already in the post log is
+    refused unless force=True; if an image can't be prepared or uploaded nothing is posted (pass
+    attach_images=False for text only); every failure is reported and swallowed so it can never
+    break the weekly run."""
+    preview_post(post, show_candidates=False)
+    if not attach_images:
+        print("Text only: images will not be attached.")
+    if len(post.text) > BLUESKY_MAX_LENGTH:
+        print(f"Not posted: the text is over Bluesky's {BLUESKY_MAX_LENGTH}-character limit.")
+        return None
+    if already_posted(post, "bluesky") and not force:
+        print(f"Not posted: {post.key} is already in {os.path.basename(POST_LOG_PATH)}.")
+        return None
+    if dry_run:
+        print(
+            f"Dry run: nothing was sent to Bluesky "
+            f"({len(bluesky_hashtag_facets(post.text))} hashtags would be clickable)."
+        )
+        return None
+    try:
+        creds = load_bluesky_credentials()
+        facets = bluesky_hashtag_facets(post.text)
+        images = list(zip(post.images, post.alt_texts))[:BLUESKY_MAX_IMAGES]
+        client = get_bluesky_client(creds)
+        if attach_images and images:
+            prepared = [_prepare_image_for_bluesky(path) for path, _ in images]
+            response = client.send_images(
+                text=post.text,
+                images=[data for data, _ in prepared],
+                image_alts=[alt for _, alt in images],
+                image_aspect_ratios=[
+                    bluesky_models.AppBskyEmbedDefs.AspectRatio(width=w, height=h)
+                    for _, (w, h) in prepared
+                ],
+                langs=["en"],
+                facets=facets,
+            )
+        else:
+            response = client.send_post(text=post.text, langs=["en"], facets=facets)
+    except MissingCredentialsError as err:
+        print(f"Credentials problem: {err}")
+        return None
+    except (bluesky_errors.AtProtocolError, requests.RequestException) as err:
+        _explain_bluesky_error(err)
+        return None
+    except (ValueError, OSError) as err:
+        print(f"Could not post to Bluesky: {err}")
+        return None
+    uri = str(response.uri)
+    _record_post(post, "bluesky", uri)
+    print(f"Posted: https://bsky.app/profile/{creds['handle']}/post/{uri.rsplit('/', 1)[-1]}")
+    return uri
+
+
+def delete_from_bluesky(post_uri: str) -> bool:
+    """Delete one of the account's posts by its at:// URI (the id the post log holds), and drop it
+    from the post log."""
+    try:
+        get_bluesky_client().delete_post(post_uri)
+    except MissingCredentialsError as err:
+        print(f"Credentials problem: {err}")
+        return False
+    except (bluesky_errors.AtProtocolError, requests.RequestException) as err:
+        _explain_bluesky_error(err)
+        return False
+    log = _read_post_log()
+    for key, entry in list(log.get("bluesky", {}).items()):
+        if entry.get("id") == post_uri:
+            del log["bluesky"][key]
+    if os.path.exists(POST_LOG_PATH):
+        with open(POST_LOG_PATH, "w", encoding="utf-8") as file:
+            json.dump(log, file, indent=2, ensure_ascii=False)
+    print(f"Deleted post {post_uri}.")
+    return True
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Draft, check, or publish the weekly AP XC post."
@@ -1590,8 +1814,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     preview.add_argument(
         "--season", type=int, help="print the post for every week of a season"
     )
-    commands.add_parser("check", help="test the X credentials with read-only requests")
-    publish = commands.add_parser("post", help="publish the newest week's post to X")
+    platform_help = "where to act (default: x; 'all' is for check and post only)"
+    check = commands.add_parser(
+        "check", help="test the credentials with read-only requests"
+    )
+    check.add_argument(
+        "--platform", choices=("x", "bluesky", "all"), default="x", help=platform_help
+    )
+    publish = commands.add_parser("post", help="publish the newest week's post")
+    publish.add_argument(
+        "--platform", choices=("x", "bluesky", "all"), default="x", help=platform_help
+    )
     publish.add_argument(
         "--yes", action="store_true", help="actually send it (else a dry run)"
     )
@@ -1602,24 +1835,36 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--text-only", action="store_true", help="do not attach the images"
     )
     remove = commands.add_parser("delete", help="delete one of the account's posts by id")
-    remove.add_argument("post_id")
+    remove.add_argument("post_id", help="X post id, or a Bluesky at:// URI")
+    remove.add_argument("--platform", choices=("x", "bluesky"), default="x")
     args = parser.parse_args(argv)
     # the movement triangles and the "·" separator need UTF-8 on a Windows console
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
+    platforms = ("x", "bluesky") if getattr(args, "platform", "") == "all" else (
+        getattr(args, "platform", "x"),
+    )
     if args.command == "check":
-        return 0 if check_twitter_connection() else 1
+        checks = {"x": check_twitter_connection, "bluesky": check_bluesky_connection}
+        results = [checks[name]() for name in platforms]
+        return 0 if all(results) else 1
     if args.command == "post":
-        sent = post_to_x(
-            compose_post(),
-            dry_run=not args.yes,
-            force=args.force,
-            attach_images=not args.text_only,
-        )
-        return 0 if sent or not args.yes else 1
+        post = compose_post()
+        posters = {"x": post_to_x, "bluesky": post_to_bluesky}
+        results = [
+            posters[name](
+                post,
+                dry_run=not args.yes,
+                force=args.force,
+                attach_images=not args.text_only,
+            )
+            for name in platforms
+        ]
+        return 0 if all(results) or not args.yes else 1
     if args.command == "delete":
-        return 0 if delete_from_x(args.post_id) else 1
+        remover = delete_from_x if args.platform == "x" else delete_from_bluesky
+        return 0 if remover(args.post_id) else 1
     if getattr(args, "season", None):
         tokens = rt.stored_week_tokens(args.season)
         for token in sorted(tokens, key=_token_order):
