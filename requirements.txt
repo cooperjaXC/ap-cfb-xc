@@ -20,7 +20,7 @@ libipld==3.5.0
 matplotlib==3.11.2
 mypy_extensions==1.2.0
 numpy==2.5.5
-oauthlib==3.3.1
+oauthlib==4.0.1
 packaging==26.3
 pandas==2.3.3
 pathspec==1.1.1
@@ -38,7 +38,6 @@ requests-oauthlib==2.0.0
 setuptools==84.2.1
 six==1.17.0
 tlds==2026102900
-tweepy==4.17.0
 typing-inspection==0.4.5
 typing_extensions==4.16.0
 tzdata==2026.6

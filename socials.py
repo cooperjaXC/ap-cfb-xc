@@ -55,7 +55,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 import requests
-import tweepy
 from atproto import Client as BlueskyClient
 from atproto import models as bluesky_models
 from atproto_client import exceptions as bluesky_errors
@@ -103,25 +102,62 @@ def load_twitter_credentials(secrets_path: str = SECRETS_PATH) -> Dict[str, str]
     return creds
 
 
-def get_twitter_client(
-    creds: Optional[Dict[str, str]] = None, return_type=tweepy.Response
-) -> tweepy.Client:
-    """An X API v2 client built from whatever credentials are available. With a bearer token it can
-    make app-level requests; with access_token/access_token_secret too it can act as the user (pass
-    `user_auth=True` on user-context calls). `return_type` is fixed per client in tweepy; pass
-    requests.Response to get raw HTTP responses."""
-    creds = creds or load_twitter_credentials()
-    return tweepy.Client(
-        bearer_token=creds.get("bearer_token"),
-        consumer_key=creds["consumer_key"],
-        consumer_secret=creds["secret_key"],
-        access_token=creds.get("access_token"),
-        access_token_secret=creds.get("access_token_secret"),
-        return_type=return_type,
+X_API_URL = "https://api.x.com/2"
+# The older (v1.1) media upload host, kept only as a fallback for _upload_image_to_x()
+X_V1_MEDIA_UPLOAD_URL = "https://upload.twitter.com/1.1/media/upload.json"
+
+
+class XAPIError(RuntimeError):
+    """X answered a request with an error status. `response` is the raw reply."""
+
+    def __init__(self, response: requests.Response):
+        super().__init__(f"X API returned HTTP {response.status_code}")
+        self.response = response
+
+
+def x_user_auth(creds: Dict[str, str]) -> OAuth1:
+    """OAuth 1.0a user-context signing for X requests (acts as the account the Access Token was
+    generated for). Raises MissingCredentialsError if the Access Token pair is absent."""
+    for key in ("access_token", "access_token_secret"):
+        if key not in creds:
+            raise MissingCredentialsError(f"[{TWITTER_SECTION}] {key} is needed to act as the account.")
+    return OAuth1(
+        creds["consumer_key"],
+        creds["secret_key"],
+        creds["access_token"],
+        creds["access_token_secret"],
     )
 
 
-def _explain_http_error(err: tweepy.errors.HTTPException) -> None:
+def x_request(
+    method: str,
+    path: str,
+    creds: Dict[str, str],
+    user_auth: bool = True,
+    **kwargs,
+) -> requests.Response:
+    """One call to the X API v2 (`path` such as "/tweets"). With user_auth=True (default) it is
+    signed as the account (OAuth 1.0a: consumer key/secret + Access Token pair); with False it is an
+    app-level call using the bearer_token. Extra keyword arguments go to requests (json=, params=,
+    ...). Returns the response, or raises XAPIError for an error status; network problems surface as
+    requests.RequestException. This is the only place the X API is contacted for the v2 endpoints."""
+    if user_auth:
+        kwargs["auth"] = x_user_auth(creds)
+    else:
+        if "bearer_token" not in creds:
+            raise MissingCredentialsError(f"[{TWITTER_SECTION}] bearer_token is needed here.")
+        kwargs["headers"] = {
+            **kwargs.get("headers", {}),
+            "Authorization": f"Bearer {creds['bearer_token']}",
+        }
+    kwargs.setdefault("timeout", 30)
+    response = requests.request(method, f"{X_API_URL}{path}", **kwargs)
+    if not response.ok:
+        raise XAPIError(response)
+    return response
+
+
+def _explain_http_error(err: XAPIError) -> None:
     """Print a one-line diagnosis plus X's own error body for a failed request."""
     status = err.response.status_code
     hints = {
@@ -136,14 +172,13 @@ def _explain_http_error(err: tweepy.errors.HTTPException) -> None:
     print(err.response.text[:500])
 
 
-def check_app_connection(client: tweepy.Client, username: str) -> Optional[str]:
+def check_app_connection(creds: Dict[str, str], username: str) -> Optional[str]:
     """App-level check (bearer token): look up `username`'s public profile. Proves the app is
     enrolled and the account exists; it cannot prove the user tokens belong to that account.
     Returns the account's user id on success, else None."""
     try:
-        resp = client.get_user(username=username)
-        resp.raise_for_status()
-    except tweepy.errors.HTTPException as err:
+        resp = x_request("GET", f"/users/by/username/{username}", creds, user_auth=False)
+    except XAPIError as err:
         _explain_http_error(err)
         return None
     except requests.RequestException as err:
@@ -177,16 +212,15 @@ def _explain_token_owner(token: str, account_id: Optional[str]) -> None:
 
 
 def check_user_connection(
-    client: tweepy.Client, expected_username: str
+    creds: Dict[str, str], expected_username: str
 ) -> Optional[bool]:
     """User-level check (Access Token): GET /2/users/me and confirm it is `expected_username`.
     Also prints the token's access level, since posting requires read-write.
     Returns True when ready to post, False when the request authenticated but the token is for the
     wrong account or is read-only, and None when the request itself failed (e.g. a 401)."""
     try:
-        resp = client.get_me(user_auth=True)
-        resp.raise_for_status()
-    except tweepy.errors.HTTPException as err:
+        resp = x_request("GET", "/users/me", creds)
+    except XAPIError as err:
         _explain_http_error(err)
         return None
     except requests.RequestException as err:
@@ -223,16 +257,14 @@ def check_twitter_connection(expected_username: str = EXPECTED_USERNAME) -> bool
     except MissingCredentialsError as err:
         print(f"Credentials problem: {err}")
         return False
-    client = get_twitter_client(creds, return_type=requests.Response)
-
     account_id = None
     if "bearer_token" in creds:
-        account_id = check_app_connection(client, expected_username)
+        account_id = check_app_connection(creds, expected_username)
     else:
         print("No bearer_token in secrets.toml; skipping the app-level check.")
 
     if "access_token" in creds and "access_token_secret" in creds:
-        ready = check_user_connection(client, expected_username)
+        ready = check_user_connection(creds, expected_username)
         if ready is None:  # the request failed outright, so say which account the token is for
             _explain_token_owner(creds["access_token"], account_id)
         return bool(ready)
@@ -1467,14 +1499,10 @@ X_MEDIA_METADATA_URL = "https://api.x.com/2/media/metadata"
 
 def _upload_image_to_x(creds: Dict[str, str], path: str, alt_text: str) -> str:
     """Upload one image and return its media id. Tries X's current (v2) upload endpoint first and
-    falls back to the older v1.1 one through tweepy. Alt text is best-effort: a failure to set it
-    is reported but does not stop the post. Raises if neither upload route works."""
-    auth = OAuth1(
-        creds["consumer_key"],
-        creds["secret_key"],
-        creds["access_token"],
-        creds["access_token_secret"],
-    )
+    falls back to the older v1.1 one. Alt text is best-effort: a failure to set it is reported but
+    does not stop the post. Raises XAPIError (or requests.RequestException) if neither upload
+    route works."""
+    auth = x_user_auth(creds)
     with open(path, "rb") as image:
         resp = requests.post(
             X_MEDIA_UPLOAD_URL,
@@ -1492,13 +1520,13 @@ def _upload_image_to_x(creds: Dict[str, str], path: str, alt_text: str) -> str:
             f"Image upload (v2) returned HTTP {resp.status_code}: {resp.text[:300]}\n"
             "Trying the older upload endpoint."
         )
-        handler = tweepy.OAuth1UserHandler(
-            creds["consumer_key"],
-            creds["secret_key"],
-            creds["access_token"],
-            creds["access_token_secret"],
-        )
-        media_id = str(tweepy.API(handler).media_upload(filename=path).media_id)
+        with open(path, "rb") as image:
+            legacy = requests.post(
+                X_V1_MEDIA_UPLOAD_URL, auth=auth, files={"media": image}, timeout=60
+            )
+        if not legacy.ok:
+            raise XAPIError(legacy)
+        media_id = str(legacy.json()["media_id_string"])
     try:
         meta = requests.post(
             X_MEDIA_METADATA_URL,
@@ -1549,19 +1577,20 @@ def post_to_x(
         if attach_images:
             for path, alt in zip(post.images, post.alt_texts):
                 media_ids.append(_upload_image_to_x(creds, path, alt))
-        response = get_twitter_client(creds).create_tweet(
-            text=post.text, media_ids=media_ids or None, user_auth=True
-        )
+        body = {"text": post.text}
+        if media_ids:
+            body["media"] = {"media_ids": media_ids}
+        response = x_request("POST", "/tweets", creds, json=body)
+        post_id = str(response.json()["data"]["id"])
     except MissingCredentialsError as err:
         print(f"Credentials problem: {err}")
         return None
-    except tweepy.errors.HTTPException as err:
+    except XAPIError as err:
         _explain_http_error(err)
         return None
-    except (tweepy.errors.TweepyException, requests.RequestException, OSError) as err:
-        print(f"Could not post to X: {err}")
+    except (requests.RequestException, KeyError, ValueError, OSError) as err:
+        print(f"Could not post to X: {err!r}")
         return None
-    post_id = str(response.data["id"])
     _record_post(post, "x", post_id)
     print(f"Posted: https://x.com/{EXPECTED_USERNAME}/status/{post_id}")
     return post_id
@@ -1570,14 +1599,14 @@ def post_to_x(
 def delete_from_x(post_id: str) -> bool:
     """Delete one of the account's posts by id (e.g. a test post) and drop it from the post log."""
     try:
-        get_twitter_client().delete_tweet(post_id, user_auth=True)
+        x_request("DELETE", f"/tweets/{post_id}", load_twitter_credentials())
     except MissingCredentialsError as err:
         print(f"Credentials problem: {err}")
         return False
-    except tweepy.errors.HTTPException as err:
+    except XAPIError as err:
         _explain_http_error(err)
         return False
-    except (tweepy.errors.TweepyException, requests.RequestException) as err:
+    except requests.RequestException as err:
         print(f"Could not delete the post: {err}")
         return False
     log = _read_post_log()
