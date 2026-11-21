@@ -13,6 +13,10 @@ This method ranks conferences based on the positions of their top teams in [the 
 before, throughout, and at the end of each college football season.
 This provides an objective, measurable comparison of conference strength for every week of the season.
 
+Each week's results are also posted to [@ap_cfb_xc on Twitter/X](https://x.com/ap_cfb_xc) and
+[@ap-cfb-xc.bsky.social on Bluesky](https://bsky.app/profile/ap-cfb-xc.bsky.social) - see
+[Posting to Social Media](#posting-to-social-media).
+
 ## Current Results
 ### 5-Team
 ![five team](images/current_week_5team.png)
@@ -87,6 +91,8 @@ with 1998-2011 imported from [collegepollarchive.com](https://collegepollarchive
   It only rewrites the text between the `XC-TABLE-5-TEAM` marker comments in this README.
 - [`weekly_update.py`](weekly_update.py): One-shot entry point that pulls the latest rankings and
   regenerates the current-week graphs and standings table in a single call - see [Automating Weekly Updates](#automating-weekly-updates).
+- [`socials.py`](socials.py): Writes each week's post from the data in `data/` and publishes it to X and
+  Bluesky - see [Posting to Social Media](#posting-to-social-media).
 - [`counterfactual_conferences_2023.py`](counterfactual_conferences_2023.py): Standalone "what-if" script
   remapping 2023 results onto the 2024 realigned conferences.
 
@@ -123,7 +129,8 @@ execute and run the [`store_data.py`](store_data.py) file.
 call: it fetches and stores the latest AP rankings for both 4-team and 5-team scoring, then regenerates
 `images/current_week_4team.png` and `images/current_week_5team.png` - the same filenames this README
 links to above - and refreshes the 5-team standings table beneath the 5-team graph, so a new week's
-results show up here automatically with no README edits needed.
+results show up here automatically with no README edits needed. It ends by posting the week's results to
+social media (see [below](#posting-to-social-media)).
 
 Run it directly with your venv's interpreter:
 
@@ -144,6 +151,24 @@ different interpreter:
 Neither script pauses for input by default, so they're safe to run unattended; each has a commented-out
 `pause` (Windows) / `read` (Linux) line you can uncomment if you'd rather the window stay open when
 running it manually by double-click.
+
+### Posting to Social Media
+
+The last step of the weekly update publishes a short write-up of the week to
+[Twitter/X](https://x.com/ap_cfb_xc) and [Bluesky](https://bsky.app/profile/ap-cfb-xc.bsky.social), with the
+5-team graph and a standings-table image attached. [`socials.py`](socials.py) writes it from the stored
+data: a headline, the conference standings, and up to four storylines (lead changes, the biggest
+conference and team movers, conferences dropping off or returning to the board, and who led at the same
+point last season), with hashtags for the conferences and teams it mentions. The text fits X's 280
+characters, so the same post goes to both platforms.
+
+- Each platform is posted to independently, so a failure on one does not affect the other or the rest of the weekly run.
+- Weeks already posted are recorded in [`data/social_post_log.json`](data/social_post_log.json), so re-running a week never posts it twice.
+- Credentials are kept outside the repo. Anyone running their own copy would need to supply their own accounts.
+- To see the post without sending anything, run `python socials.py preview`. Set `AP_XC_SKIP_SOCIAL=1` to run the weekly update without posting.
+
+Tracked in [issue #11](https://github.com/cooperjaXC/ap-cfb-xc/issues/11) and
+[PR #31](https://github.com/cooperjaXC/ap-cfb-xc/pull/31).
 
 ### Specialized Uses
 
