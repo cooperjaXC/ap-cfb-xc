@@ -323,15 +323,20 @@ TEAM_HASHTAGS = {"N Dakota St": "#NDSU", "Texas A&M": "#TexasAM"}
 # (the standings line itself always spells names out).
 ABBREVIATIONS = {"Big Ten": "B1G"}
 
+# The AP's own account on each platform, tagged in the headline where the post says "AP Poll"
+AP_HANDLES = {"x": "@AP_Top25", "bluesky": "@apnews.com"}
+
 # How a conference is written mid-sentence. Anything not listed becomes "the <shortName>".
 CONFERENCE_NAMES = {"FBS Indep.": "the FBS Independents"}
 
 # Wording. Each key holds interchangeable variants; one is picked per week (repeatably, so
 # re-running a week gives the same text). {conf} is "the SEC", {Conf} is "The SEC".
 PHRASES = {
-    "title": ["{label} AP Poll XC", "AP Poll XC, {label}"],
-    "title_preseason": ["{year} AP Poll XC, Preseason"],
-    "title_final": ["Final {year} AP Poll XC"],
+    # {ap} is "AP" or the platform's AP handle ("@AP_Top25"). Every title leads with the week or
+    # year, never the handle: a post that starts with "@" is treated as a reply and loses reach.
+    "title": ["{label} {ap} Poll XC"],
+    "title_preseason": ["{year} Preseason {ap} Poll XC"],
+    "title_final": ["Final {year} {ap} Poll XC"],
     "head_none": ["no conference has {n_word} teams in the poll yet."],
     "head_preseason": [
         "{conf} opens the season on top.",
@@ -442,6 +447,7 @@ class PostConfig:
 
     num_scoring_teams: int = 5
     max_length: int = 280  # platform limit (X: 280 weighted characters; Bluesky: 300)
+    ap_name: str = "AP"  # how the headline names the AP; compose_post() swaps in each platform's handle
     max_storylines: int = 4  # how many storylines follow the standings line, at most
     max_standings: int = 4  # how many conferences the standings line lists
     hashtags: Tuple[str, ...] = ("#CFB",)  # always included, as the post's last line
@@ -521,10 +527,12 @@ class SocialPost:
 
     year: int
     token: str
-    text: str
+    text: str  # the X version (tags the AP as @AP_Top25)
     images: Tuple[str, ...] = ()
     alt_texts: Tuple[str, ...] = ()
     storylines: Tuple[Storyline, ...] = field(default=(), compare=False)
+    # The Bluesky version: the same post with that platform's AP handle. Empty means use `text`.
+    bluesky_text: str = ""
 
     @property
     def key(self) -> str:
@@ -780,7 +788,9 @@ def build_headline(ctx: WeekContext) -> str:
         if ctx.is_final
         else "title_preseason" if ctx.is_preseason else "title"
     )
-    title = _phrase(ctx, title_key, label=ctx.label, year=ctx.week.year)
+    title = _phrase(
+        ctx, title_key, label=ctx.label, year=ctx.week.year, ap=ctx.cfg.ap_name
+    )
     if not ctx.standings:
         return f"{title}: {_phrase(ctx, 'head_none')}"
 
@@ -1423,7 +1433,16 @@ def compose_post(
     the text plus the images to attach. Images are only attached when the post is for the newest
     stored week, since `images/current_week_*` always shows that week. The standings-table image is
     attached if a file exists at images/current_week_<N>team_table.png."""
-    ctx = build_week_context(year, week_token, cfg, data_dir)
+    # Each platform tags the AP by its own handle. Bluesky's is two characters longer, so its length
+    # cap is raised by the same amount: both platforms then carry the same storylines.
+    x_handle, bsky_handle = AP_HANDLES["x"], AP_HANDLES["bluesky"]
+    cfg_x = dataclasses.replace(cfg, ap_name=x_handle)
+    cfg_bsky = dataclasses.replace(
+        cfg,
+        ap_name=bsky_handle,
+        max_length=cfg.max_length + len(bsky_handle) - len(x_handle),
+    )
+    ctx = build_week_context(year, week_token, cfg_x, data_dir)
     n = cfg.num_scoring_teams
     images, alts = [], []
     newest_year, newest_token, _ = rt.latest_recorded_week(n, data_dir)
@@ -1446,17 +1465,32 @@ def compose_post(
         images=tuple(images),
         alt_texts=tuple(alts),
         storylines=tuple(find_storylines(ctx)),
+        bluesky_text=compose_text(
+            build_week_context(year, week_token, cfg_bsky, data_dir), length_fn
+        ),
     )
 
 
-def preview_post(post: SocialPost, show_candidates: bool = True) -> None:
-    """Print a post the way it would go out, with its length, images, and the storylines that were
-    considered (so thresholds and priorities can be tuned)."""
+def preview_both(post: SocialPost, show_candidates: bool = True) -> None:
+    """preview_post() for X, then for Bluesky when its text differs (it carries a different AP
+    handle)."""
+    preview_post(post, show_candidates, platform="x")
+    if post.bluesky_text and post.bluesky_text != post.text:
+        preview_post(post, show_candidates=False, platform="bluesky")
+
+
+def preview_post(
+    post: SocialPost, show_candidates: bool = True, platform: str = "x"
+) -> None:
+    """Print a post the way it would go out on `platform` ("x" or "bluesky"), with its length,
+    images, and the storylines that were considered (so thresholds and priorities can be tuned)."""
+    text = (post.bluesky_text or post.text) if platform == "bluesky" else post.text
     print("-" * 60)
-    print(post.text)
+    print(text)
     print("-" * 60)
     print(
-        f"[{post.key}] {weighted_length(post.text)} weighted characters; images: "
+        f"[{post.key}, {platform}] {weighted_length(text)} weighted characters "
+        f"({len(text)} characters); images: "
         f"{[os.path.basename(p) for p in post.images] or 'none'}"
     )
     if show_candidates:
@@ -1482,12 +1516,14 @@ def already_posted(post: SocialPost, platform: str = "x") -> bool:
     return post.key in _read_post_log().get(platform, {})
 
 
-def _record_post(post: SocialPost, platform: str, post_id: str) -> None:
+def _record_post(
+    post: SocialPost, platform: str, post_id: str, text: Optional[str] = None
+) -> None:
     log = _read_post_log()
     log.setdefault(platform, {})[post.key] = {
         "id": post_id,
         "posted_at": datetime.datetime.now().isoformat(timespec="seconds"),
-        "text": post.text,
+        "text": text if text is not None else post.text,
     }
     with open(POST_LOG_PATH, "w", encoding="utf-8") as file:
         json.dump(log, file, indent=2, ensure_ascii=False)
@@ -1705,6 +1741,25 @@ def bluesky_hashtag_facets(text: str) -> list:
     return facets
 
 
+def bluesky_mention_facets(text: str, handle: str, did: str) -> list:
+    """Facets that make each occurrence of "@<handle>" in `text` a real mention of the account with
+    DID `did` (so the AP is notified and the name links to it). Offsets are UTF-8 byte offsets."""
+    facets = []
+    pattern = re.compile(rf"(?<![\w.@]){re.escape('@' + handle.lstrip('@'))}(?![\w-])")
+    for match in pattern.finditer(text):
+        start = len(text[: match.start()].encode("utf-8"))
+        end = start + len(match.group().encode("utf-8"))
+        facets.append(
+            bluesky_models.AppBskyRichtextFacet.Main(
+                index=bluesky_models.AppBskyRichtextFacet.ByteSlice(
+                    byte_start=start, byte_end=end
+                ),
+                features=[bluesky_models.AppBskyRichtextFacet.Mention(did=did)],
+            )
+        )
+    return facets
+
+
 def _prepare_image_for_bluesky(path: str) -> Tuple[bytes, Tuple[int, int]]:
     """The image's bytes (shrunk to fit Bluesky's size limit if needed) and its (width, height).
     Images already under the limit are sent untouched."""
@@ -1758,10 +1813,11 @@ def post_to_bluesky(
     refused unless force=True; if an image can't be prepared or uploaded nothing is posted (pass
     attach_images=False for text only); every failure is reported and swallowed so it can never
     break the weekly run."""
-    preview_post(post, show_candidates=False)
+    text = post.bluesky_text or post.text
+    preview_post(post, show_candidates=False, platform="bluesky")
     if not attach_images:
         print("Text only: images will not be attached.")
-    if len(post.text) > BLUESKY_MAX_LENGTH:
+    if len(text) > BLUESKY_MAX_LENGTH:
         print(f"Not posted: the text is over Bluesky's {BLUESKY_MAX_LENGTH}-character limit.")
         return None
     if already_posted(post, "bluesky") and not force:
@@ -1770,18 +1826,28 @@ def post_to_bluesky(
     if dry_run:
         print(
             f"Dry run: nothing was sent to Bluesky "
-            f"({len(bluesky_hashtag_facets(post.text))} hashtags would be clickable)."
+            f"({len(bluesky_hashtag_facets(text))} hashtags would be clickable)."
         )
         return None
     try:
         creds = load_bluesky_credentials()
-        facets = bluesky_hashtag_facets(post.text)
+        facets = bluesky_hashtag_facets(text)
         images = list(zip(post.images, post.alt_texts))[:BLUESKY_MAX_IMAGES]
         client = get_bluesky_client(creds)
+        ap_handle = AP_HANDLES["bluesky"]
+        if ap_handle in text:
+            # Look up the AP's account so the handle becomes a real mention. If that fails the
+            # post still goes out, with the handle as plain text.
+            try:
+                did = client.resolve_handle(ap_handle.lstrip("@")).did
+                facets += bluesky_mention_facets(text, ap_handle, did)
+            except (bluesky_errors.AtProtocolError, requests.RequestException) as err:
+                print(f"Could not look up {ap_handle}; posting it as plain text ({err}).")
+        facets.sort(key=lambda facet: facet.index.byte_start)
         if attach_images and images:
             prepared = [_prepare_image_for_bluesky(path) for path, _ in images]
             response = client.send_images(
-                text=post.text,
+                text=text,
                 images=[data for data, _ in prepared],
                 image_alts=[alt for _, alt in images],
                 image_aspect_ratios=[
@@ -1792,7 +1858,7 @@ def post_to_bluesky(
                 facets=facets,
             )
         else:
-            response = client.send_post(text=post.text, langs=["en"], facets=facets)
+            response = client.send_post(text=text, langs=["en"], facets=facets)
     except MissingCredentialsError as err:
         print(f"Credentials problem: {err}")
         return None
@@ -1803,7 +1869,7 @@ def post_to_bluesky(
         print(f"Could not post to Bluesky: {err}")
         return None
     uri = str(response.uri)
-    _record_post(post, "bluesky", uri)
+    _record_post(post, "bluesky", uri, text)
     print(f"Posted: https://bsky.app/profile/{creds['handle']}/post/{uri.rsplit('/', 1)[-1]}")
     return uri
 
@@ -1897,9 +1963,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     if getattr(args, "season", None):
         tokens = rt.stored_week_tokens(args.season)
         for token in sorted(tokens, key=_token_order):
-            preview_post(compose_post(args.season, token), show_candidates=False)
+            preview_both(compose_post(args.season, token), show_candidates=False)
         return 0
-    preview_post(compose_post(getattr(args, "year", None), getattr(args, "week", None)))
+    preview_both(compose_post(getattr(args, "year", None), getattr(args, "week", None)))
     return 0
 
 
