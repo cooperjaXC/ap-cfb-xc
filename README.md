@@ -22,25 +22,23 @@ Each week's results are also posted to [@ap_cfb_xc on Twitter/X](https://x.com/a
 ![five team](images/current_week_5team.png)
 
 <!-- XC-TABLE-5-TEAM:START -->
-**2026 Week 12** — 5-team XC standings
+**2026 Week 13** — 5-team XC standings
 
-| Pos | 1st · SEC | 2nd · Big Ten | 3rd · Big 12 | 4th · ACC | FBS Indep. | Pac-12 | CUSA | American | Mountain West | Sun Belt | MAC |
+| Pos | 1st · SEC | 2nd · Big 12 | 3rd · Big Ten | ACC | FBS Indep. | CUSA | Pac-12 | Mountain West | American | Sun Belt | MAC |
 |:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| **Score** | **42**&nbsp;(▼4) | **53**&nbsp;(▲6) | **64**&nbsp;(▼4) | **99.5**&nbsp;(▼1.5) | DNS | DNS | DNS | DNS | DNS | DNS | DNS |
-| 1 | Georgia (1)&nbsp;– | UCLA (4)&nbsp;– | Utah (2)&nbsp;– | Miami (5)&nbsp;– | *Notre Dame (3)&nbsp;–* | *Boise St (15)&nbsp;▲2* | *Liberty (22)&nbsp;▲7* | *Memphis (24)&nbsp;NR* | *New Mexico (30)&nbsp;▼7* | *Louisiana Tech (32)&nbsp;NR* | *Toledo (35.5)&nbsp;NR* |
-| 2 | Alabama (7)&nbsp;– | Indiana (6)&nbsp;– | Texas Tech (11)&nbsp;▼1 | Wake Forest (10)&nbsp;▲1 |  |  |  | *UTSA (29)&nbsp;NR* | *N Dakota St (33)&nbsp;NR* |  |  |
-| 3 | Texas (8)&nbsp;– | Iowa (13)&nbsp;▲3 | BYU (12)&nbsp;– | Louisville (21)&nbsp;▲9 |  |  |  |  | *Wyoming (35.5)&nbsp;NR* |  |  |
-| 4 | Tennessee (9)&nbsp;– | Oregon (14)&nbsp;▲4 | Arizona (19)&nbsp;▲3 | Duke (28)&nbsp;▼1 |  |  |  |  | *Air Force (35.5)&nbsp;NR* |  |  |
-| 5 | Kentucky (17)&nbsp;▼4 | Ohio State (16)&nbsp;▲5 | Houston (20)&nbsp;▼6 | SMU (35.5)&nbsp;▼10.5 |  |  |  |  |  |  |  |
+| **Score** | **38**&nbsp;(▲4) | **55**&nbsp;(▲9) | **64**&nbsp;(▼11) | DNS | DNS | DNS | DNS | DNS | DNS | DNS | DNS |
+| 1 | Georgia (1)&nbsp;– | Utah (2)&nbsp;– | UCLA (10)&nbsp;▼6 | *Miami (4)&nbsp;▲1* | *Notre Dame (3)&nbsp;–* | *Liberty (21)&nbsp;▲1* | *Boise St (22)&nbsp;▼7* | *New Mexico (26)&nbsp;▲4* | *UTSA (28)&nbsp;▲1* | *Louisiana Tech (31)&nbsp;▲1* | *Toledo (33)&nbsp;▲2.5* |
+| 2 | Texas (5)&nbsp;▲3 | Texas Tech (9)&nbsp;▲2 | Indiana (12)&nbsp;▼6 | *Wake Forest (8)&nbsp;▲2* |  |  |  | *N Dakota St (32)&nbsp;▲1* |  |  |  |
+| 3 | Alabama (6)&nbsp;▲1 | BYU (11)&nbsp;▲1 | Iowa (13)&nbsp;– | *Louisville (18)&nbsp;▲3* |  |  |  | *Air Force (36)&nbsp;▼0.5* |  |  |  |
+| 4 | Tennessee (7)&nbsp;▲2 | Arizona (16)&nbsp;▲3 | Oregon (14)&nbsp;– | *Duke (37)&nbsp;▼9* |  |  |  |  |  |  |  |
+| 5 | Oklahoma (19)&nbsp;▲7 | Houston (17)&nbsp;▲3 | USC (15)&nbsp;▲3 |  |  |  |  |  |  |  |  |
 |  | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— | ——— |
-| 6 | *Florida (23)&nbsp;NR* | *USC (18)&nbsp;▼3* |  |  |  |  |  |  |  |  |  |
-| 7 | *Ole Miss (25)&nbsp;▼6* |  |  |  |  |  |  |  |  |  |  |
-| 8 | *Oklahoma (26)&nbsp;NR* |  |  |  |  |  |  |  |  |  |  |
-| 9 | *LSU (27)&nbsp;▼3* |  |  |  |  |  |  |  |  |  |  |
-| 10 | *South Carolina (31)&nbsp;▼11* |  |  |  |  |  |  |  |  |  |  |
-| 11 | *Auburn (38)&nbsp;NR* |  |  |  |  |  |  |  |  |  |  |
-| 12 | *Missouri (39)&nbsp;▼13* |  |  |  |  |  |  |  |  |  |  |
-| Dropped |  |  | Oklahoma St |  |  |  |  | North Texas |  |  |  |
+| 6 | *Florida (20)&nbsp;▲3* | *Oklahoma St (34)&nbsp;NR* | *Ohio State (25)&nbsp;▼9* |  |  |  |  |  |  |  |  |
+| 7 | *Ole Miss (23)&nbsp;▲2* |  | *Nebraska (27)&nbsp;NR* |  |  |  |  |  |  |  |  |
+| 8 | *Missouri (24)&nbsp;▲15* |  | *Washington (30)&nbsp;NR* |  |  |  |  |  |  |  |  |
+| 9 | *Kentucky (29)&nbsp;▼12* |  |  |  |  |  |  |  |  |  |  |
+| 10 | *Auburn (35)&nbsp;▲3* |  |  |  |  |  |  |  |  |  |  |
+| Dropped | LSU, South Carolina |  |  | SMU |  |  |  | Wyoming | Memphis |  |  |
 
 <sub>Each team is shown with its AP ranking. A conference's score is the sum of its top five teams' rankings - lowest score wins, and ties are broken by each conference's 6th runner. Italicized teams don't count toward the score; DNS means the conference didn't have enough ranked teams to score (listed after the scoring conferences). ▲/▼ is how many spots a team moved since last week's poll (a conference's score change is shown in parentheses; a lower score is better, so a falling score is ▲). – means unchanged and NR means it wasn't ranked or receiving votes last week. Dropped lists teams that were ranked or receiving votes last week but are out of the poll entirely this week, in last week's order.</sub>
 <!-- XC-TABLE-5-TEAM:END -->
