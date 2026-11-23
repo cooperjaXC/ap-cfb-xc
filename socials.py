@@ -407,6 +407,19 @@ PHRASES = {
     "best_on_record": [
         "{score} is the best score for {conf} in our data (since {since})."
     ],
+    # A conference passing another below first place; {Conf} "The Big 12", {passed} "the Big Ten",
+    # {place} "second". The place_<mark> versions also carry the conference's own mark.
+    "place_change": ["{Conf} passes {passed} for {place} place."],
+    "place_change_short": ["{Conf} passes {passed} for {place}."],
+    "place_best_since": [
+        "{Conf} passes {passed} for {place} at {score}, its best since {when}."
+    ],
+    "place_best_on_record": [
+        "{Conf} passes {passed} for {place} at {score}, its best in our data."
+    ],
+    "place_season_best": [
+        "{Conf} passes {passed} for {place} at {score}, a season best."
+    ],
     "best_since": ["{score} is the best score for {conf} since {when}."],
     "season_best": ["{score} is a season best for {conf}."],
     "season_worst": ["{score} is a season worst for {conf}."],
@@ -472,6 +485,9 @@ class PostConfig:
     repeat_penalty: float = 15
     # which storyline kinds to leave out entirely, e.g. ("year_over_year",)
     skip_kinds: Tuple[str, ...] = ()
+    # A storyline at or above this priority is worth its full sentence even if that means leaving
+    # out the weakest other storylines (records, titles, a conference passing another)
+    full_wording_priority: float = 85
 
 
 @dataclass(frozen=True)
@@ -990,39 +1006,100 @@ def storyline_conference_mover(ctx: WeekContext) -> List[Storyline]:
     return [Storyline(key, priority, text, f"conf:{_alias(conf)}", short)]
 
 
+def _conference_mark(
+    ctx: WeekContext, conf: str, score: float
+) -> Optional[Tuple[str, float, dict]]:
+    """How a conference's score compares with its own past, as (kind, priority, wording fields), or
+    None if unremarkable: best in our data / best since some earlier poll / best of this season, or
+    worst of this season. Shared by the plain marks storyline and the place-change one, which
+    folds the same fact into its sentence."""
+    own = ctx.history[ctx.history["conference"] == _alias(conf)]
+    this_season = own[own["year"] == ctx.week.year]["score"]
+    if len(this_season) < ctx.cfg.min_polls_for_season_marks:
+        return None
+    fields = dict(score=_num(score), conf=_conf(conf))
+    if score < this_season.min():
+        earlier = own[own["year"] < ctx.week.year]
+        as_good = earlier[earlier["score"] <= score]
+        last = _last_from_earlier_season(ctx, as_good)
+        since = int(own["year"].min())
+        enough_data = ctx.week.year - since >= ctx.cfg.min_seasons_for_records
+        if as_good.empty and enough_data:
+            return "best_on_record", 90, dict(since=since, **fields)
+        if last is not None:
+            years = ctx.week.year - last["year"]
+            when = _when(last["label"], last["year"])
+            return "best_since", 60 + min(3 * years, 24), dict(when=when, **fields)
+        return "season_best", 52, fields
+    if score > this_season.max():
+        return "season_worst", 46, fields
+    return None
+
+
 def storyline_conference_marks(ctx: WeekContext) -> List[Storyline]:
     """A conference's own score against its past: best in years, or best/worst of the season."""
     out = []
     for conf, score in ctx.standings:
-        own = ctx.history[ctx.history["conference"] == _alias(conf)]
-        this_season = own[own["year"] == ctx.week.year]["score"]
-        if len(this_season) < ctx.cfg.min_polls_for_season_marks:
-            continue
-        fields = dict(score=_num(score), conf=_conf(conf))
-        topic = f"conf:{_alias(conf)}"
-        if score < this_season.min():
-            earlier = own[own["year"] < ctx.week.year]
-            as_good = earlier[earlier["score"] <= score]
-            last = _last_from_earlier_season(ctx, as_good)
-            since = int(own["year"].min())
-            enough_data = ctx.week.year - since >= ctx.cfg.min_seasons_for_records
-            if as_good.empty and enough_data:
-                text = _phrase(ctx, "best_on_record", since=since, **fields)
-                out.append(Storyline("best_on_record", 90, text, topic))
-            elif last is not None:
-                years = ctx.week.year - last["year"]
-                when = _when(last["label"], last["year"])
-                text = _phrase(ctx, "best_since", when=when, **fields)
-                out.append(
-                    Storyline("best_since", 60 + min(3 * years, 24), text, topic)
-                )
-            else:
-                text = _phrase(ctx, "season_best", **fields)
-                out.append(Storyline("season_best", 52, text, topic))
-        elif score > this_season.max():
-            text = _phrase(ctx, "season_worst", **fields)
-            out.append(Storyline("season_worst", 46, text, topic))
+        mark = _conference_mark(ctx, conf, score)
+        if mark:
+            kind, priority, fields = mark
+            text = _phrase(ctx, kind, **fields)
+            out.append(Storyline(kind, priority, text, f"conf:{_alias(conf)}"))
     return out
+
+
+PLACE_WORDS = {2: "second", 3: "third", 4: "fourth", 5: "fifth", 6: "sixth"}
+
+
+def storyline_place_changes(ctx: WeekContext) -> List[Storyline]:
+    """A conference moving ahead of another in the standings below first place (a new leader is
+    the headline's job): the one that passed the most conferences, else the one that climbed
+    highest. When that conference's score is also a mark against its own past (best since 2011,
+    a season best), the two facts share one sentence."""
+    if not ctx.standings or not ctx.prev_standings:
+        return []
+    now_place = {_alias(c): i for i, (c, _) in enumerate(ctx.standings, start=1)}
+    prev_place = {_alias(c): i for i, (c, _) in enumerate(ctx.prev_standings, start=1)}
+    climbs = []
+    for conf, score in ctx.standings:
+        alias = _alias(conf)
+        place = now_place[alias]
+        if alias not in prev_place or place < 2 or place >= prev_place[alias]:
+            continue
+        passed = [
+            c
+            for c, _ in ctx.standings
+            if _alias(c) in prev_place
+            and now_place[_alias(c)] > place
+            and prev_place[_alias(c)] < prev_place[alias]
+        ]
+        if passed and place in PLACE_WORDS:
+            climbs.append((len(passed), -place, conf, score, place, passed))
+    if not climbs:
+        return []
+    _, _, conf, score, place, passed = max(climbs, key=lambda c: c[:2])
+    fields = dict(
+        Conf=_conf(conf, capital=True),
+        passed=_join_names([_conf(c) for c in passed]),
+        place=PLACE_WORDS[place],
+        score=_num(score),
+    )
+    topic = f"conf:{_alias(conf)}"
+    plain = _phrase(ctx, "place_change", **fields)
+    short = _phrase(ctx, "place_change_short", **fields)
+    priority = 80
+    mark = _conference_mark(ctx, conf, score)
+    if mark and mark[0] in ("best_on_record", "best_since", "season_best"):
+        kind, mark_priority, mark_fields = mark
+        merged = _phrase(ctx, f"place_{kind}", **{**mark_fields, **fields})
+        # the mark's own sentence is blocked by the shared topic, so this carries both facts; if
+        # space is short it falls back to the bare place change
+        return [
+            Storyline(
+                "place_change", max(priority, mark_priority) + 5, merged, topic, short
+            )
+        ]
+    return [Storyline("place_change", priority, plain, topic, short)]
 
 
 def storyline_board_changes(ctx: WeekContext) -> List[Storyline]:
@@ -1195,6 +1272,7 @@ STORYLINE_BUILDERS: List[Callable[[WeekContext], List[Storyline]]] = [
     storyline_lead_changes,
     storyline_conference_mover,
     storyline_conference_marks,
+    storyline_place_changes,
     storyline_board_changes,
     storyline_team_movers,
     storyline_depth,
@@ -1339,7 +1417,31 @@ def choose_storylines(
         trial = texts[:i] + [story.text] + texts[i + 1 :]
         if _render_post(ctx, trial, length_fn, keep_all_tags=True) is not None:
             texts = trial
-    final = [dataclasses.replace(c, text=t) for c, t in zip(chosen, texts)]
+    # 3. a top story (priority >= cfg.full_wording_priority) that is still in its short wording
+    #    gets its full sentence even if that means dropping the weakest other storylines
+    pairs = list(zip(chosen, texts))
+    for story in sorted(chosen, key=lambda c: -c.priority):
+        if story.priority < cfg.full_wording_priority or story.text == story.short:
+            continue
+        slot = next(i for i, (c, _) in enumerate(pairs) if c is story)
+        if pairs[slot][1] == story.text:
+            continue
+        weaker = sorted(
+            (p for p in pairs if p[0] is not story and p[0].priority < story.priority),
+            key=lambda p: p[0].priority,
+        )
+        trial = list(pairs)
+        trial[slot] = (story, story.text)
+        for victim in [None] + weaker:
+            if victim is not None:
+                trial = [p for p in trial if p is not victim]
+            if (
+                _render_post(ctx, [t for _, t in trial], length_fn, keep_all_tags=True)
+                is not None
+            ):
+                pairs = trial
+                break
+    final = [dataclasses.replace(c, text=t) for c, t in pairs]
     # Board changes close the post, just above the hashtags (a stable sort keeps the rest in order)
     return sorted(final, key=lambda story: story.kind in ("off_board", "on_board"))
 
