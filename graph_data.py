@@ -570,7 +570,8 @@ _TABLE_UNESCAPE_RE = re.compile(r"\\(.)")
 
 def _parse_table_cell(cell: str) -> dict:
     """One Markdown cell from readme_table.build_week_table() -> its plain text, its Movement
-    Indicator (may be ''), and whether it was italic (a non-scoring team) or bold (a score)."""
+    Indicator (may be ''), and whether it was italic (a non-scoring team) or bold (a score).
+    """
     cell = cell.strip()
     italic = cell.startswith("*") and not cell.startswith("**") and cell.endswith("*")
     if italic:
@@ -633,7 +634,9 @@ def generate_week_table_image(
         scored = " · " in header[j]
         if scored or depth >= min_depth:
             place, _, conference = header[j].rpartition(" · ")
-            columns.append({"j": j, "place": place, "conference": conference, "depth": depth})
+            columns.append(
+                {"j": j, "place": place, "conference": conference, "depth": depth}
+            )
     team_rows = team_rows[: max((c["depth"] for c in columns), default=0)]
     dropped = (
         {c["j"]: _parse_table_cell(dropped_row[c["j"]])["text"] for c in columns}
@@ -654,7 +657,13 @@ def generate_week_table_image(
     )
     width = 2 * margin + pos_w + col_w * len(columns)
     height = (
-        margin + title_h + header_h + score_h + row_h * len(team_rows) + dropped_h + footer_h
+        margin
+        + title_h
+        + header_h
+        + score_h
+        + row_h * len(team_rows)
+        + dropped_h
+        + footer_h
     )
     fig, ax = plt.subplots(figsize=(width, height), dpi=150)
     fig.patch.set_facecolor(BACKGROUND_COLOR)
@@ -699,13 +708,29 @@ def generate_week_table_image(
     # Conference header + score row
     y_header = margin + title_h + header_h / 2
     y_score = margin + title_h + header_h + score_h / 2
-    ax.text(margin + pos_w / 2, y_score, "Score", ha="center", **{**text_kw, "color": TABLE_MUTED_COLOR})
+    ax.text(
+        margin + pos_w / 2,
+        y_score,
+        "Score",
+        ha="center",
+        **{**text_kw, "color": TABLE_MUTED_COLOR},
+    )
     for i, column in enumerate(columns):
         x = col_x(i)
         color = colors[column["conference"]]
         label = " · ".join(p for p in (column["place"], column["conference"]) if p)
-        ax.text(x + pad, y_header, label, va="center", color=color, fontsize=14, fontweight="bold")
-        ax.plot([x + pad, x + col_w - pad], [y_header + header_h / 2] * 2, color=color, lw=2)
+        ax.text(
+            x + pad,
+            y_header,
+            label,
+            va="center",
+            color=color,
+            fontsize=14,
+            fontweight="bold",
+        )
+        ax.plot(
+            [x + pad, x + col_w - pad], [y_header + header_h / 2] * 2, color=color, lw=2
+        )
         score = _parse_table_cell(score_row[column["j"]])
         ax.text(
             x + pad,
@@ -732,8 +757,21 @@ def generate_week_table_image(
     for r, row in enumerate(team_rows):
         y = y_rows + row_h * (r + 0.5)
         if r % 2 == 0:
-            ax.axhspan(y - row_h / 2, y + row_h / 2, xmin=0, xmax=1, color=TABLE_BAND_COLOR, lw=0)
-        ax.text(margin + pos_w / 2, y, row[0], ha="center", **{**text_kw, "color": TABLE_MUTED_COLOR})
+            ax.axhspan(
+                y - row_h / 2,
+                y + row_h / 2,
+                xmin=0,
+                xmax=1,
+                color=TABLE_BAND_COLOR,
+                lw=0,
+            )
+        ax.text(
+            margin + pos_w / 2,
+            y,
+            row[0],
+            ha="center",
+            **{**text_kw, "color": TABLE_MUTED_COLOR},
+        )
         for i, column in enumerate(columns):
             cell = _parse_table_cell(row[column["j"]])
             if not cell["text"]:
@@ -766,12 +804,29 @@ def generate_week_table_image(
     # Dropped row
     y_dropped = y_rows + row_h * len(team_rows)
     if dropped_lines:
-        ax.plot([margin, width - margin], [y_dropped + 0.06] * 2, color=GRID_COLOR, lw=1)
+        ax.plot(
+            [margin, width - margin], [y_dropped + 0.06] * 2, color=GRID_COLOR, lw=1
+        )
         first = y_dropped + 0.18 + row_h / 2
-        ax.text(margin + pos_w / 2, first, "Dropped", ha="center", va="center", color=TABLE_MUTED_COLOR, fontsize=9)
+        ax.text(
+            margin + pos_w / 2,
+            first,
+            "Dropped",
+            ha="center",
+            va="center",
+            color=TABLE_MUTED_COLOR,
+            fontsize=9,
+        )
         for i, column in enumerate(columns):
             for k, line in enumerate(dropped_lines.get(column["j"], [])):
-                ax.text(col_x(i) + pad, first + row_h * k, line, va="center", color=TABLE_MUTED_COLOR, fontsize=10)
+                ax.text(
+                    col_x(i) + pad,
+                    first + row_h * k,
+                    line,
+                    va="center",
+                    color=TABLE_MUTED_COLOR,
+                    fontsize=10,
+                )
 
     # Footer
     words = rt._NUMBER_WORDS.get(num_scoring_teams, str(num_scoring_teams))
@@ -784,8 +839,24 @@ def generate_week_table_image(
         note += " Dropped = in the last poll, out of this one."
     wrapped = textwrap.fill(note, width=max(60, int((width - 2 * margin - 1.4) * 12.5)))
     y_footer = y_dropped + dropped_h + footer_h / 2
-    ax.text(margin, y_footer, wrapped, va="center", color=TABLE_MUTED_COLOR, fontsize=9, linespacing=1.4)
-    ax.text(width - margin, y_footer, "@ap_cfb_xc", va="center", ha="right", color=TABLE_MUTED_COLOR, fontsize=11)
+    ax.text(
+        margin,
+        y_footer,
+        wrapped,
+        va="center",
+        color=TABLE_MUTED_COLOR,
+        fontsize=9,
+        linespacing=1.4,
+    )
+    ax.text(
+        width - margin,
+        y_footer,
+        "@ap_cfb_xc",
+        va="center",
+        ha="right",
+        color=TABLE_MUTED_COLOR,
+        fontsize=11,
+    )
 
     if file_name is None:
         file_name = f"current_week_{num_scoring_teams}team_table.png"

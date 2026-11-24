@@ -62,7 +62,8 @@ def post_to_socials():
     """Draw the standings-table image and publish the week's post to X and to Bluesky. Everything
     here is best-effort: whatever goes wrong is printed, never raised, so the stored data, graphs
     and README from the steps above are unaffected. Each platform is tried independently of the
-    other: an exception (or a refusal) on X does not stop the Bluesky post, and vice versa."""
+    other: an exception (or a refusal) on X does not stop the Bluesky post, and vice versa.
+    """
     print("-----------------------")
     try:
         gd.generate_week_table_image(num_scoring_teams=5)

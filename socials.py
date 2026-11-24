@@ -117,10 +117,13 @@ class XAPIError(RuntimeError):
 
 def x_user_auth(creds: Dict[str, str]) -> OAuth1:
     """OAuth 1.0a user-context signing for X requests (acts as the account the Access Token was
-    generated for). Raises MissingCredentialsError if the Access Token pair is absent."""
+    generated for). Raises MissingCredentialsError if the Access Token pair is absent.
+    """
     for key in ("access_token", "access_token_secret"):
         if key not in creds:
-            raise MissingCredentialsError(f"[{TWITTER_SECTION}] {key} is needed to act as the account.")
+            raise MissingCredentialsError(
+                f"[{TWITTER_SECTION}] {key} is needed to act as the account."
+            )
     return OAuth1(
         creds["consumer_key"],
         creds["secret_key"],
@@ -140,12 +143,15 @@ def x_request(
     signed as the account (OAuth 1.0a: consumer key/secret + Access Token pair); with False it is an
     app-level call using the bearer_token. Extra keyword arguments go to requests (json=, params=,
     ...). Returns the response, or raises XAPIError for an error status; network problems surface as
-    requests.RequestException. This is the only place the X API is contacted for the v2 endpoints."""
+    requests.RequestException. This is the only place the X API is contacted for the v2 endpoints.
+    """
     if user_auth:
         kwargs["auth"] = x_user_auth(creds)
     else:
         if "bearer_token" not in creds:
-            raise MissingCredentialsError(f"[{TWITTER_SECTION}] bearer_token is needed here.")
+            raise MissingCredentialsError(
+                f"[{TWITTER_SECTION}] bearer_token is needed here."
+            )
         kwargs["headers"] = {
             **kwargs.get("headers", {}),
             "Authorization": f"Bearer {creds['bearer_token']}",
@@ -177,7 +183,9 @@ def check_app_connection(creds: Dict[str, str], username: str) -> Optional[str]:
     enrolled and the account exists; it cannot prove the user tokens belong to that account.
     Returns the account's user id on success, else None."""
     try:
-        resp = x_request("GET", f"/users/by/username/{username}", creds, user_auth=False)
+        resp = x_request(
+            "GET", f"/users/by/username/{username}", creds, user_auth=False
+        )
     except XAPIError as err:
         _explain_http_error(err)
         return None
@@ -194,10 +202,13 @@ def check_app_connection(creds: Dict[str, str], username: str) -> Optional[str]:
 
 def _explain_token_owner(token: str, account_id: Optional[str]) -> None:
     """An X Access Token starts with the numeric id of the account it was issued for (followed by a
-    dash and a random part). Only that public id is printed, never any part of the secret."""
+    dash and a random part). Only that public id is printed, never any part of the secret.
+    """
     token_user_id = token.split("-", 1)[0] if "-" in token else None
     if not token_user_id or not token_user_id.isdigit():
-        print("The token doesn't look like a standard Access Token (expected '<digits>-<random>').")
+        print(
+            "The token doesn't look like a standard Access Token (expected '<digits>-<random>')."
+        )
     elif account_id and token_user_id != account_id:
         print(
             f"The token was issued for account id {token_user_id}, not the @{EXPECTED_USERNAME} "
@@ -217,7 +228,8 @@ def check_user_connection(
     """User-level check (Access Token): GET /2/users/me and confirm it is `expected_username`.
     Also prints the token's access level, since posting requires read-write.
     Returns True when ready to post, False when the request authenticated but the token is for the
-    wrong account or is read-only, and None when the request itself failed (e.g. a 401)."""
+    wrong account or is read-only, and None when the request itself failed (e.g. a 401).
+    """
     try:
         resp = x_request("GET", "/users/me", creds)
     except XAPIError as err:
@@ -251,7 +263,8 @@ def check_user_connection(
 
 def check_twitter_connection(expected_username: str = EXPECTED_USERNAME) -> bool:
     """Run every check the stored credentials allow. Returns True only when the user-level check
-    ran and confirmed the @`expected_username` account (i.e. the setup is ready to post)."""
+    ran and confirmed the @`expected_username` account (i.e. the setup is ready to post).
+    """
     try:
         creds = load_twitter_credentials()
     except MissingCredentialsError as err:
@@ -265,7 +278,9 @@ def check_twitter_connection(expected_username: str = EXPECTED_USERNAME) -> bool
 
     if "access_token" in creds and "access_token_secret" in creds:
         ready = check_user_connection(creds, expected_username)
-        if ready is None:  # the request failed outright, so say which account the token is for
+        if (
+            ready is None
+        ):  # the request failed outright, so say which account the token is for
             _explain_token_owner(creds["access_token"], account_id)
         return bool(ready)
     print(
@@ -364,9 +379,7 @@ PHRASES = {
     ],
     "head_again": ["{conf} leads again.", "{conf} stays on top."],
     "scoring_note": ["(low score wins)"],
-    "perfect": [
-        "A perfect {score}: {conf} holds every one of the top {n_word} spots."
-    ],
+    "perfect": ["A perfect {score}: {conf} holds every one of the top {n_word} spots."],
     "record_low": [
         "{score} is the lowest score by any conference in our data (since {since})."
     ],
@@ -382,10 +395,16 @@ PHRASES = {
     "gap_shrinks": [
         "{Conf_poss} lead over {other} shrinks from {prev_gap} to {gap} points."
     ],
-    "gap_grows": ["{Conf_poss} lead over {other} grows from {prev_gap} to {gap} points."],
+    "gap_grows": [
+        "{Conf_poss} lead over {other} grows from {prev_gap} to {gap} points."
+    ],
     # "_short" variants are used when the full sentences would not all fit in one post
-    "gap_shrinks_short": ["{Conf_poss} lead over {other} shrinks from {prev_gap} to {gap}."],
-    "gap_grows_short": ["{Conf_poss} lead over {other} grows from {prev_gap} to {gap}."],
+    "gap_shrinks_short": [
+        "{Conf_poss} lead over {other} shrinks from {prev_gap} to {gap}."
+    ],
+    "gap_grows_short": [
+        "{Conf_poss} lead over {other} grows from {prev_gap} to {gap}."
+    ],
     "gap_widest_short": ["{Conf_poss} {gap}-point lead is the season's largest."],
     "conf_up_short": ["{Conf} improves {delta} {points} to {score}."],
     "conf_down_short": ["{Conf} slips {delta} {points} to {score}."],
@@ -402,8 +421,12 @@ PHRASES = {
     ],
     "lead_change_first": ["It is the first lead change of the season."],
     "lead_change_nth": ["It is lead change No. {count} of the season."],
-    "conf_up": ["{Conf} improves {delta} {points} to {score}, the week's biggest jump."],
-    "conf_down": ["{Conf} slips {delta} {points} to {score}, the week's biggest slide."],
+    "conf_up": [
+        "{Conf} improves {delta} {points} to {score}, the week's biggest jump."
+    ],
+    "conf_down": [
+        "{Conf} slips {delta} {points} to {score}, the week's biggest slide."
+    ],
     "best_on_record": [
         "{score} is the best score for {conf} in our data (since {since})."
     ],
@@ -437,7 +460,9 @@ PHRASES = {
     "faller": ["Biggest drop: {faller}, down {fall} {faller_dest}."],
     "fell_out": ["{faller} falls out of the poll entirely from {faller_rank}."],
     "fell_out_top25": ["{faller} falls out of the Top 25 from {faller_rank}."],
-    "top_five": ["{count} of the top five teams come from {conf}."],  # count: Three/Four/All five
+    "top_five": [
+        "{count} of the top five teams come from {conf}."
+    ],  # count: Three/Four/All five
     "depth": ["{count} of the Top 25 come from {conf}."],
     # {point}: "in this same week last season" / "in last season's final poll"
     "last_year_same": ["{Conf} also led {point} ({score})."],
@@ -460,7 +485,9 @@ class PostConfig:
 
     num_scoring_teams: int = 5
     max_length: int = 280  # platform limit (X: 280 weighted characters; Bluesky: 300)
-    ap_name: str = "AP"  # how the headline names the AP; compose_post() swaps in each platform's handle
+    ap_name: str = (
+        "AP"  # how the headline names the AP; compose_post() swaps in each platform's handle
+    )
     max_storylines: int = 4  # how many storylines follow the standings line, at most
     max_standings: int = 4  # how many conferences the standings line lists
     hashtags: Tuple[str, ...] = ("#CFB",)  # always included, as the post's last line
@@ -477,8 +504,12 @@ class PostConfig:
     big_team_move: float = 5  # team rank change, in spots
     depth_threshold: int = 8  # this many Top 25 teams from one conference
     streak_threshold: int = 3  # straight polls on top before the headline mentions it
-    min_polls_for_season_marks: int = 4  # earlier polls needed before "season best/worst"
-    min_seasons_for_since: int = 2  # "best since ..." must reach back at least this many seasons
+    min_polls_for_season_marks: int = (
+        4  # earlier polls needed before "season best/worst"
+    )
+    min_seasons_for_since: int = (
+        2  # "best since ..." must reach back at least this many seasons
+    )
     min_seasons_for_records: int = 5  # seasons of data needed before "best in our data"
     # A storyline of the same kind as one in last week's post loses this many priority points
     # (twice that if the sentence is word-for-word the same), so posts don't repeat themselves
@@ -499,7 +530,9 @@ class Storyline:
     priority: float
     text: str
     topic: str
-    short: str = ""  # a tighter wording, used when space is short; empty means use `text`
+    short: str = (
+        ""  # a tighter wording, used when space is short; empty means use `text`
+    )
     # Narrower versions of the same story, as (short, full) wordings, tried in order when even
     # `short` won't fit: e.g. two movers -> just the bigger one
     fallbacks: Tuple[Tuple[str, str], ...] = ()
@@ -513,7 +546,9 @@ class WeekContext:
     previous: Optional[rt.StoredWeek]  # prior poll of the same season, if any
     standings: List[Tuple[str, float]]  # scoring conferences in finishing order
     prev_standings: List[Tuple[str, float]]
-    season: pd.DataFrame  # earlier polls of this season: year, order, label, conference, score
+    season: (
+        pd.DataFrame
+    )  # earlier polls of this season: year, order, label, conference, score
     history: pd.DataFrame  # every poll before this one, all seasons, same columns
     leaders: pd.DataFrame  # one row per poll before this one: see _poll_leaders()
     cfg: PostConfig
@@ -654,7 +689,8 @@ def load_score_history(
 ) -> pd.DataFrame:
     """Every recorded conference score from every season's summary-statistics CSV, one row per
     (season, poll, conference): columns year, order, label, conference, score. Conferences are
-    relabeled per HISTORY_ALIASES; weeks with no score for a conference (DNS) have no row."""
+    relabeled per HISTORY_ALIASES; weeks with no score for a conference (DNS) have no row.
+    """
     team_dir = rt._team_dir(num_scoring_teams)
     frames = []
     for entry in sorted(os.listdir(data_dir)):
@@ -688,7 +724,8 @@ def conference_standings(
     week: rt.StoredWeek, num_scoring_teams: int = 5
 ) -> List[Tuple[str, float]]:
     """The conferences that scored, in finishing order (the pipeline's own order, so ties are
-    broken exactly as in the stored graphs and README table): [(conference, score), ...]."""
+    broken exactly as in the stored graphs and README table): [(conference, score), ...].
+    """
     if not any(score != epi.did_not_score for score in week.scores.values()):
         return []
     with contextlib.redirect_stdout(io.StringIO()):
@@ -868,7 +905,8 @@ def _last_from_earlier_season(
     ctx: WeekContext, rows: pd.DataFrame
 ) -> Optional[pd.Series]:
     """The most recent of `rows` (polls that already match some mark), provided it is from far
-    enough back (cfg.min_seasons_for_since) to be worth a 'since ...'. None otherwise."""
+    enough back (cfg.min_seasons_for_since) to be worth a 'since ...'. None otherwise.
+    """
     if rows.empty:
         return None
     last = rows.sort_values(["year", "order"]).iloc[-1]
@@ -945,9 +983,7 @@ def storyline_margin(ctx: WeekContext) -> List[Storyline]:
             fields = dict(prev_gap=_num(prev_gap), gap=_num(gap), **names)
             text = _phrase(ctx, key, **fields)
             short = _phrase(ctx, f"{key}_short", **fields)
-            out.append(
-                Storyline(key, base + min(abs(swing), 20), text, "lead", short)
-            )
+            out.append(Storyline(key, base + min(abs(swing), 20), text, "lead", short))
     season_gaps = _season_leaders(ctx)["gap"].dropna()
     if (
         gap >= cfg.wide_gap
@@ -1145,9 +1181,7 @@ def storyline_team_movers(ctx: WeekContext) -> List[Storyline]:
         out.append(Storyline("fell_out", 38 + (26 - rank), text, "teams"))
     fields = {}
     if rise:
-        fields.update(
-            riser=rise[1], rise=_num(rise[0]), riser_rank=_rank_text(rise[2])
-        )
+        fields.update(riser=rise[1], rise=_num(rise[0]), riser_rank=_rank_text(rise[2]))
     if fall:
         # a rank past 25 is only a vote count, so say where the team fell from the reader's view
         dest = f"to {_rank_text(fall[2])}" if fall[2] <= 25 else "and out of the Top 25"
@@ -1171,7 +1205,9 @@ def storyline_team_movers(ctx: WeekContext) -> List[Storyline]:
         singles.sort(key=lambda pair: -pair[1])
         fallbacks = []
         for k, _ in singles:
-            fallbacks.append((_phrase(ctx, f"{k}_short", **fields), _phrase(ctx, k, **fields)))
+            fallbacks.append(
+                (_phrase(ctx, f"{k}_short", **fields), _phrase(ctx, k, **fields))
+            )
             tiny = _phrase(ctx, f"{k}_tiny", **fields)
             fallbacks.append((tiny, tiny))
         fallbacks = tuple(fallbacks)
@@ -1491,7 +1527,8 @@ def compose_text(
     """The post text for one week: headline, standings line, then as many of the top storylines as
     fit in cfg.max_length (never two on the same topic), then the always-on hashtags. The
     conferences and teams the post talks about most get their hashtag inline, where they are
-    named (see rank_hashtags()). If space runs short, extras go before any storyline does."""
+    named (see rank_hashtags()). If space runs short, extras go before any storyline does.
+    """
     lines = [story.text for story in choose_storylines(ctx, length_fn)]
     while True:
         text = _render_post(ctx, lines, length_fn)
@@ -1550,7 +1587,10 @@ def compose_post(
     newest_year, newest_token, _ = rt.latest_recorded_week(n, data_dir)
     if (ctx.week.year, ctx.week.token) == (newest_year, newest_token):
         candidates = (
-            (os.path.join(IMAGES_DIR, f"current_week_{n}team.png"), _alt_text_graph(ctx)),
+            (
+                os.path.join(IMAGES_DIR, f"current_week_{n}team.png"),
+                _alt_text_graph(ctx),
+            ),
             (
                 os.path.join(IMAGES_DIR, f"current_week_{n}team_table.png"),
                 _alt_text_table(ctx),
@@ -1585,7 +1625,8 @@ def preview_post(
     post: SocialPost, show_candidates: bool = True, platform: str = "x"
 ) -> None:
     """Print a post the way it would go out on `platform` ("x" or "bluesky"), with its length,
-    images, and the storylines that were considered (so thresholds and priorities can be tuned)."""
+    images, and the storylines that were considered (so thresholds and priorities can be tuned).
+    """
     text = (post.bluesky_text or post.text) if platform == "bluesky" else post.text
     print("-" * 60)
     print(text)
@@ -1597,7 +1638,9 @@ def preview_post(
     )
     if show_candidates:
         for story in post.storylines:
-            in_post = story.text in post.text or (story.short and story.short in post.text)
+            in_post = story.text in post.text or (
+                story.short and story.short in post.text
+            )
             used = "*" if in_post else " "
             print(f"  {used} {story.priority:5.1f}  {story.kind:<16} {story.text}")
 
@@ -1673,7 +1716,9 @@ def _upload_image_to_x(creds: Dict[str, str], path: str, alt_text: str) -> str:
             timeout=30,
         )
         if not meta.ok:
-            print(f"Alt text not set for {os.path.basename(path)} (HTTP {meta.status_code}).")
+            print(
+                f"Alt text not set for {os.path.basename(path)} (HTTP {meta.status_code})."
+            )
     except requests.RequestException as err:
         print(f"Alt text not set for {os.path.basename(path)}: {err}")
     return media_id
@@ -1691,7 +1736,8 @@ def post_to_x(
     Safe by default: with dry_run=True (the default) it only prints what would be sent. A week that
     was already posted (per social_post_log.json) is refused unless force=True. If an image cannot
     be uploaded nothing is posted (pass attach_images=False for a text-only post). Every failure
-    is reported and swallowed, so a posting problem can never break the weekly data/graph run."""
+    is reported and swallowed, so a posting problem can never break the weekly data/graph run.
+    """
     preview_post(post, show_candidates=False)
     if not attach_images:
         print("Text only: images will not be attached.")
@@ -1699,7 +1745,9 @@ def post_to_x(
         print("Not posted: the text is over X's 280-character limit.")
         return None
     if already_posted(post, "x") and not force:
-        print(f"Not posted: {post.key} is already in {os.path.basename(POST_LOG_PATH)}.")
+        print(
+            f"Not posted: {post.key} is already in {os.path.basename(POST_LOG_PATH)}."
+        )
         return None
     if dry_run:
         print("Dry run: nothing was sent to X.")
@@ -1770,7 +1818,9 @@ BLUESKY_SECTION = "bluesky"
 BLUESKY_MAX_LENGTH = 300
 BLUESKY_MAX_IMAGE_BYTES = 950_000  # the limit is 1,000,000; leave some headroom
 BLUESKY_MAX_IMAGES = 4
-_HASHTAG = re.compile(r"(?<![\w&#])#(\w*[A-Za-z_]\w*)")  # not all digits, never inside a word
+_HASHTAG = re.compile(
+    r"(?<![\w&#])#(\w*[A-Za-z_]\w*)"
+)  # not all digits, never inside a word
 
 
 def load_bluesky_credentials(secrets_path: str = SECRETS_PATH) -> Dict[str, str]:
@@ -1827,7 +1877,8 @@ def _explain_bluesky_error(err: Exception) -> None:
 
 def bluesky_hashtag_facets(text: str) -> list:
     """Facets that make each #hashtag in `text` a clickable tag. Bluesky positions are UTF-8 byte
-    offsets, not character offsets, which matters here because of the ▲/▼/· characters."""
+    offsets, not character offsets, which matters here because of the ▲/▼/· characters.
+    """
     facets = []
     for match in _HASHTAG.finditer(text):
         start = len(text[: match.start()].encode("utf-8"))
@@ -1845,7 +1896,8 @@ def bluesky_hashtag_facets(text: str) -> list:
 
 def bluesky_mention_facets(text: str, handle: str, did: str) -> list:
     """Facets that make each occurrence of "@<handle>" in `text` a real mention of the account with
-    DID `did` (so the AP is notified and the name links to it). Offsets are UTF-8 byte offsets."""
+    DID `did` (so the AP is notified and the name links to it). Offsets are UTF-8 byte offsets.
+    """
     facets = []
     pattern = re.compile(rf"(?<![\w.@]){re.escape('@' + handle.lstrip('@'))}(?![\w-])")
     for match in pattern.finditer(text):
@@ -1880,7 +1932,9 @@ def _prepare_image_for_bluesky(path: str) -> Tuple[bytes, Tuple[int, int]]:
             data = buffer.getvalue()
             size = resized.size
     if len(data) > BLUESKY_MAX_IMAGE_BYTES:
-        raise ValueError(f"{os.path.basename(path)} is too large for Bluesky even resized.")
+        raise ValueError(
+            f"{os.path.basename(path)} is too large for Bluesky even resized."
+        )
     return data, size
 
 
@@ -1920,10 +1974,14 @@ def post_to_bluesky(
     if not attach_images:
         print("Text only: images will not be attached.")
     if len(text) > BLUESKY_MAX_LENGTH:
-        print(f"Not posted: the text is over Bluesky's {BLUESKY_MAX_LENGTH}-character limit.")
+        print(
+            f"Not posted: the text is over Bluesky's {BLUESKY_MAX_LENGTH}-character limit."
+        )
         return None
     if already_posted(post, "bluesky") and not force:
-        print(f"Not posted: {post.key} is already in {os.path.basename(POST_LOG_PATH)}.")
+        print(
+            f"Not posted: {post.key} is already in {os.path.basename(POST_LOG_PATH)}."
+        )
         return None
     if dry_run:
         print(
@@ -1944,7 +2002,9 @@ def post_to_bluesky(
                 did = client.resolve_handle(ap_handle.lstrip("@")).did
                 facets += bluesky_mention_facets(text, ap_handle, did)
             except (bluesky_errors.AtProtocolError, requests.RequestException) as err:
-                print(f"Could not look up {ap_handle}; posting it as plain text ({err}).")
+                print(
+                    f"Could not look up {ap_handle}; posting it as plain text ({err})."
+                )
         facets.sort(key=lambda facet: facet.index.byte_start)
         if attach_images and images:
             prepared = [_prepare_image_for_bluesky(path) for path, _ in images]
@@ -1972,7 +2032,9 @@ def post_to_bluesky(
         return None
     uri = str(response.uri)
     _record_post(post, "bluesky", uri, text)
-    print(f"Posted: https://bsky.app/profile/{creds['handle']}/post/{uri.rsplit('/', 1)[-1]}")
+    print(
+        f"Posted: https://bsky.app/profile/{creds['handle']}/post/{uri.rsplit('/', 1)[-1]}"
+    )
     return uri
 
 
@@ -2031,7 +2093,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     publish.add_argument(
         "--text-only", action="store_true", help="do not attach the images"
     )
-    remove = commands.add_parser("delete", help="delete one of the account's posts by id")
+    remove = commands.add_parser(
+        "delete", help="delete one of the account's posts by id"
+    )
     remove.add_argument("post_id", help="X post id, or a Bluesky at:// URI")
     remove.add_argument("--platform", choices=("x", "bluesky"), default="x")
     args = parser.parse_args(argv)
@@ -2039,8 +2103,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    platforms = ("x", "bluesky") if getattr(args, "platform", "") == "all" else (
-        getattr(args, "platform", "x"),
+    platforms = (
+        ("x", "bluesky")
+        if getattr(args, "platform", "") == "all"
+        else (getattr(args, "platform", "x"),)
     )
     if args.command == "check":
         checks = {"x": check_twitter_connection, "bluesky": check_bluesky_connection}
