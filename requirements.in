@@ -1,9 +1,11 @@
+atproto
 black
 matplotlib
 numpy
+# oauthlib>=4.0.1  # Security patch version without a direct import in this codebase
 pandas<3.0.0
 pillow>=13.0.0
 requests>=2.33.0
+requests-oauthlib>=2.0.0
 setuptools
-tweepy
 urllib3>=2.8.0
